@@ -1,0 +1,191 @@
+/* ============================================
+   AirDate v111 - Card Grid Enhancements
+   ============================================ */
+
+/* Line clamp utility for truncating text */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Smooth animations for cards */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Card grid responsive improvements */
+#results-grid {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Enhanced card hover states */
+#results-grid > div {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+#results-grid > div:hover {
+  transform: translateY(-8px);
+}
+
+/* Ensure posters maintain aspect ratio */
+#results-grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Login Button */
+#auth-btn {
+    position: relative;
+    right: 35%;
+}
+#airdate-nav {
+  margin: 0;
+  min-height: 70px;
+  padding-top: 10px;
+}
+header {
+  margin-top: 15px;
+}
+/* body area */
+#details-content {
+  margin-top: 100px;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 640px) {
+  #results-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  #results-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  #results-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  #results-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Loading skeleton improvements */
+#loading-state .animate-pulse {
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ============================================
+   Notifications Page
+   ============================================ */
+
+.notif-card {
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.notif-card.unread {
+  border-left-color: #06B6D4;
+  background: rgba(6, 182, 212, 0.04);
+}
+
+.notif-card:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.fade-in {
+  animation: notifFadeIn 0.3s ease forwards;
+  opacity: 0;
+}
+
+@keyframes notifFadeIn {
+  to { opacity: 1; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #253348 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Peacock: hide logo, network name shown via JS */
+img#show-network-logo[src*="gIAcGTjKKr0KOHL5s4O36roJ8p7"] { display: none !important; }
+
+/* ============================================
+   Trending Page — Tab & Pill Navigation
+   (moved from trending.html inline <style>)
+   ============================================ */
+
+.tab-btn {
+  color: #64748b; /* slate-500 */
+  background: transparent;
+}
+
+.tab-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.active-tab {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.network-pill,
+.genre-pill {
+  color: #94a3b8; /* slate-400 */
+  border-color: rgba(255, 255, 255, 0.08);
+  background: transparent;
+}
+
+.network-pill:hover,
+.genre-pill:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.active-pill {
+  color: #22d3ee !important; /* cyan-400 */
+  border-color: rgba(34, 211, 238, 0.3) !important;
+  background: rgba(34, 211, 238, 0.08) !important;
+}
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
