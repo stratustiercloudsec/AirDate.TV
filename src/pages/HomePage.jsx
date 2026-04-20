@@ -46,12 +46,38 @@ async function enrichWithNetwork(shows) {
     network: s.network || details[i]?.networks?.[0]?.name || '',
   }))
 }
+
+function dedupById(shows) {
+  const seen = new Set()
+  return shows.filter(s => {
+    // Use id if present, fall back to name to avoid losing valid shows
+    const key = s.id ? String(s.id) : (s.name || s.title || '')
+    if (!key || seen.has(key)) return false
+    seen.add(key); return true
+  })
+}
 function mapTMDB(s) {
   return { id:s.id, name:s.name??s.original_name, poster_path:s.poster_path,
     backdrop_path:s.backdrop_path, first_air_date:s.first_air_date,
     vote_average:s.vote_average, overview:s.overview, network:s.network||'' }
 }
 
+
+// Normalize Lambda result shape {title,poster,premiereDate,network,id}
+// to the TMDB shape ShowCard expects {name,poster_path,first_air_date,network,id}
+function normalizeShow(s) {
+  return {
+    id:             s.id,
+    name:           s.title || s.name || s.seriesTitle || '',
+    poster_path:    s.poster_path || null,   // bare path if present
+    poster:         s.poster || null,         // full URL from Lambda
+    first_air_date: s.premiereDate || s.premiere || s.first_air_date || null,
+    network:        s.network || '',
+    overview:       s.description || s.overview || '',
+    vote_average:   s.user_score ? s.user_score / 10 : (s.vote_average || 0),
+    backdrop_path:  s.backdrop_path || null,
+  }
+}
 function parseGateway(gateway) {
   return gateway.body
     ? (typeof gateway.body==='string' ? JSON.parse(gateway.body) : gateway.body)
@@ -64,7 +90,7 @@ function SkeletonCard() {
 
 function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) {
   const tracked = isTracked(show.id)
-  const posterImg = usePoster(show.poster_path, show.name, 342)
+  const posterImg = usePoster(show.poster_path || show.poster, show.name, 342)
   return (
     <div className="group relative cursor-pointer" onClick={()=>window.location.href=`/details/${show.id}`}>
       {rank!=null&&<span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-yellow-400 text-slate-950 text-xs font-black rounded-full flex items-center justify-center shadow-lg">{rank}</span>}
@@ -81,7 +107,7 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) 
       </div>
       <h3 className="text-sm font-bold text-white leading-snug mb-1 line-clamp-2">{show.name}</h3>
       {show.network&&<p className="text-xs font-medium text-slate-400 mb-0.5">{show.network}</p>}
-      {show.first_air_date&&<p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{new Date(show.first_air_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</p>}
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{(()=>{const d=show.first_air_date||show.premiereDate;if(!d)return 'TBA';try{const dt=new Date(d.includes('T')?d:d+'T12:00:00');return isNaN(dt.getTime())?'TBA':dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}catch{return 'TBA'}})()}</p>
     </div>
   )
 }
@@ -99,7 +125,7 @@ function SectionHeader({ icon, iconColor, title, subtitle }) {
 function ShowGrid({ shows, loading, skeletonCount=5, rank=false, ...cardProps }) {
   const grid='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5'
   if(loading) return <div className={grid}>{Array.from({length:skeletonCount}).map((_,i)=><SkeletonCard key={i}/>)}</div>
-  return <div className={grid}>{shows.map((s,i)=><ShowCard key={s.id} show={s} rank={rank?i+1:undefined} {...cardProps}/>)}</div>
+  return <div className={grid}>{dedupById(shows).map((s,i)=><ShowCard key={`${s.id}-${i}`} show={s} rank={rank?i+1:undefined} {...cardProps}/>)}</div>
 }
 
 export function HomePage() {
@@ -143,7 +169,7 @@ export function HomePage() {
     fetch(`${TMDB}/trending/tv/week?api_key=${TMDB_KEY}&language=en-US`)
       .then(r=>r.json()).then(async d=>{
         const shows = (d.results||[]).slice(0,10).map(mapTMDB)
-        setTrending(await enrichWithNetwork(shows))
+        setTrending(dedupById(await enrichWithNetwork(shows)))
       }).catch(()=>{}).finally(()=>setLoadTrend(false))
 
     // TMDB Popular — /tv/popular (Top 10)
@@ -151,7 +177,7 @@ export function HomePage() {
     fetch(`${TMDB}/tv/popular?api_key=${TMDB_KEY}&language=en-US&page=1`)
       .then(r=>r.json()).then(async d=>{
         const shows = (d.results||[]).slice(0,10).map(mapTMDB)
-        setTop10(await enrichWithNetwork(shows))
+        setTop10(dedupById(await enrichWithNetwork(shows)))
       }).catch(()=>{}).finally(()=>setLoadTop10(false))
 
     // TMDB This Week — /discover/tv with week date range
@@ -160,7 +186,7 @@ export function HomePage() {
       `&first_air_date.gte=${startOfWeek()}&first_air_date.lte=${endOfWeek()}&with_original_language=en&page=1`)
       .then(r=>r.json()).then(async d=>{
         const shows = (d.results||[]).slice(0,20).map(mapTMDB)
-        setThisWeek(await enrichWithNetwork(shows))
+        setThisWeek(dedupById(await enrichWithNetwork(shows)))
       }).catch(()=>{}).finally(()=>setLoadWeek(false))
 
     // TMDB Next Month — /discover/tv with network IDs
@@ -173,7 +199,7 @@ export function HomePage() {
       `&first_air_date.gte=${gte}&first_air_date.lte=${lte}&page=1`)
       .then(r=>r.json()).then(async d=>{
         const shows = (d.results||[]).slice(0,20).map(mapTMDB)
-        setNextMonth(await enrichWithNetwork(shows))
+        setNextMonth(dedupById(await enrichWithNetwork(shows)))
       }).catch(()=>{}).finally(()=>setLoadMonth(false))
 
     // Sidebar — /get-premieres returns featured (Confirmed Premieres) + leaderboard (Hype Ranking)
@@ -192,16 +218,41 @@ export function HomePage() {
     if(!q.trim()) return
     setSearching(true); setShowResults(true)
     try {
-      let url = `${TMDB}/search/tv?api_key=${TMDB_KEY}&language=en-US&query=${encodeURIComponent(q)}&page=${overridePage}`
-      const res  = await fetch(url)
-      const data = await res.json()
-      const mapped = (data.results ?? []).map(mapTMDB)
-      setResults(mapped)
-      setHeader(`Results for "${q}"`)
-      setCount(data.total_results ? `${data.total_results.toLocaleString()} results` : '')
-      setTotalPages(data.total_pages ?? 1)
+      // Route through Lambda — same intelligence as the static site
+      const payload = { query: q, page: overridePage, per_page: 20 }
+      if (network && network !== 'All') payload.network = network
+      const res  = await fetch(`${API_BASE}/get-premieres`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const gw   = await res.json()
+      const data = parseGateway(gw)
+      // Lambda handles dedup server-side — don't filter by id here
+      // Multiple seasons of same show share TMDB series id but are distinct results
+      const results = (data.results ?? data.shows ?? []).map(normalizeShow)
+
+      // If Lambda returns nothing, fall back to TMDB title search
+      if (results.length === 0) {
+        const tmdbRes  = await fetch(`${TMDB}/search/tv?api_key=${TMDB_KEY}&language=en-US&query=${encodeURIComponent(q)}&page=${overridePage}`)
+        const tmdbData = await tmdbRes.json()
+        const tmdbMapped = (tmdbData.results ?? []).map(mapTMDB)
+        setResults(tmdbMapped)
+        setHeader(`Results for "${q}"`)
+        setCount(tmdbData.total_results ? `${tmdbData.total_results.toLocaleString()} results` : '')
+        setTotalPages(tmdbData.total_pages ?? 1)
+      } else {
+        setResults(results)
+        setHeader(data.header || `Results for "${q}"`)
+        setCount(data.pagination?.total ? `${data.pagination.total.toLocaleString()} results` : `${results.length} results`)
+        setTotalPages(data.pagination?.pages ?? 1)
+      }
       setPage(overridePage)
-    } catch(e){ console.error('Search failed',e) }
+      // Update sidebar with fresh featured/leaderboard if Lambda returned them
+      if (data?.featured?.length)    setFeatured(data.featured)
+      if (data?.leaderboard?.length) setLeaderboard(data.leaderboard)
+    } catch(e){
+      console.error('Search failed', e)
+    }
     finally { setSearching(false) }
   }
 
@@ -291,7 +342,7 @@ export function HomePage() {
                   <img {...usePoster(show.poster_path, show.name, 92)} alt={show.name} className="w-12 h-16 object-cover rounded-xl flex-shrink-0"/>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-bold text-white truncate">{show.name}</h3>
-                    {show.first_air_date&&<p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{new Date(show.first_air_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</p>}
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{(()=>{const d=show.first_air_date;if(!d)return 'TBA';try{const dt=new Date(d.includes('T')?d:d+'T12:00:00');return isNaN(dt.getTime())?'TBA':dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}catch{return 'TBA'}})()}</p>
                   </div>
                   <button onClick={()=>handleTrack(show)} className="text-slate-400 hover:text-red-400 transition-colors flex-shrink-0"><i className="fa-solid fa-xmark"></i></button>
                 </div>
@@ -313,12 +364,14 @@ export function HomePage() {
                   ? <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">{Array.from({length:6}).map((_,i)=><SkeletonCard key={i}/>)}</div>
                   : <>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 mb-8">
-                        {searchResults.map(s=><ShowCard key={s.id} show={s} {...cardProps}/>)}
+                        {searchResults.map((s,i)=><ShowCard key={`${s.id}-${i}`} show={s} {...cardProps}/>)}
                       </div>
                       {totalPages>1&&(
                         <div className="flex items-center justify-center gap-2 mt-6 mb-10">
                           <button onClick={()=>handleSearch(query,page-1)} disabled={page===1} className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">← Prev</button>
-                          <span className="text-xs font-bold text-slate-400 px-3">Page {page} of {totalPages}</span>
+                          <span className="text-xs font-bold text-slate-400 px-3">
+                            Page {page} of {totalPages}{resultsCount ? ` (${resultsCount})` : ''}
+                          </span>
                           <button onClick={()=>handleSearch(query,page+1)} disabled={page===totalPages} className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">Next →</button>
                         </div>
                       )}
@@ -358,8 +411,8 @@ export function HomePage() {
               <div className="grid grid-cols-2 gap-3">
                 {featured.length===0
                   ? Array.from({length:4}).map((_,i)=><div key={i} className="animate-pulse bg-slate-700/50 rounded-2xl aspect-[2/3]"></div>)
-                  : featured.slice(0,8).map(s=>(
-                      <div key={s.id} className="relative overflow-hidden rounded-2xl aspect-[2/3] cursor-pointer group" onClick={()=>window.location.href=`/details/${s.id}`}>
+                  : dedupById(featured).slice(0,8).map((s,i)=>(
+                      <div key={`${s.id}-${i}`} className="relative overflow-hidden rounded-2xl aspect-[2/3] cursor-pointer group" onClick={()=>window.location.href=`/details/${s.id}`}>
                         <img {...usePoster(s.poster_path||s.poster, s.title||s.name, 185)} alt={s.title||s.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"/>
                         <div className="absolute bottom-0 left-0 right-0 p-2"><p className="text-white text-[10px] font-black leading-tight line-clamp-2">{s.title||s.name}</p></div>
@@ -382,8 +435,8 @@ export function HomePage() {
                         <div className="flex-1"><div className="h-3 bg-slate-700 rounded w-3/4 mb-1"></div><div className="h-2 bg-slate-700 rounded w-1/2"></div></div>
                       </div>
                     ))
-                  : leaderboard.slice(0,10).map((s,idx)=>(
-                      <div key={s.id??idx} className="flex items-center gap-3 p-3 bg-slate-800/40 border border-white/5 rounded-2xl hover:border-pink-500/20 transition-all cursor-pointer" onClick={()=>window.location.href=`/details/${s.id}`}>
+                  : dedupById(leaderboard).slice(0,10).map((s,idx)=>(
+                      <div key={`${s.id ?? idx}-${idx}`} className="flex items-center gap-3 p-3 bg-slate-800/40 border border-white/5 rounded-2xl hover:border-pink-500/20 transition-all cursor-pointer" onClick={()=>window.location.href=`/details/${s.id}`}>
                         <span className="w-6 text-center text-[10px] font-black text-slate-400">{idx+1}</span>
                         <img {...usePoster(s.poster_path||s.poster, s.title||s.name, 92)} alt={s.title||s.name} className="w-8 h-10 object-cover rounded-lg flex-shrink-0"/>
                         <div className="flex-1 min-w-0">

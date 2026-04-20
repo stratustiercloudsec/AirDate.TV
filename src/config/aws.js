@@ -14,7 +14,6 @@ export const AWS_CONFIG = {
     redirectSignOut:  isDev ? 'https://dev.airdate.tv/'     : 'https://airdate.tv/',
   },
   apiGateway: {
-    // Both main content + user data live on the same gateway
     baseUrl: 'https://21ave5trw7.execute-api.us-east-1.amazonaws.com',
   },
   stripe: {
@@ -26,17 +25,7 @@ export const AWS_CONFIG = {
   },
 }
 
-// In dev (localhost / IP), route through Vite's proxy to avoid CORS.
-// In production, hit the API Gateway directly.
-export const API_BASE = isDev
-  ? '/api'
-  : AWS_CONFIG.apiGateway.baseUrl
-
-export const USER_API = API_BASE                         // same gateway
-export const IS_DEV   = isDev
-
-// Image CDN: use CloudFront in production (pre-warmed cache), fall back to
-// TMDB origin in dev so every poster is always available regardless of cache state.
-export const IMAGE_BASE = isDev
-  ? 'https://image.tmdb.org'
-  : 'https://dmg16wbx5pi4h.cloudfront.net'
+export const API_BASE   = AWS_CONFIG.apiGateway.baseUrl
+export const USER_API   = API_BASE
+export const IMAGE_BASE = 'https://dmg16wbx5pi4h.cloudfront.net'
+export const IS_DEV     = isDev
