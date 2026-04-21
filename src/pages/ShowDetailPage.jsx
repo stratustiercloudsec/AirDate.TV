@@ -10,6 +10,7 @@ import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
 import { API_BASE, IMAGE_BASE } from '@/config/aws'
 import { usePoster, createDefaultPoster } from '@/utils/poster'
+import { getProviderUrl } from '@/utils/providers'
 
 const TMDB_KEY = '9e7202516e78494f2b18ec86d29a4309'
 const TMDB     = 'https://api.themoviedb.org/3'
@@ -75,25 +76,174 @@ function CastGrid({ cast }) {
   )
 }
 
+// Email builder — outside component to avoid JSX template literal conflicts
+function buildOutlookEmail(title, network, premiere, overview, posterUrl, url) {
+  const ov = (overview || '').slice(0, 160) + ((overview || '').length > 160 ? '…' : '')
+  const rows = [
+    posterUrl
+      ? `<img src="${posterUrl}" width="440" style="display:block;width:100%;max-width:440px;border-radius:10px;margin-bottom:18px"/>`
+      : '',
+    `<p style="color:#67e8f9;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px">AirDate.tv</p>`,
+    `<h2 style="color:#fff;font-size:20px;font-weight:900;margin:0 0 10px;line-height:1.2">${title}</h2>`,
+    network  ? `<p style="color:#94a3b8;margin:4px 0;font-size:13px"><b style="color:#e2e8f0">Network:</b> ${network}</p>`   : '',
+    premiere ? `<p style="color:#94a3b8;margin:4px 0;font-size:13px"><b style="color:#e2e8f0">Premiere:</b> ${premiere}</p>` : '',
+    ov       ? `<p style="color:#cbd5e1;margin:14px 0;line-height:1.7;font-size:13px">${ov}</p>` : '',
+    `<a href="${url}" style="display:inline-block;background:#06b6d4;color:#0f172a;font-weight:900;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:13px;margin-top:6px">Track on AirDate.tv →</a>`,
+    `<p style="color:#475569;font-size:11px;margin-top:18px">Track TV premieres before they trend · airdate.tv</p>`,
+  ].join('')
+
+  const html =
+    '<html><body style="font-family:Arial,sans-serif;background:#0f172a;padding:24px">' +
+    '<table width="480" cellpadding="0" cellspacing="0" style="background:#1e293b;border-radius:14px;padding:28px;border:1px solid #334155">' +
+    '<tr><td>' + rows + '</td></tr></table></body></html>'
+
+  return encodeURIComponent(html)
+}
+
+function ShareModal({ url, title, show, posterUrl, onClose }) {
+  const [copied, setCopied] = useState(false)
+  const showId    = url.split('/details/')[1]?.split('?')[0]
+  // OG proxy URL — for social crawlers (FB/LinkedIn/Twitter)
+  const ogUrl     = showId
+    ? `https://21ave5trw7.execute-api.us-east-1.amazonaws.com/og/${showId}`
+    : url
+  const encoded   = encodeURIComponent(ogUrl)   // social shares use OG proxy
+  const encDirect = encodeURIComponent(url)      // copy + email use real URL
+  const network     = show?.networks?.[0]?.name || show?.network || ''
+  const premiere    = show?.first_air_date ? (() => {
+    try { const d=new Date(show.first_air_date+'T12:00:00'); return isNaN(d)?'':d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) } catch { return '' }
+  })() : ''
+  const overview    = (show?.overview||'').slice(0,200) + ((show?.overview||'').length>200?'…':'')
+
+  // Rich share text for social
+  const tweetText   = encodeURIComponent(`🎬 ${title}${network?' on '+network:''}${premiere?' — premiering '+premiere:''} | Track it on AirDate.tv`)
+  const emailSubj = encodeURIComponent(`${title} | AirDate.tv`)
+
+  const emailBody = encodeURIComponent(
+    `Check out ${title} on AirDate.tv!\n\n` +
+    (network  ? `Network: ${network}\n`   : '') +
+    (premiere ? `Premiere: ${premiere}\n` : '') +
+    (overview ? `\n${overview}\n`        : '') +
+    (posterUrl ? `\n🖼️ Poster: ${posterUrl}\n` : '') +
+    `\n🔗 ${url}\n\nTrack TV premieres before they trend at AirDate.tv`
+  )
+
+  const outlookBody = buildOutlookEmail(title, network, premiere, overview, posterUrl, url)
+
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(url) } catch {
+      const el = document.createElement('input'); el.value = url
+      document.body.appendChild(el); el.select()
+      document.execCommand('copy'); document.body.removeChild(el)
+    }
+    setCopied(true); setTimeout(()=>{setCopied(false);onClose()},1500)
+  }
+
+  const ogEncoded   = encodeURIComponent(ogUrl)
+  const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(ogUrl)}`
+
+  const options = [
+    { icon:'fa-brands fa-x-twitter', label:'X (Twitter)', bg:'bg-black',     href:`https://twitter.com/intent/tweet?url=${encoded}&text=${tweetText}` },
+    { icon:'fa-brands fa-facebook',  label:'Facebook',    bg:'bg-blue-600',   href:`https://www.facebook.com/sharer/sharer.php?u=${ogEncoded}` },
+    { icon:'fa-brands fa-linkedin',  label:'LinkedIn',    bg:'bg-blue-700',   href:linkedInUrl },
+    { icon:'fa-brands fa-whatsapp',  label:'WhatsApp',    bg:'bg-green-600',  href:`https://wa.me/?text=${encodeURIComponent('🎬 '+title+(network?' on '+network:'')+(premiere?' premiering '+premiere:'')+' — '+url)}` },
+    { icon:'fa-regular fa-envelope', label:'Email',       bg:'bg-slate-600',  href:`mailto:?subject=${emailSubj}&body=${emailBody}` },
+    { icon:'fa-brands fa-microsoft', label:'Outlook',     bg:'bg-blue-500',   href:`https://outlook.live.com/mail/0/deeplink/compose?subject=${emailSubj}&body=${outlookBody}` },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+      onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="bg-slate-900 border border-white/20 w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <i className="fa-solid fa-share-nodes text-cyan-400"></i>
+            <h3 className="text-lg font-black text-white">Share</h3>
+          </div>
+          <button onClick={onClose} className="text-white/50 hover:text-white text-2xl leading-none">×</button>
+        </div>
+
+        {/* Rich preview card */}
+        <div className="flex gap-3 p-3 bg-slate-800/60 rounded-2xl border border-white/10 mb-4">
+          {posterUrl && (
+            <img src={posterUrl} alt={title}
+              className="w-12 h-16 object-cover rounded-xl flex-shrink-0 shadow-lg"/>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-xs font-black leading-tight line-clamp-2 mb-1">{title}</p>
+            {network && <p className="text-cyan-400 text-[10px] font-bold mb-0.5">{network}</p>}
+            {premiere && <p className="text-slate-400 text-[10px]">{premiere}</p>}
+            <p className="text-slate-500 text-[9px] truncate mt-1">airdate.tv</p>
+          </div>
+          <button onClick={copyLink}
+            className={`self-start flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
+              ${copied?'bg-green-500/20 text-green-400 border border-green-500/30':'bg-slate-700 hover:bg-cyan-500/20 text-slate-200 hover:text-cyan-400 border border-white/10'}`}>
+            <i className={`fa-solid ${copied?'fa-check':'fa-copy'} text-[10px]`}></i>
+            {copied?'✓':'Copy'}
+          </button>
+        </div>
+
+        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-3">Share using</p>
+        <div className="grid grid-cols-3 gap-2">
+          {options.map(o=>(
+            <a key={o.label} href={o.href} target="_blank" rel="noreferrer noopener" onClick={onClose}
+              className="flex flex-col items-center gap-2 p-3 bg-slate-800/40 hover:bg-slate-700/60 border border-white/5 hover:border-white/20 rounded-2xl transition-all group">
+              <div className={`w-10 h-10 rounded-2xl ${o.bg} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                <i className={`${o.icon} text-white text-lg`}></i>
+              </div>
+              <span className="text-slate-300 text-[9px] font-bold text-center leading-tight">{o.label}</span>
+            </a>
+          ))}
+        </div>
+
+        {/* OG meta note */}
+        <p className="text-slate-600 text-[9px] text-center mt-4 font-medium">
+          Rich previews appear when shared to airdate.tv
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function ShareButton({ url, title, show, posterUrl }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <button onClick={()=>setOpen(true)}
+        className="flex items-center gap-2 px-6 py-3 bg-slate-800/60 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/30 rounded-xl text-white font-bold transition-all">
+        <i className="fa-solid fa-share-nodes"></i>
+        <span>Share</span>
+      </button>
+      {open&&<ShareModal url={url} title={title} show={show} posterUrl={posterUrl} onClose={()=>setOpen(false)}/>}
+    </>
+  )
+}
+
 // ─── Providers ────────────────────────────────────────────────────────────────
-function ProvidersGrid({ providers, watchLink }) {
+function ProvidersGrid({ providers, watchLink, showTitle }) {
   if (!providers?.length) return (
     <div className="bg-slate-800/30 rounded-2xl p-6 border border-white/5 text-center">
       <p className="text-slate-400 text-sm">Streaming info not available</p>
-      {watchLink&&<a href={watchLink} target="_blank" rel="noreferrer" className="mt-3 inline-block text-cyan-400 text-xs font-bold hover:underline">Check JustWatch →</a>}
+      {watchLink&&<a href={watchLink} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-cyan-400 text-xs font-bold hover:underline">Check JustWatch →</a>}
     </div>
   )
   return (
-    <div className="flex flex-wrap gap-4">
-      {providers.map(p=>(
-        <a key={p.provider_id} href={p.provider_link||watchLink||'#'} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-2 group">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-white/10 group-hover:border-cyan-500/30 transition-all">
-            {p.logo_path?<img src={`${IMAGE_BASE}/t/p/w92${p.logo_path}`} alt={p.provider_name} className="w-full h-full object-cover"/>
-              :<div className="w-full h-full flex items-center justify-center"><i className="fa-solid fa-tv text-slate-400"></i></div>}
-          </div>
-          <p className="text-slate-400 text-[10px] font-bold text-center w-16 truncate group-hover:text-cyan-400 transition-colors">{p.provider_name}</p>
-        </a>
-      ))}
+    <div>
+      <div className="flex flex-wrap gap-4 mb-3">
+        {providers.map(p=>{
+          const href=getProviderUrl(p,showTitle||'',watchLink)
+          return (
+            <a key={p.provider_id} href={href} target="_blank" rel="noreferrer noopener" className="flex flex-col items-center gap-2 group">
+              <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-white/10 group-hover:border-cyan-500/40 group-hover:shadow-lg group-hover:shadow-cyan-500/10 transition-all">
+                {p.logo_path?<img src={`${IMAGE_BASE}/t/p/w92${p.logo_path}`} alt={p.provider_name} className="w-full h-full object-cover"/>
+                  :<div className="w-full h-full flex items-center justify-center"><i className="fa-solid fa-tv text-slate-400"></i></div>}
+              </div>
+              <p className="text-slate-400 text-[10px] font-bold text-center w-16 truncate group-hover:text-cyan-400 transition-colors">{p.provider_name}</p>
+            </a>
+          )
+        })}
+      </div>
+      {watchLink&&<p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest"><i className="fa-solid fa-circle-info mr-1"></i>Availability may vary · <a href={watchLink} target="_blank" rel="noreferrer" className="text-cyan-500 hover:underline">Full options on JustWatch</a></p>}
     </div>
   )
 }
@@ -504,10 +654,37 @@ export function ShowDetailPage() {
       setLoading(false)  // ← TIER 1 complete — page visible
       document.title=`${show.name} | AirDate`
 
+      // ── Dynamic OG meta tags for rich social previews ─────────────────────
+      const posterUrl = s.poster || (s.poster_path ? `https://image.tmdb.org/t/p/w500${s.poster_path}` : '')
+      const desc = (s.description||s.overview||'').slice(0,200)
+      const canonical = window.location.href
+      const setMeta = (prop, val, isName=false) => {
+        const attr = isName ? 'name' : 'property'
+        let el = document.querySelector(`meta[${attr}="${prop}"]`)
+        if (!el) { el=document.createElement('meta'); el.setAttribute(attr,prop); document.head.appendChild(el) }
+        el.setAttribute('content', val)
+      }
+      // Open Graph
+      setMeta('og:title',       `${show.name} | AirDate`)
+      setMeta('og:description', desc || `Track ${show.name} on AirDate.tv`)
+      setMeta('og:image',       posterUrl)
+      setMeta('og:image:width', '500')
+      setMeta('og:image:height','750')
+      setMeta('og:url',         canonical)
+      setMeta('og:type',        'video.tv_show')
+      setMeta('og:site_name',   'AirDate.tv')
+      // Twitter Card
+      setMeta('twitter:card',        'summary_large_image', true)
+      setMeta('twitter:title',       `${show.name} | AirDate.tv`, true)
+      setMeta('twitter:description', desc || `Track ${show.name} on AirDate.tv`, true)
+      setMeta('twitter:image',       posterUrl, true)
+      setMeta('twitter:site',        '@airdatetv', true)
+      // Cleanup on unmount handled by React router navigation
+
       // ── TIER 2: All secondary data in parallel ─────────────────────────────
       Promise.all([
-        // Credits — Lambda
-        fetch(`${API_BASE}/show/${id}/credits`).then(r=>r.json()).then(gw).catch(()=>({})),
+        // Credits — TMDB direct (Lambda credits returns empty results)
+        fetch(`${TMDB}/tv/${id}/credits?api_key=${TMDB_KEY}`).then(r=>r.json()).catch(()=>({})),
         // Providers — Lambda first, fall back to TMDB if empty
         fetch(`${API_BASE}/show/${id}/providers`).then(r=>r.json()).then(gw).catch(()=>({})),
         // Recommendations — Lambda first, fall back to TMDB if empty
@@ -613,11 +790,8 @@ export function ShowDetailPage() {
                         className={`flex items-center gap-2 px-6 py-3 border rounded-xl font-bold transition-all ${tracked?'bg-cyan-500 border-cyan-400 text-slate-950':'bg-slate-800/60 border-white/10 hover:bg-pink-500/20 hover:border-pink-500/30 text-white'}`}>
                         <i className={`fa-${tracked?'solid':'regular'} fa-heart`}></i><span>{tracked?'Tracking':'+ Track'}</span>
                       </button>
-                      <button onClick={()=>navigator.clipboard?.writeText(window.location.href)}
-                        className="flex items-center gap-2 px-6 py-3 bg-slate-800/60 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/30 rounded-xl text-white font-bold transition-all">
-                        <i className="fa-solid fa-share-nodes"></i><span>Share</span>
-                      </button>
-                      {show.first_air_date&&(
+                      <ShareButton url={window.location.href} title={show.name} show={show} posterUrl={show?.poster||(show?.poster_path?`https://image.tmdb.org/t/p/w500${show.poster_path}`:null)}/>
+                        {show.first_air_date && daysBetween(todayLocal(), show.first_air_date) >= 0 && (
                         <button onClick={()=>setCalendar(true)} className="flex items-center gap-2 px-6 py-3 bg-slate-800/60 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/30 rounded-xl text-white font-bold transition-all">
                           <i className="fa-solid fa-calendar-plus"></i><span>Save to Calendar</span>
                         </button>
@@ -660,7 +834,7 @@ export function ShowDetailPage() {
                 <div className="p-2 bg-cyan-500/10 rounded-lg"><i className="fa-solid fa-tv text-cyan-400 text-xl"></i></div>
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Where to Watch</h2>
               </div>
-              <ProvidersGrid providers={providers} watchLink={watchLink}/>
+              <ProvidersGrid providers={providers} watchLink={watchLink} showTitle={show?.name||''}/>
             </section>
 
             {/* Cast */}
