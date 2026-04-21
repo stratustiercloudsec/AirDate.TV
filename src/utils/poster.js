@@ -1,9 +1,17 @@
 const CF = 'https://dmg16wbx5pi4h.cloudfront.net'
 
-export function createDefaultPoster(name = '') {
-  const letter = (name || '?')[0].toUpperCase()
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450"><rect width="300" height="450" fill="#1e293b"/><rect x="1" y="1" width="298" height="448" fill="none" stroke="#334155" stroke-width="2"/><text x="150" y="245" font-family="Inter,sans-serif" font-size="120" font-weight="900" fill="#475569" text-anchor="middle" dominant-baseline="middle">${letter}</text></svg>`
-  return `data:image/svg+xml;base64,${btoa(svg)}`
+export function createDefaultPoster(name) {
+  // Strip non-Latin1 chars from the initial before SVG embedding
+  // so btoa() doesn't throw on Japanese/Arabic/Korean titles
+  const raw     = (name || '?')[0].toUpperCase()
+  const initial = raw.codePointAt(0) > 255 ? '?' : raw
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150">
+    <rect width="100" height="150" fill="#1e293b" rx="8"/>
+    <text x="50" y="85" font-family="Arial,sans-serif" font-size="48" font-weight="bold"
+      fill="#94a3b8" text-anchor="middle">${initial}</text>
+  </svg>`
+  // Use encodeURIComponent instead of btoa — handles ALL unicode safely
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
 export function usePoster(posterPathOrUrl, name = '', width = 342) {
