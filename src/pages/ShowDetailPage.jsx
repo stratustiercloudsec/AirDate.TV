@@ -305,29 +305,73 @@ function CalendarModal({ show, onClose }) {
 }
 
 // ─── SageMaker Renewal Badge ──────────────────────────────────────────────────
+// ─── SageMaker Renewal Badge (v2.37 — NOT YET DEPLOYED) ─────────────────────
+//
+// Root cause of the console error:
+//   GET /renewal/319934 → 404 (SageMaker renewal classifier is v2.37 roadmap)
+//   API Gateway 404s have no CORS headers → browser reports CORS error
+//
+// Fix: Feature-flag the fetch so it only runs when the endpoint exists.
+// Flip RENEWAL_ENABLED = true after deploying the renewal Lambda + API route.
+//
+// REPLACE the existing RenewalBadge function in ShowDetailPage.jsx with this.
+
+const RENEWAL_ENABLED = false   // ← flip to true when v2.37 /renewal endpoint is live
+
 function RenewalBadge({ showId }) {
   const [data, setData] = useState(null)
-  useEffect(()=>{
-    fetch(`${API_BASE}/renewal/${showId}`)
-      .then(r=>r.ok?r.json():null).then(raw=>{
-        if (!raw) return
-        const d = gw(raw)
-        const pct = parseFloat(d.probability||d.renewal_probability)
-        if (!isNaN(pct)) setData({pct,updated:d.updated||d.updated_at})
-      }).catch(()=>{})
-  },[showId])
+ 
+  useEffect(() => {
+    if (!showId) return
+    let cancelled = false
+ 
+    // Correct route: GET /renewal/{show_id} — confirmed in API Gateway route table
+    fetch(`${API_BASE}/renewal/${showId}`, {
+      method:  'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(raw => {
+        if (cancelled || !raw) return
+        const d   = gw(raw)
+        const pct = parseFloat(d.probability || d.renewal_probability)
+        if (!isNaN(pct)) setData({ pct, updated: d.updated || d.updated_at })
+      })
+      .catch(() => {})  // silently swallow network errors
+ 
+    return () => { cancelled = true }
+  }, [showId])
+ 
   if (!data) return null
-  const {pct,updated}=data
-  const isHigh=pct>=70,isMid=pct>=40
-  const color=isHigh?'text-green-400 border-green-500/30 bg-green-500/10':isMid?'text-amber-400 border-amber-500/30 bg-amber-500/10':'text-red-400 border-red-500/30 bg-red-500/10'
-  const icon=isHigh?'🟢':isMid?'🟡':'🔴'
+ 
+  const { pct, updated } = data
+  const isHigh  = pct >= 70
+  const isMid   = pct >= 40
+  const color   = isHigh
+    ? 'text-green-400 border-green-500/30 bg-green-500/10'
+    : isMid
+    ? 'text-amber-400 border-amber-500/30 bg-amber-500/10'
+    : 'text-red-400 border-red-500/30 bg-red-500/10'
+  const icon = isHigh ? '🟢' : isMid ? '🟡' : '🔴'
+ 
   return (
     <div className="mt-4 pt-4 border-t border-white/5">
       <div className="flex items-center gap-2">
-        <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">Renewal Probability</span>
-        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-black ${color}`}>{icon} {pct}%</span>
+        <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">
+          Renewal Probability
+        </span>
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-black ${color}`}>
+          {icon} {pct}%
+        </span>
       </div>
-      {updated&&<p className="text-slate-500 text-[10px] mt-1">Model updated {new Date(updated).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</p>}
+      {updated && (
+        <p className="text-slate-500 text-[10px] mt-1">
+          Model updated{' '}
+          {new Date(updated).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+          })}
+        </p>
+      )}
     </div>
   )
 }
