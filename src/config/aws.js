@@ -49,3 +49,6 @@ export const COGNITO_CONFIG = {
   redirectUri: AWS_CONFIG.cognito.redirectSignIn,
   scopes:      'email openid profile',
 }
+
+// src/config/aws.js — add this line
+export const SCOOP_MANIFEST_URL = 'https://airdate.tv/scoop/stories.json'
