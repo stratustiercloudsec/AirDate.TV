@@ -85,8 +85,14 @@ export function WatchlistProvider({ children }) {
             'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
-            showId:   show.id,
-            showData: show,
+            show: {
+              id:             show.id,
+              name:           show.name         ?? show.title ?? '',
+              poster_path:    show.poster_path  ?? null,
+              poster:         show.poster       ?? null,
+              first_air_date: show.first_air_date ?? null,
+              network:        show.network      ?? show.networks?.[0]?.name ?? '',
+            },
           }),
         }).catch(() => {})
       }

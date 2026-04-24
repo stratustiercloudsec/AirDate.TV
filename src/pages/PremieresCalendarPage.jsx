@@ -26,6 +26,32 @@ const NETWORK_MAP = {
   'AMC':          [174],
   'STARZ':        [318, 304, 1709],
 }
+
+// Streaming platforms store episode air_date as UTC midnight → needs +1 day shift for US local.
+// Broadcast networks (NBC/CBS/ABC/FOX/FX/AMC) store the correct US air date already.
+const STREAMING_NETWORK_IDS = new Set([
+  213,                    // Netflix
+  49, 3186, 1565,         // HBO / Max
+  2739,                   // Disney+
+  1024, 1025, 2777,       // Prime Video
+  453,                    // Hulu
+  2552, 350, 3411, 2007,  // Apple TV+
+  3353, 3076,             // Peacock
+  4330, 67, 4711,         // Paramount+
+  2503,                   // Tubi
+  4406, 318, 304, 1709,   // STARZ
+])
+
+const STREAMING_NAME_KEYWORDS = ['netflix','apple tv','prime','hulu','disney','peacock','paramount','max','starz','tubi']
+
+function isStreaming(detail) {
+  // ID-based check (primary)
+  if ((detail?.networks || []).some(n => STREAMING_NETWORK_IDS.has(n.id))) return true
+  // Name-based fallback — catches alternate Apple TV+ IDs and unlisted streaming networks
+  return (detail?.networks || []).some(n =>
+    STREAMING_NAME_KEYWORDS.some(kw => (n.name || '').toLowerCase().includes(kw))
+  )
+}
 const NETWORKS  = ['All', ...Object.keys(NETWORK_MAP)]
 const DOW       = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 const DOW_SHORT = ['SUN','MON','TUE','WED','THU','FRI','SAT']
@@ -90,16 +116,19 @@ async function batchFetchDetails(ids) {
   const results = {}
   const chunks = []
   for (let i=0; i<ids.length; i+=20) chunks.push(ids.slice(i,i+20))
-  for (const chunk of chunks) {
-    await Promise.all(
-      chunk.map(id =>
-        fetch(`${TMDB}/tv/${id}?api_key=${TMDB_KEY}&language=en-US`)
-          .then(r=>r.json())
-          .then(d=>{ results[id]=d })
-          .catch(()=>{})
+  // Fetch ALL chunks in parallel (not sequentially) for speed
+  await Promise.all(
+    chunks.map(chunk =>
+      Promise.all(
+        chunk.map(id =>
+          fetch(`${TMDB}/tv/${id}?api_key=${TMDB_KEY}&language=en-US`)
+            .then(r=>r.json())
+            .then(d=>{ results[id]=d })
+            .catch(()=>{})
+        )
       )
     )
-  }
+  )
   return results
 }
 
@@ -166,7 +195,7 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
     : null
 
   const [lambdaShows, ...tmdbPerNetwork] = await Promise.all([
-    fetchLambdaPremieres(year, month, activeNetworkLabel),
+    Promise.resolve([]),   // GET /premieres/calendar not yet deployed — TMDB passes cover all data
     ...networkIdList.map(async (networkId) => {
       const netParam = networkId ? `&with_networks=${networkId}` : ''
       const netLabel = networkId
@@ -177,7 +206,7 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
       const baseA = `${TMDB}/discover/tv?api_key=${TMDB_KEY}&language=en-US`
         + `&first_air_date.gte=${qStart}&first_air_date.lte=${last}`
         + `&sort_by=popularity.desc` + langFilter + netParam
-      const newShowsRaw = await fetchAllPages(baseA, 8)
+      const newShowsRaw = await fetchAllPages(baseA, 3)
       const newShows = newShowsRaw
         .map(s => ({
           ...s,
@@ -193,23 +222,34 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
       const baseB = `${TMDB}/discover/tv?api_key=${TMDB_KEY}&language=en-US`
         + `&air_date.gte=${qStart}&air_date.lte=${last}`
         + `&sort_by=popularity.desc` + langFilter + netParam
-      const airingShows = await fetchAllPages(baseB, 5)
+      const airingShows = await fetchAllPages(baseB, 2)
 
       const newIds     = new Set(newShows.map(s=>s.id))
       const candidates = airingShows.filter(s=>!newIds.has(s.id))
-      const detailsMap = candidates.length > 0
-        ? await batchFetchDetails(candidates.map(s=>s.id))
-        : {}
+
+      // Fetch details in two separate batches so newShows are GUARANTEED inclusion.
+      // If we merged into one slice(0,60), candidates (often 60+) crowd out newShows entirely.
+      //   newShowsDetails → Pass C continuing episode check (e.g. YF&N premieres Apr 3, Ep4 Apr 24)
+      //   candidateDetails → Pass B season premieres + Pass C continuing check
+      const [newShowsDetails, candidateDetails] = await Promise.all([
+        newShows.length > 0
+          ? batchFetchDetails(newShows.slice(0, 40).map(s=>s.id))
+          : Promise.resolve({}),
+        candidates.length > 0
+          ? batchFetchDetails(candidates.slice(0, 40).map(s=>s.id))
+          : Promise.resolve({}),
+      ])
+      const detailsMap = { ...candidateDetails, ...newShowsDetails }
 
       // Pass B: season premieres (E1 of a new season landing this month)
-      const seasonPremierIds = new Set()
+      const seasonPremierIds = new Map()  // id → premiere air_date
       const seasonPremieres  = []
       for (const show of candidates) {
         const detail = detailsMap[show.id]
         if (!detail) continue
         const season = findSeasonPremiereInRange(detail, first, last)
         if (!season) continue
-        seasonPremierIds.add(show.id)
+        seasonPremierIds.set(show.id, season.air_date)
         seasonPremieres.push({
           ...show,
           first_air_date: season.air_date,
@@ -221,13 +261,15 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
       }
 
       // Pass C: continuing shows — premiered in a prior month, episodes still airing now
+      // Also processes newShows: a show that premiered this month (Pass A) may have
+      // additional episodes airing later the same month (e.g. Your Friends & Neighbors
+      // premieres Apr 3, Ep4 airs Apr 25 — both should appear on the calendar).
       // Two-check fallback so we catch both:
       //   • Weekly shows where next_episode_to_air is upcoming this month
       //   • Full-season drops (e.g. Apple TV+) where all eps already aired and
       //     next_episode_to_air is null — use last_episode_to_air instead
       const continuingShows = []
-      for (const show of candidates) {
-        if (seasonPremierIds.has(show.id)) continue  // already handled by Pass B
+      for (const show of [...candidates, ...newShows]) {
         const detail = detailsMap[show.id]
         if (!detail) continue
 
@@ -236,11 +278,14 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
         let seasonNum   = null
 
         // Check 1: next_episode_to_air — upcoming weekly episodes
+        // Streaming platforms (Netflix, Apple TV+, etc.) store UTC midnight dates → shift +1 for US.
+        // Broadcast networks (NBC, CBS, ABC, FOX) already store the correct US air date.
+        const streaming = isStreaming(detail)
         const nextEp = detail.next_episode_to_air
         if (nextEp?.air_date) {
-          const shifted = shiftDate(nextEp.air_date)
-          if (shifted >= first && shifted <= last) {
-            episodeDate = shifted
+          const epDate = streaming ? shiftDate(nextEp.air_date) : nextEp.air_date
+          if (epDate >= first && epDate <= last) {
+            episodeDate = epDate
             episodeNum  = nextEp.episode_number
             seasonNum   = nextEp.season_number
           }
@@ -251,9 +296,9 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
         if (!episodeDate) {
           const lastEp = detail.last_episode_to_air
           if (lastEp?.air_date) {
-            const shifted = shiftDate(lastEp.air_date)
-            if (shifted >= first && shifted <= last) {
-              episodeDate = shifted
+            const epDate = streaming ? shiftDate(lastEp.air_date) : lastEp.air_date
+            if (epDate >= first && epDate <= last) {
+              episodeDate = epDate
               episodeNum  = lastEp.episode_number
               seasonNum   = lastEp.season_number
             }
@@ -262,6 +307,15 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
 
         if (!episodeDate) continue  // genuinely no episodes this month
 
+        // NOW safe to check: skip only if episodeDate == the season premiere date
+        // (Pass B already placed it). Don't skip entirely — later episodes still needed.
+        if (seasonPremierIds.has(show.id) && episodeDate === seasonPremierIds.get(show.id)) continue
+
+        // For shows that premiered this month (in newShows), skip continuing entry
+        // if episodeDate == their premiere date — Pass A already placed them there
+        if (newIds.has(show.id) && episodeDate === show.first_air_date) continue
+
+        // Primary entry — next_episode_to_air (upcoming) or last_episode_to_air (recently aired)
         continuingShows.push({
           ...show,
           first_air_date: episodeDate,
@@ -271,6 +325,27 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
           _isSeason:      false,
           _isContinuing:  true,
         })
+
+        // Secondary entry — if we used next_episode_to_air, ALSO show last_episode_to_air
+        // if it aired earlier this month (different date). This lets weekly shows like
+        // Law & Order appear on BOTH the date they aired AND the upcoming date.
+        const usedNext = episodeDate === nextEp?.air_date
+        if (usedNext && detail.last_episode_to_air?.air_date) {
+          const lastDate = streaming ? shiftDate(detail.last_episode_to_air.air_date) : detail.last_episode_to_air.air_date
+          const lastNum  = detail.last_episode_to_air.episode_number
+          const lastSsn  = detail.last_episode_to_air.season_number
+          if (lastDate >= first && lastDate <= last && lastDate !== episodeDate) {
+            continuingShows.push({
+              ...show,
+              first_air_date: lastDate,
+              _networkLabel:  netLabel || (detail.networks?.[0]?.name || ''),
+              _seasonNum:     lastSsn,
+              _episodeNum:    lastNum,
+              _isSeason:      false,
+              _isContinuing:  true,
+            })
+          }
+        }
       }
 
       return [...newShows, ...seasonPremieres, ...continuingShows]
@@ -282,8 +357,8 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
   return [...tmdbPerNetwork.flat(), ...lambdaShows]
     .sort((a,b) => (a.first_air_date||'').localeCompare(b.first_air_date||''))
     .filter(s => {
-      if (!s.id || seen.has(String(s.id))) return false
-      seen.add(String(s.id))
+      if (!s.id || seen.has(`${s.id}_${s.first_air_date||''}`)) return false
+      seen.add(`${s.id}_${s.first_air_date||''}`)
       return true
     })
 }

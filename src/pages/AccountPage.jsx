@@ -1,13 +1,5 @@
 // src/pages/AccountPage.jsx
-// Fixed:
-// 1. Auth shape: user.email + user.sub + signOut (not Amplify loginId/userId/logout)
-// 2. WatchlistContext: toggleWatchlist instead of removeFromWatchlist; no preferences prop
-// 3. usePoster called inside map → extracted to ShowCard sub-component (hooks rules)
-// 4. Navigation: /details/:id (not /show/:id)
-// 5. Preferences: loaded from GET /user/{sub}, saved via PUT /user/{sub}/preferences
-// 6. isPremium: matches AuthContext (tier === 'premium'), API may return 'pro' — both handled
-
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate }   from 'react-router-dom'
 import { useAuth }             from '@/context/AuthContext'
 import { useWatchlist }        from '@/context/WatchlistContext'
@@ -25,16 +17,13 @@ const ALERT_LABELS  = {
 const GENRES          = ['Drama','Comedy','Thriller','Sci-Fi','Crime','Horror','Fantasy','Documentary','Reality','Animation']
 const NETWORK_OPTIONS = ['Netflix','HBO / Max','Prime Video','Apple TV+','Hulu','Disney+','Peacock','Paramount+','AMC','FX','Showtime','BritBox','Starz']
 
-// ── ShowCard — must be a component so usePoster is a valid hook call ──────────
+// ── ShowCard — usePoster must be inside a component, not called inside .map() ─
 function ShowCard({ show, onRemove }) {
   const navigate = useNavigate()
   const poster   = usePoster(show?.poster_path ?? show?.poster, show?.name, 185)
   if (!show) return null
   return (
-    <div
-      className="relative group cursor-pointer"
-      onClick={() => navigate(`/details/${show.id}`)}
-    >
+    <div className="relative group cursor-pointer" onClick={() => navigate(`/details/${show.id}`)}>
       <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-2 bg-slate-800">
         <img {...poster} alt={show.name ?? ''} className="w-full h-full object-cover"/>
         <button
@@ -49,24 +38,26 @@ function ShowCard({ show, onRemove }) {
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
 export function AccountPage() {
-  // FIX 1: correct AuthContext shape — email/sub/signOut (not Amplify loginId/userId/logout)
   const { user, token, signOut, isAuthenticated, isPremium } = useAuth()
-  // FIX 2: correct WatchlistContext shape — toggleWatchlist (not removeFromWatchlist)
   const { watchlist, toggleWatchlist } = useWatchlist()
   const navigate = useNavigate()
 
-  const [userData,        setUserData]        = useState(null)
-  const [preferences,     setPreferences]     = useState({ networks: [], genres: [], notifications: false, alert_days: 1 })
-  const [networkInput,    setNetworkInput]     = useState('')
-  const [toast,           setToast]           = useState(null)
-  const [cancelModal,     setCancelModal]     = useState(false)
-  const [reactivateModal, setReactivate]      = useState(false)
-  const [actionLoading,   setActionLoading]   = useState(false)
-  const [prefSaving,      setPrefSaving]      = useState(false)
+  const [userData,        setUserData]      = useState(null)
+  // FIX: initial state uses alertDays (camelCase) to match Lambda response
+  const [preferences,     setPreferences]   = useState({
+    networks:      [],
+    genres:        [],
+    notifications: false,
+    alertDays:     1,          // ← was alert_days — Lambda stores/returns alertDays
+  })
+  const [networkInput,    setNetworkInput]   = useState('')
+  const [toast,           setToast]         = useState(null)
+  const [cancelModal,     setCancelModal]   = useState(false)
+  const [reactivateModal, setReactivate]    = useState(false)
+  const [actionLoading,   setActionLoading] = useState(false)
+  const [prefSaving,      setPrefSaving]    = useState(false)
 
-  // FIX 3: correct user field names from AuthContext
   const email = user?.email ?? ''
   const sub   = user?.sub   ?? ''
 
@@ -75,7 +66,7 @@ export function AccountPage() {
     setTimeout(() => setToast(null), 5000)
   }
 
-  // ── Fetch user record (tier, sub dates, preferences) ───────────────────────
+  // ── Fetch user record ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!token || !sub) return
     fetch(`${API_BASE}/user/${sub}`, {
@@ -84,17 +75,16 @@ export function AccountPage() {
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d) return
-        const record = d.Item ?? d
-        setUserData(record)
-        // Merge preferences from user record
-        if (record.preferences) {
-          setPreferences(prev => ({ ...prev, ...record.preferences }))
+        // API returns flat object — no Item wrapper
+        setUserData(d)
+        if (d.preferences) {
+          // Merge saved preferences — overrides initial defaults
+          setPreferences(prev => ({ ...prev, ...d.preferences }))
         }
       })
       .catch(() => {})
   }, [token, sub])
 
-  // Normalize tier — API may return 'pro', JWT may return 'premium'
   const tier          = userData?.tier ?? (isPremium ? 'pro' : 'free')
   const isProTier     = tier === 'pro' || tier === 'premium'
   const cancelPending = userData?.cancel_at_period_end === true
@@ -103,17 +93,13 @@ export function AccountPage() {
         .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : ''
 
-  // FIX 4: signOut not logout
-  async function handleLogout() {
-    await signOut()
-    navigate('/')
-  }
+  async function handleLogout() { await signOut(); navigate('/') }
 
   // ── Preferences helpers ────────────────────────────────────────────────────
-  const networks  = preferences.networks      ?? []
-  const genrePrefs = preferences.genres       ?? []
-  const notifsOn  = preferences.notifications ?? false
-  const alertDays = preferences.alert_days    ?? 1
+  const networks   = preferences.networks      ?? []
+  const genrePrefs = preferences.genres        ?? []
+  const notifsOn   = preferences.notifications ?? false
+  const alertDays  = preferences.alertDays     ?? 1   // ← was alert_days
 
   function addNetwork() {
     if (!networkInput || networks.includes(networkInput)) return
@@ -132,11 +118,11 @@ export function AccountPage() {
   function toggleNotifs() {
     setPreferences(prev => ({ ...prev, notifications: !prev.notifications }))
   }
-  function setAlertDays(d) {
-    setPreferences(prev => ({ ...prev, alert_days: d }))
+  function handleSetAlertDays(d) {
+    // FIX: write alertDays (camelCase) — was writing alert_days
+    setPreferences(prev => ({ ...prev, alertDays: d }))
   }
 
-  // Save preferences via PUT /user/{sub}/preferences
   async function savePreferences() {
     if (!token || !sub) return
     setPrefSaving(true)
@@ -144,7 +130,8 @@ export function AccountPage() {
       const res = await fetch(`${API_BASE}/user/${sub}/preferences`, {
         method:  'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body:    JSON.stringify(preferences),
+        // preferences object now only contains alertDays (no stale alert_days key)
+        body:    JSON.stringify({ preferences }),   // Lambda reads body.get("preferences", {})
       })
       if (!res.ok) throw new Error('Save failed')
       showToast('Preferences saved!', 'cyan')
@@ -160,38 +147,30 @@ export function AccountPage() {
     setActionLoading(true)
     try {
       const res  = await fetch(`${API_BASE}/user/${sub}/cancel`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setUserData(prev => ({ ...prev, cancel_at_period_end: true }))
       setCancelModal(false)
       showToast(`Pro access ends ${periodEnd}. No further charges.`, 'amber')
-    } catch (e) {
-      showToast(`Could not cancel: ${e.message}`, 'red')
-    } finally {
-      setActionLoading(false)
-    }
+    } catch (e) { showToast(`Could not cancel: ${e.message}`, 'red') }
+    finally { setActionLoading(false) }
   }
 
   async function confirmReactivate() {
     setActionLoading(true)
     try {
       const res  = await fetch(`${API_BASE}/user/${sub}/reactivate`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setUserData(prev => ({ ...prev, cancel_at_period_end: false }))
       setReactivate(false)
       showToast("Pro plan reactivated! You're all set.", 'cyan')
-    } catch (e) {
-      showToast(`Could not reactivate: ${e.message}`, 'red')
-    } finally {
-      setActionLoading(false)
-    }
+    } catch (e) { showToast(`Could not reactivate: ${e.message}`, 'red') }
+    finally { setActionLoading(false) }
   }
 
   return (
@@ -220,7 +199,6 @@ export function AccountPage() {
           {/* ── Sidebar ── */}
           <aside className="lg:col-span-1 space-y-6">
             <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-8 text-center sticky top-24">
-              {/* Avatar */}
               {user?.picture
                 ? <img src={user.picture} alt={user.name}
                     className="w-20 h-20 rounded-full mx-auto mb-5 object-cover shadow-2xl border border-white/10"/>
@@ -232,15 +210,12 @@ export function AccountPage() {
                   </div>
                 )
               }
-              <h2 className="text-base font-black text-white truncate mb-1">
-                {user?.name || email || 'Loading…'}
-              </h2>
+              <h2 className="text-base font-black text-white truncate mb-1">{user?.name || email || 'Loading…'}</h2>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{email}</p>
               <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6
                 ${isProTier ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400 border border-white/8'}`}>
                 {isProTier ? '★ Pro' : 'Free Plan'}
               </span>
-
               <div className="space-y-2">
                 <Link to="/"
                   className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800/60 hover:bg-slate-800 border border-white/10 rounded-xl text-slate-200 hover:text-white font-bold transition-all text-xs uppercase tracking-widest">
@@ -357,7 +332,6 @@ export function AccountPage() {
                   </h2>
                 </div>
               </div>
-
               {watchlist.length === 0 ? (
                 <div className="text-center p-10 text-slate-500 text-sm uppercase tracking-widest border border-dashed border-white/5 rounded-2xl">
                   <i className="fa-solid fa-heart text-3xl text-slate-700 mb-3 block"/>
@@ -365,13 +339,8 @@ export function AccountPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-                  {/* FIX: ShowCard component — usePoster can't be called inside .map() */}
                   {watchlist.filter(Boolean).map(show => (
-                    <ShowCard
-                      key={show.id}
-                      show={show}
-                      onRemove={toggleWatchlist}   // FIX: was removeFromWatchlist
-                    />
+                    <ShowCard key={show.id} show={show} onRemove={toggleWatchlist}/>
                   ))}
                 </div>
               )}
@@ -465,7 +434,7 @@ export function AccountPage() {
                       <p className="text-slate-400 text-xs mb-4">How far in advance do you want to be notified?</p>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {ALERT_DAYS.map(d => (
-                          <button key={d} onClick={() => setAlertDays(d)}
+                          <button key={d} onClick={() => handleSetAlertDays(d)}
                             className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all
                               ${alertDays === d ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-transparent border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-200'}`}>
                             <div className="text-sm font-black mb-0.5">{ALERT_LABELS[d].emoji}</div>
@@ -494,7 +463,7 @@ export function AccountPage() {
       </div>
       <Footer/>
 
-      {/* ── Cancel Modal ── */}
+      {/* Cancel Modal */}
       {cancelModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={e => e.target === e.currentTarget && setCancelModal(false)}>
@@ -525,7 +494,7 @@ export function AccountPage() {
         </div>
       )}
 
-      {/* ── Reactivate Modal ── */}
+      {/* Reactivate Modal */}
       {reactivateModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={e => e.target === e.currentTarget && setReactivate(false)}>
@@ -551,7 +520,7 @@ export function AccountPage() {
         </div>
       )}
 
-      {/* ── Toast ── */}
+      {/* Toast */}
       {toast && (
         <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl border backdrop-blur-sm shadow-2xl text-sm font-bold transition-all
           ${toast.color === 'amber' ? 'bg-amber-500/20 border-amber-500/30 text-amber-300'
@@ -564,5 +533,4 @@ export function AccountPage() {
   )
 }
 
-// MyPulsePage alias — same component, two routes (/account and /pulse)
 export function MyPulsePage() { return <AccountPage /> }
