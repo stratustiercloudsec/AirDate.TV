@@ -84,7 +84,7 @@ export function UpdatePage() {
 
     try {
       const priceId = isAnnual ? PRICE_ANNUAL : PRICE_MONTHLY
-      const res  = await fetch(`${API_BASE}/create-checkout-session`, {
+      const res  = await fetch(`${AWS_CONFIG.apiGateway.checkoutUrl}/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ priceId }),

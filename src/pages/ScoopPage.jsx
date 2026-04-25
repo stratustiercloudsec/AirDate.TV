@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { Footer } from '@/components/layout/Footer'
 
 // ── CloudFront manifest URL (agent publishes here every 4h) ──────────────────
-const MANIFEST_URL = 'https://s3.amazonaws.com/airdate.tv/scoop/stories.json'
+const MANIFEST_URL = 'https://airdate.tv/scoop/stories.json'
 
 const CATS = {
   premieres:     { label:'Premiere Dates',     icon:'calendar-star',  color:'#22d3ee' },

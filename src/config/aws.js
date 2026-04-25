@@ -25,9 +25,8 @@ export const AWS_CONFIG = {
     redirectSignOut:  isDev ? `${origin}/`                   : 'https://airdate.tv/',
   },
   apiGateway: {
-    baseUrl: isDev
-      ? 'https://21ave5trw7.execute-api.us-east-1.amazonaws.com/dev'
-      : 'https://21ave5trw7.execute-api.us-east-1.amazonaws.com/prod',
+    baseUrl: 'https://21ave5trw7.execute-api.us-east-1.amazonaws.com',
+    checkoutUrl: 'https://hazl8ggqu3.execute-api.us-east-1.amazonaws.com',
   },
   stripe: {
     publishableKey: isDev
