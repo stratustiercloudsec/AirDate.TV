@@ -77,7 +77,7 @@ function ScoopCard({ item }) {
   const srcColor  = SOURCE_COLORS[item.source_domain || item.domain] || '#475569'
   const srcLabel  = formatSource(item.source_domain || item.domain || '')
   const timeAgo   = formatTime(item.published_at)
-  const poster    = item.poster_url || item.poster
+  const poster    = item.image_url || item.poster_url || item.poster
 
   const handleClick = () => {
     if (item.story_hash) {

@@ -86,6 +86,20 @@ export function ScoopStoryPage() {
           Back to The Scoop
         </button>
 
+        {/* Hero image */}
+        {story.image_url && (
+          <div className="relative h-64 sm:h-80 rounded-2xl overflow-hidden mb-8">
+            <img src={story.image_url} alt={story.show_title || story.headline}
+              className="w-full h-full object-cover"/>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"/>
+            {story.image_source === 'pexels' && (
+              <span className="absolute bottom-3 right-3 text-[10px] text-slate-500 bg-slate-950/60 px-2 py-1 rounded-md">
+                Photo by Pexels
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Category badge */}
         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider mb-6"
           style={{background:`${conf.color}22`, color:conf.color, border:`1px solid ${conf.color}33`}}>
