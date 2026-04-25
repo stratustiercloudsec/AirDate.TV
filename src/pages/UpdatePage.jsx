@@ -71,6 +71,12 @@ export function UpdatePage() {
   }, [isPremium])
 
   async function startCheckout(cycle) {
+    console.log('=== CHECKOUT DEBUG ===')
+    console.log('isAuthenticated:', isAuthenticated)
+    console.log('token:', token ? token.substring(0, 20) + '...' : 'NULL')
+    console.log('PRICE_MONTHLY:', PRICE_MONTHLY)
+    console.log('PRICE_ANNUAL:', PRICE_ANNUAL)
+    console.log('API_BASE:', API_BASE)
     if (!isAuthenticated) { navigate('/login'); return }
 
     const isAnnual = cycle === 'annual'
