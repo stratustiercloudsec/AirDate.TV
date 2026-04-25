@@ -16,7 +16,8 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { HomePage }              from '@/pages/HomePage'
 import { TrendingPage }          from '@/pages/TrendingPage'
 import { PremieresCalendarPage } from '@/pages/PremieresCalendarPage'
-import { ScoopPage }             from '@/pages/ScoopPage'
+import { ScoopPage } from '@/pages/ScoopPage'
+import { ScoopStoryPage } from '@/pages/ScoopStoryPage'
 import { ShowDetailPage }        from '@/pages/ShowDetailPage'
 import { ContactPage }           from '@/pages/ContactPage'
 import { VisionPage }            from '@/pages/VisionPage'
@@ -52,7 +53,8 @@ export default function App() {
                 <Route path="/"                element={<HomePage />} />
                 <Route path="/trending"        element={<TrendingPage />} />
                 <Route path="/premieres"       element={<PremieresCalendarPage />} />
-                <Route path="/scoop"           element={<ScoopPage />} />
+                <Route path="/scoop" element={<ScoopPage />} />
+              <Route path="/scoop/:hash" element={<ScoopStoryPage />} />
                 <Route path="/details/:id"     element={<ShowDetailPage />} />
                 <Route path="/contact"         element={<ContactPage />} />
                 <Route path="/vision"          element={<VisionPage />} />

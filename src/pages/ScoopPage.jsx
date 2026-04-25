@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { Footer } from '@/components/layout/Footer'
 
 // ── CloudFront manifest URL (agent publishes here every 4h) ──────────────────
-const MANIFEST_URL = 'https://d3t7gopk4cip9i.cloudfront.net/scoop/stories.json'
+const MANIFEST_URL = 'https://s3.amazonaws.com/airdate.tv/scoop/stories.json'
 
 const CATS = {
   premieres:     { label:'Premiere Dates',     icon:'calendar-star',  color:'#22d3ee' },
@@ -116,11 +116,10 @@ function ScoopCard({ item }) {
           : <div className="flex-1"></div>
         }
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-            style={{background:`${srcColor}22`, color:srcColor}}>
-            {srcLabel || 'AirDate'}
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-cyan-400">
+            <i className="fa-solid fa-sparkles text-[10px]"></i>AirDate Original
           </span>
-          <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
             <span className="text-slate-400 text-xs">{timeAgo}</span>
             <span className="text-cyan-400 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
               Read →
