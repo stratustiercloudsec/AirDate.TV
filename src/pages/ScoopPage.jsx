@@ -316,8 +316,8 @@ export function ScoopPage() {
               <span className="w-8 h-px bg-cyan-400"></span>
               <span className="text-cyan-400 text-[10px] font-black uppercase tracking-[0.3em]">AI-Synthesized Intelligence</span>
             </div>
-            <h1 className="text-white font-black tracking-tight leading-none"
-              style={{fontSize:'clamp(2.5rem, 6vw, 3.5rem)', letterSpacing:'-0.02em'}}>
+            <h1 className="text-white font-black tracking-tight leading-none normal-case"
+              style={{fontSize:'clamp(2rem, 4vw, 3rem)', letterSpacing:'-0.02em'}}>
               The Scoop
             </h1>
             <p className="text-slate-500 text-sm mt-1.5">Real-time TV industry intelligence, synthesized by AI</p>

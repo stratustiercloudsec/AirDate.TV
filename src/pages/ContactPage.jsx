@@ -87,11 +87,11 @@ export function ContactPage() {
             <span className="w-10 h-px bg-cyan-400"></span>
             <span className="text-cyan-400 text-[10px] font-black uppercase tracking-[0.3em]">Get in Touch</span>
           </div>
-          <h1 className="text-white font-black tracking-tight leading-none mb-4"
-            style={{fontSize:'clamp(2.8rem, 7vw, 3.5rem)', letterSpacing:'-0.02em'}}>
+          <h1 className="text-white font-black tracking-tight leading-none normal-case"
+            style={{fontSize:'clamp(2rem, 4vw, 3rem)', letterSpacing:'-0.02em'}}>
             Let's Talk.
           </h1>
-          <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
+                    <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
             Whether you're a network, streamer, journalist, or fan — we want to hear from you.
           </p>
         </div>
