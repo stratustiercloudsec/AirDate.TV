@@ -48,10 +48,10 @@ export function VisionPage() {
               <h2 className="text-white font-black text-xl tracking-tight mb-6">The Mechanism</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                  { icon: 'fa-lock', color: 'text-cyan-400', bg: 'bg-cyan-500/10', title: 'ID-Locked Precision', desc: 'Strict ID-aware disambiguation layer to resolve multi-version title collisions and eliminate AI hallucinations.' },
+                  { icon: 'fa-lock', color: 'text-cyan-400', bg: 'bg-cyan-500/10', title: 'ID-Locked Precision', desc: 'Strict ID-aware disambiguation layer to resolve multi-version title collisions and eliminate hallucinations.' },
                   { icon: 'fa-brain', color: 'text-purple-400', bg: 'bg-purple-500/10', title: 'Neural Synthesis', desc: 'Amazon Bedrock quantifies sentiment and community hype into actionable performance metrics.' },
                   { icon: 'fa-fire', color: 'text-orange-400', bg: 'bg-orange-500/10', title: 'Anticipation Tracking', desc: 'Track what you\'re waiting for, not just what you\'ve watched. The only platform built for pre-premiere intelligence.' },
-                  { icon: 'fa-calendar-check', color: 'text-green-400', bg: 'bg-green-500/10', title: 'Premiere Calendar', desc: 'Real premiere dates verified by AI signal scanning — not rumors, not user submissions.' },
+                  { icon: 'fa-calendar-check', color: 'text-green-400', bg: 'bg-green-500/10', title: 'Premiere Calendar', desc: 'Real premiere dates verified by signal scanning — not rumors, not user submissions.' },
                 ].map(item => (
                   <div key={item.title} className="bg-slate-800/40 rounded-2xl p-5 border border-white/5">
                     <div className={`w-8 h-8 ${item.bg} rounded-lg flex items-center justify-center mb-3`}>

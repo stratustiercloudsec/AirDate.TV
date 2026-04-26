@@ -448,7 +448,7 @@ export function HomePage() {
   }
 
   async function openRecap(show) {
-    setModalTitle(`${show.name} — AI Recap`); setModalContent(''); setModal(true); setModalLoading(true)
+    setModalTitle(`${show.name} — Recap`); setModalContent(''); setModal(true); setModalLoading(true)
     try {
       const res  = await fetch(`${API_BASE}/generate-recap`, {
         method:'POST', headers:{'Content-Type':'application/json'},

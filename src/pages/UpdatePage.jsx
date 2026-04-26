@@ -37,7 +37,7 @@ const PRO_FEATURES = [
   'Full Scoop access',
   'Premiere calendar',
   'Trending & Top 10',
-  'AI show recaps',
+  'show recaps',
 ]
 
 function FaqItem({ q, a }) {

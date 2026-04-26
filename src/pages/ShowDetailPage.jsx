@@ -38,7 +38,10 @@ function formatDate(s) {
 }
 function formatScoop(raw) {
   if (!raw || typeof raw !== 'string') return raw
-  return raw
+  let text = raw.trim()
+  text = text.replace(/^Here(?:'s| is) a[^:]{0,250}:\s*/i, '')
+  text = text.replace(/^Here(?:'s| is) a[^.!?\n]*[.!?]\s*/i, '')
+  return text.trim()
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -417,12 +420,6 @@ function EpisodeCard({ episode, role, recapHtml='' }) {
         </div>
         {episode.vote_average>0&&<div className="flex items-center gap-1 mb-3"><i className="fa-solid fa-star text-yellow-400 text-[11px]"></i><span className="text-yellow-400 text-xs font-bold">{episode.vote_average.toFixed(1)}</span><span className="text-slate-400 text-xs">/10</span></div>}
         <div className="text-slate-200 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html:bodyText}}/>
-        {!isNext&&recapHtml&&recapHtml!==episode.overview&&(
-          <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-1.5">
-            <i className="fa-solid fa-sparkles text-purple-400 text-[10px]"></i>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">AI-Enhanced Recap</span>
-          </div>
-        )}
       </div>
     </div>
   )
@@ -547,7 +544,6 @@ function ScoopSection({ showId, showTitle }) {
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-purple-500/10 rounded-lg"><i className="fa-solid fa-sparkles text-purple-400 text-xl"></i></div>
         <h2 className="text-2xl font-black text-white uppercase tracking-tight">The Scoop</h2>
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">AI Intel</span>
       </div>
       <div className="bg-slate-800/40 rounded-2xl p-6 border border-white/10 min-h-[80px]">
         {html===null?(
