@@ -516,7 +516,7 @@ export function HomePage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {watchlist.map(show=>(
-                <div key={show.id} className="flex items-center gap-4 bg-slate-800/40 border border-white/5 rounded-2xl p-4 hover:border-cyan-500/20 transition-all">
+                <div key={show.id} onClick={()=>window.location.href=`/details/${show.id}`} className="flex items-center gap-4 bg-slate-800/40 border border-white/5 rounded-2xl p-4 hover:border-cyan-500/20 transition-all cursor-pointer">
                   <img {...usePoster(show.poster_path, show.name, 92)} alt={show.name} className="w-12 h-16 object-cover rounded-xl flex-shrink-0"/>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-bold text-white truncate">{show.name}</h3>
@@ -527,7 +527,7 @@ export function HomePage() {
                       catch{return 'TBA'}
                     })()}</p>
                   </div>
-                  <button onClick={()=>handleTrack(show)} className="text-slate-400 hover:text-red-400 transition-colors flex-shrink-0">
+                 <button onClick={e=>{e.stopPropagation();handleTrack(show)}} className="text-slate-400 hover:text-red-400 transition-colors flex-shrink-0">
                     <i className="fa-solid fa-xmark"></i>
                   </button>
                 </div>

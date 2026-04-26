@@ -325,7 +325,7 @@ function RenewalBadge({ showId }) {
   const [data, setData] = useState(null)
  
   useEffect(() => {
-    if (!showId) return
+    if (!showId || !RENEWAL_ENABLED) return   // ← add !RENEWAL_ENABLED check
     let cancelled = false
  
     // Correct route: GET /renewal/{show_id} — confirmed in API Gateway route table
