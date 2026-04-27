@@ -22,7 +22,7 @@ const CHIPS = [
 ]
 
 const NETWORKS = {
-  Streaming: ['Netflix','Hulu','Disney+','Paramount+','HBO Max','Apple TV+','Prime Video','Peacock','STARZ','BET+','Tubi','YouTube'],
+  Streaming: ['Netflix','Hulu','Disney+','Paramount+','Max','Apple TV+','Prime Video','Peacock','STARZ','BET+','Tubi','YouTube'],
   Broadcast:  ['CBS','NBC','ABC','FOX','The CW'],
   Cable:      ['FX','AMC','USA Network','Bravo','Syfy','Freeform','OWN','Comedy Central','BET'],
 }
@@ -71,8 +71,17 @@ function normalizeShow(s) {
     overview:       s.description || s.overview || '',
     vote_average:   s.user_score ? s.user_score / 10 : (s.vote_average || 0),
     backdrop_path:  s.backdrop_path || null,
+    // ── season routing: carry season_number so card links go to correct season
+    season_number:  s.season_number || null,
   }
 }
+
+// Build detail URL — includes ?season=N when season_number is present
+function detailUrl(show) {
+  const base = `/details/${show.id}`
+  return show.season_number ? `${base}?season=${show.season_number}` : base
+}
+
 function parseGateway(gateway) {
   return gateway.body
     ? (typeof gateway.body==='string' ? JSON.parse(gateway.body) : gateway.body)
@@ -93,10 +102,8 @@ function fuzzyScore(query, name) {
   if (n === q) return 100
   if (n.startsWith(q)) return 90
   if (n.includes(q)) return 75
-  // word-level match
   const words = n.split(/\s+/)
   if (words.some(w => w.startsWith(q))) return 65
-  // Levenshtein on first word
   const dist = levenshtein(q, words[0] || n)
   const maxLen = Math.max(q.length, (words[0]||n).length)
   const similarity = 1 - dist/maxLen
@@ -146,14 +153,12 @@ function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, sh
   const inputRef    = useRef(null)
   const wrapRef     = useRef(null)
 
-  // Fetch autocomplete suggestions via TMDB search
   const fetchSuggestions = useCallback(async (q) => {
     if (q.trim().length < 2) { setSuggestions([]); return }
     try {
       const res  = await fetch(`${TMDB}/search/tv?api_key=${TMDB_KEY}&language=en-US&query=${encodeURIComponent(q)}&page=1`)
       const data = await res.json()
       const results = (data.results || []).slice(0, 8)
-      // Sort by fuzzy score
       results.sort((a,b) => fuzzyScore(q,b.name||'') - fuzzyScore(q,a.name||''))
       setSuggestions(results)
       setShowSuggest(results.length > 0)
@@ -193,10 +198,10 @@ function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, sh
     setSuggestions([])
     setShowSuggest(false)
     setActiveIdx(-1)
+    // Autocomplete picks always go to latest season (no season param)
     window.location.href = `/details/${show.id}`
   }
 
-  // Click outside closes dropdown
   useEffect(() => {
     function handler(e) {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) {
@@ -244,7 +249,6 @@ function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, sh
         </div>
       </div>
 
-      {/* Autocomplete dropdown */}
       {showSuggest && suggestions.length > 0 && (
         <div className="absolute left-0 right-0 top-[calc(100%-12px)] z-50 bg-slate-900 border border-white/15 rounded-2xl shadow-2xl overflow-hidden">
           <div className="py-1.5">
@@ -278,8 +282,9 @@ function SkeletonCard() {
 function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) {
   const tracked    = isTracked(show.id)
   const posterImg  = usePoster(show.poster_path || show.poster, show.name, 342)
+  const href       = detailUrl(show)
   return (
-    <div className="group relative cursor-pointer" onClick={() => window.location.href=`/details/${show.id}`}>
+    <div className="group relative cursor-pointer" onClick={() => window.location.href = href}>
       {rank!=null && <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-yellow-400 text-slate-950 text-xs font-black rounded-full flex items-center justify-center shadow-lg">{rank}</span>}
       <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-3 bg-slate-800">
         <img {...posterImg} alt={show.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy"/>
@@ -407,7 +412,7 @@ export function HomePage() {
     if (!q.trim()) return
     setSearching(true); setShowResults(true)
     try {
-      const payload = { query:q, page:overridePage, per_page:20 }
+      const payload = { query:q, page:overridePage, per_page:20, cache_bust: true }
       if (network && network !== 'All') payload.network = network
       const res  = await fetch(`${API_BASE}/get-premieres`, {
         method:'POST', headers:{'Content-Type':'application/json'},
@@ -516,7 +521,7 @@ export function HomePage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {watchlist.map(show=>(
-                <div key={show.id} onClick={()=>window.location.href=`/details/${show.id}`} className="flex items-center gap-4 bg-slate-800/40 border border-white/5 rounded-2xl p-4 hover:border-cyan-500/20 transition-all cursor-pointer">
+                <div key={show.id} onClick={()=>window.location.href=detailUrl(show)} className="flex items-center gap-4 bg-slate-800/40 border border-white/5 rounded-2xl p-4 hover:border-cyan-500/20 transition-all cursor-pointer">
                   <img {...usePoster(show.poster_path, show.name, 92)} alt={show.name} className="w-12 h-16 object-cover rounded-xl flex-shrink-0"/>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-bold text-white truncate">{show.name}</h3>
@@ -549,7 +554,7 @@ export function HomePage() {
                   ? <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">{Array.from({length:6}).map((_,i)=><SkeletonCard key={i}/>)}</div>
                   : <>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 mb-8">
-                        {searchResults.map((s,i)=><ShowCard key={`${s.id}-${i}`} show={s} {...cardProps}/>)}
+                        {searchResults.map((s,i)=><ShowCard key={`${s.id}-${s.season_number||i}`} show={s} {...cardProps}/>)}
                       </div>
                       {totalPages>1 && (
                         <div className="flex items-center justify-center gap-2 mt-6 mb-10">

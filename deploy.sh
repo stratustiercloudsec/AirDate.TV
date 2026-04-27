@@ -8,7 +8,7 @@ set -e
 
 BUCKET="airdate.tv"
 PROFILE="greymoonmedia"
-CF_DIST="E790ECNWOI9EN"
+CF_DIST="EUFOZ7OTGUMGW"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  AirDate Safe Deploy"
@@ -61,9 +61,9 @@ echo ""
 echo "4/4  Invalidating CloudFront..."
 aws cloudfront create-invalidation \
   --distribution-id ${CF_DIST} \
-  --paths "/index.html" "/static/*" "/assets/*" "/*.js" "/*.css" \
+  --paths "/*" \
   --profile ${PROFILE} \
-  --no-cli-pager
+  --no-cli-page
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
