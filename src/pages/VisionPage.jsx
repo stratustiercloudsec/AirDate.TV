@@ -1,4 +1,4 @@
-// src/pages/VisionPage.jsx
+// src/pages/VisionPage.jsx — v2 reflecting actual AirDate v3.x product
 import { Link } from 'react-router-dom'
 import { Footer } from '@/components/layout/Footer'
 
@@ -18,8 +18,10 @@ export function VisionPage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest mb-5">
               <i className="fa-solid fa-rocket"></i> Our Vision
             </div>
-            <h1 className="text-5xl font-black tracking-tighter text-white mb-3 italic">The Invisible Engine.</h1>
-            <p className="text-slate-200 text-lg leading-relaxed">Redefining metadata orchestration for the content supply chain.</p>
+            <h1 className="text-5xl font-black tracking-tighter text-white mb-3 italic">Track Before They Trend.</h1>
+            <p className="text-slate-200 text-lg leading-relaxed">
+              AirDate is the only TV intelligence platform built for what you're <em>waiting</em> for — not just what you've watched.
+            </p>
           </div>
 
           <div className="space-y-10 text-slate-200 leading-relaxed text-base">
@@ -29,29 +31,31 @@ export function VisionPage() {
                   <div className="w-9 h-9 bg-red-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i className="fa-solid fa-triangle-exclamation text-red-400 text-sm"></i>
                   </div>
-                  <h2 className="text-white font-black text-xl tracking-tight">The Challenge: Scheduling Volatility</h2>
+                  <h2 className="text-white font-black text-xl tracking-tight">The Problem</h2>
                 </div>
-                <p>In the modern streaming landscape, metadata is high-entropy. Authoritative databases often suffer from "Knowledge Latency"—a gap between real-world production shifts and systemic updates. This creates data fragmentation, name ambiguity, and title collisions that degrade the user discovery experience.</p>
+                <p>The streaming era has fractured discovery. Premiere dates shift without warning. Renewal decisions break in trade publications before fans hear about them. Recommendation engines optimize for what you've already seen — leaving the most anticipated shows invisible until it's too late to build genuine excitement.</p>
               </section>
               <section className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 flex flex-col">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-9 h-9 bg-cyan-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i className="fa-solid fa-signal text-cyan-400 text-sm"></i>
                   </div>
-                  <h2 className="text-white font-black text-xl tracking-tight">The Solution: Signal Intelligence</h2>
+                  <h2 className="text-white font-black text-xl tracking-tight">The Platform</h2>
                 </div>
-                <p>AirDate is a serverless <strong className="text-white">Metadata Orchestration Platform</strong>. We harmonize static, authoritative metadata with transient, unstructured production signals through a parallel RAG architecture. By synthesizing live studio markers and trade intelligence in real-time, we deliver a high-fidelity <strong className="text-white">"Network Signal"</strong> that bypasses traditional training-data cutoffs.</p>
+                <p>AirDate is a <strong className="text-white">serverless AI intelligence platform</strong> that harmonizes authoritative metadata with live industry signals. Through a parallel RAG architecture — drawing from TMDB, trade publications, and real-time news — we deliver premiere intelligence, renewal probability, episode context, and personalized recommendations before the rest of the internet catches on.</p>
               </section>
             </div>
 
             <section className="bg-slate-900/40 border border-white/5 rounded-3xl p-8">
-              <h2 className="text-white font-black text-xl tracking-tight mb-6">The Mechanism</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <h2 className="text-white font-black text-xl tracking-tight mb-6">Core Intelligence Systems</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
-                  { icon: 'fa-lock', color: 'text-cyan-400', bg: 'bg-cyan-500/10', title: 'ID-Locked Precision', desc: 'Strict ID-aware disambiguation layer to resolve multi-version title collisions and eliminate hallucinations.' },
-                  { icon: 'fa-brain', color: 'text-purple-400', bg: 'bg-purple-500/10', title: 'Neural Synthesis', desc: 'Amazon Bedrock quantifies sentiment and community hype into actionable performance metrics.' },
-                  { icon: 'fa-fire', color: 'text-orange-400', bg: 'bg-orange-500/10', title: 'Anticipation Tracking', desc: 'Track what you\'re waiting for, not just what you\'ve watched. The only platform built for pre-premiere intelligence.' },
-                  { icon: 'fa-calendar-check', color: 'text-green-400', bg: 'bg-green-500/10', title: 'Premiere Calendar', desc: 'Real premiere dates verified by signal scanning — not rumors, not user submissions.' },
+                  { icon:'fa-brain',         color:'text-purple-400', bg:'bg-purple-500/10', title:'RAG Orchestration',      desc:'A multi-source Lambda orchestrates Tavily, NewsAPI, TMDB, and Amazon Bedrock in parallel to synthesize live show intelligence — no training cutoffs, no stale data.' },
+                  { icon:'fa-chart-line',     color:'text-pink-400',   bg:'bg-pink-500/10',   title:'Global Hype Ranking',    desc:'Real tracking counts aggregated across the AirDate user base, weighted by velocity and recency — surfacing what audiences are genuinely anticipating.' },
+                  { icon:'fa-rotate',         color:'text-green-400',  bg:'bg-green-500/10',  title:'ML Renewal Probability', desc:'A SageMaker-trained classifier scores renewal likelihood for 270+ shows using network patterns, ratings signals, and production status — refreshed on a rolling batch schedule.' },
+                  { icon:'fa-clapperboard',   color:'text-cyan-400',   bg:'bg-cyan-500/10',   title:'Episode Intelligence',   desc:'Timezone-aware episode tracking with AI-generated recaps for the last aired episode and contextual previews for what\'s next — powered by Bedrock.' },
+                  { icon:'fa-bell',           color:'text-amber-400',  bg:'bg-amber-500/10',  title:'Premiere Alerts',        desc:'Configurable early alerts at 0, 1, 3, and 7 days before a premiere via SES email and web push — so you never miss a first episode again.' },
+                  { icon:'fa-magnifying-glass',color:'text-orange-400',bg:'bg-orange-500/10', title:'Fuzzy Search',           desc:'Levenshtein-scored search with autocomplete surfaces the right show even with typos, partial titles, or alternate names — backed by the full TMDB catalog.' },
                 ].map(item => (
                   <div key={item.title} className="bg-slate-800/40 rounded-2xl p-5 border border-white/5">
                     <div className={`w-8 h-8 ${item.bg} rounded-lg flex items-center justify-center mb-3`}>
@@ -64,8 +68,36 @@ export function VisionPage() {
               </div>
             </section>
 
+            <section className="bg-slate-900/40 border border-white/5 rounded-3xl p-8">
+              <h2 className="text-white font-black text-xl tracking-tight mb-4">Built to Scale</h2>
+              <p className="mb-6">Every layer of AirDate is serverless and cloud-native — no infrastructure to manage, no scaling ceilings. Intelligence endpoints respond in real time. Personalization data syncs across devices instantly. Show imagery is served globally from edge locations. The renewal classifier runs on a managed ML pipeline. Identity is secured without third-party auth dependencies. Notifications are delivered directly — no intermediary push services.</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  { label:'Intelligence Endpoints',        value:'15+' },
+                  { label:'Shows with Renewal Data', value:'272' },
+                  { label:'Scoop Stories',            value:'397' },
+                  { label:'Intelligence Sources',     value:'5'   },
+                ].map(stat => (
+                  <div key={stat.label} className="bg-slate-800/60 rounded-2xl p-4 border border-white/5 text-center">
+                    <p className="text-2xl font-black text-cyan-400 mb-1">{stat.value}</p>
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="bg-slate-900/40 border border-cyan-500/10 rounded-3xl p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 bg-cyan-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <i className="fa-solid fa-building text-cyan-400 text-sm"></i>
+                </div>
+                <h2 className="text-white font-black text-xl tracking-tight">Engineered by Stratustier Innovation Labs</h2>
+              </div>
+              <p>AirDate is a product of <strong className="text-white">Stratustier Innovation Labs</strong> — specializing in scalable intelligence platforms, AI-powered product experiences, and cloud-native media applications. Our engineering philosophy: build systems that are invisible to users and invincible under load.</p>
+            </section>
+
             <div className="text-center py-8">
-              <p className="italic text-slate-200 text-lg">Our goal is to make discovery technology invisible, intelligent, and invincible.</p>
+              <p className="italic text-slate-200 text-lg">Discovery technology should be invisible, intelligent, and invincible.</p>
             </div>
           </div>
         </div>

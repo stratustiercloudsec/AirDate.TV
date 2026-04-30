@@ -1,13 +1,71 @@
-// src/pages/PrivacyPage.jsx
+// src/pages/PrivacyPage.jsx — v3 plain language, no vendor/infra references
 import { Link } from 'react-router-dom'
 import { Footer } from '@/components/layout/Footer'
 
 const SECTIONS = [
-  { icon: 'fa-user-slash', color: 'text-cyan-400', bg: 'bg-cyan-500/10', title: 'The Zero-Identity Pillar', span: 1, body: 'AirDate is engineered as a stateless metadata platform. We do not maintain centralized user databases, nor do we require account creation, email harvesting, or authentication tokens. Your interaction with the intelligence hub is anonymous by design, ensuring that signal discovery remains private and unlinked to a personal identity.' },
-  { icon: 'fa-heart', color: 'text-pink-400', bg: 'bg-pink-500/10', title: 'Edge-Side Intelligence', span: 1, body: (<>All personalized data—including your <strong className="text-white">"Pulse"</strong> watchlist—is stored exclusively on your device using <strong className="text-white">Edge-side Local Storage</strong>. AirDate does not synchronize this data to external servers, meaning your discovery patterns never leave your browser.</>) },
-  { icon: 'fa-chart-line', color: 'text-orange-400', bg: 'bg-orange-500/10', title: 'Signal Telemetry', span: 1, body: (<>To power the <strong className="text-white">Global Hype Ranking</strong>, the platform captures anonymous telemetry regarding title search frequency. This data is aggregated and stripped of all device-specific markers, utilized solely to quantify community interest.</>) },
-  { icon: 'fa-brain', color: 'text-purple-400', bg: 'bg-purple-500/10', title: 'Synthesis Protocols', span: 1, body: (<>Intelligence briefings generated utilize <strong className="text-white">stateless LLM orchestration (Amazon Bedrock)</strong>. No user input or personally identifiable information (PII) is utilized as context for neural synthesis.</>) },
-  { icon: 'fa-arrows-to-circle', color: 'text-slate-400', bg: 'bg-slate-700/60', title: 'Third-Party Signal Boundaries', span: 2, body: 'Interactions with external assets—such as trailer playback—are governed by those respective providers. We utilize Google Analytics to monitor platform health, with IP addresses masked to prioritize user anonymity.' },
+  {
+    icon: 'fa-user-check', color: 'text-cyan-400', bg: 'bg-cyan-500/10', span: 1,
+    title: 'Account & Identity',
+    body: (
+      <>
+        When you create an AirDate account, we collect your email address and a securely hashed password. We never store plaintext passwords, and your credentials are used solely for authentication, watchlist sync, and delivering notifications you've requested.
+      </>
+    ),
+  },
+  {
+    icon: 'fa-heart', color: 'text-pink-400', bg: 'bg-pink-500/10', span: 1,
+    title: 'Watchlist & Personalization',
+    body: (
+      <>
+        Your watchlist, viewing history, and preferences are stored securely on our servers under your account ID. This enables your Pulse to sync across devices and powers personalized show recommendations. You may request full deletion of your account and all associated data at any time by contacting <strong className="text-white">support@airdate.tv</strong>.
+      </>
+    ),
+  },
+  {
+    icon: 'fa-bell', color: 'text-amber-400', bg: 'bg-amber-500/10', span: 1,
+    title: 'Notifications',
+    body: (
+      <>
+        If you enable premiere alerts, your email address is used to deliver those notifications. Web push notifications are handled directly between your browser and our servers — no third-party push service is involved. You can unsubscribe from all alerts at any time from your account settings.
+      </>
+    ),
+  },
+  {
+    icon: 'fa-credit-card', color: 'text-green-400', bg: 'bg-green-500/10', span: 1,
+    title: 'Payments & Billing',
+    body: (
+      <>
+        Pro tier subscriptions are processed by <strong className="text-white">Stripe</strong>, a PCI-compliant payment provider. AirDate never sees, stores, or has access to your credit card number or payment details. Only your subscription status is retained on our end — solely to unlock Pro features.
+      </>
+    ),
+  },
+  {
+    icon: 'fa-pen-nib', color: 'text-purple-400', bg: 'bg-purple-500/10', span: 1,
+    title: 'Editorial Content',
+    body: (
+      <>
+        The Scoop is AirDate's original editorial vertical — covering premieres, renewals, cancellations, casting, and production news across the TV landscape. Stories are researched and written by the AirDate editorial team using a combination of licensed trade sources, network announcements, and industry intelligence. Editorial content is published for informational purposes and does not reflect user-specific data.
+      </>
+    ),
+  },
+  {
+    icon: 'fa-chart-line', color: 'text-orange-400', bg: 'bg-orange-500/10', span: 1,
+    title: 'Hype Telemetry',
+    body: (
+      <>
+        To power the <strong className="text-white">Global Hype Ranking</strong>, AirDate tracks anonymized show interaction signals — including search frequency, watchlist additions, and detail page visits. This data is aggregated by show only, never linked to individual accounts, and used solely to calculate community interest scores.
+      </>
+    ),
+  },
+  {
+    icon: 'fa-database', color: 'text-slate-300', bg: 'bg-slate-700/60', span: 2,
+    title: 'Data Retention & Third-Party Attribution',
+    body: (
+      <>
+        Account data is retained for the lifetime of your account. Anonymized telemetry is retained for 90 days on a rolling basis. Show metadata, imagery, and plot summaries are sourced from <strong className="text-white">TMDB</strong> and remain the property of their respective rights holders — AirDate is not endorsed or certified by TMDB. Real-time news signals are aggregated from licensed third-party sources — no user data is shared with these services. All data is processed and stored in the United States.
+      </>
+    ),
+  },
 ]
 
 export function PrivacyPage() {
@@ -24,8 +82,10 @@ export function PrivacyPage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest mb-5">
               <i className="fa-solid fa-shield"></i> Privacy Policy
             </div>
-            <h1 className="text-5xl font-black tracking-tighter text-white mb-3">Data Integrity &<br />Stateless Orchestration</h1>
-            <p className="text-slate-200 text-lg leading-relaxed">How AirDate handles your data — which is as little as possible.</p>
+            <h1 className="text-5xl font-black tracking-tighter text-white mb-3">What We Collect.<br />Why We Collect It.</h1>
+            <p className="text-slate-200 text-lg leading-relaxed">
+              We collect what we need to deliver a personalized TV intelligence experience — and nothing more. Last updated: April 2026.
+            </p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-slate-200 leading-relaxed text-base">
             {SECTIONS.map(s => (

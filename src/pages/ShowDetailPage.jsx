@@ -319,7 +319,7 @@ function CalendarModal({ show, onClose }) {
 //
 // REPLACE the existing RenewalBadge function in ShowDetailPage.jsx with this.
 
-const RENEWAL_ENABLED = false   // ← flip to true when v2.37 /renewal endpoint is live
+const RENEWAL_ENABLED = true  // ← flip to true when v2.37 /renewal endpoint is live
 
 function RenewalBadge({ showId }) {
   const [data, setData] = useState(null)

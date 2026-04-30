@@ -43,7 +43,18 @@ export function ScoopStoryPage() {
 
   useEffect(() => {
     fetch(`${STORY_BASE}${hash}.json`)
-      .then(r => { if (!r.ok) throw new Error('Story not found'); return r.json() })
+      .then(r => {
+        if (r.ok) return r.json()
+        // Fallback: find story in manifest by hash
+        return fetch('https://s3.amazonaws.com/airdate.tv/scoop/stories.json')
+          .then(m => m.json())
+          .then(manifest => {
+            const items = manifest.items || []
+            const found = items.find(s => s.story_hash === hash)
+            if (!found) throw new Error('Story not found')
+            return found
+          })
+      })
       .then(setStory)
       .catch(e => setError(e.message))
   }, [hash])
