@@ -25,6 +25,7 @@ const NETWORK_MAP = {
   'FX':           [88],
   'AMC':          [174],
   'STARZ':        [318, 304, 1709],
+  'Tubi':         [2503],
 }
 
 // Streaming platforms store episode air_date as UTC midnight → needs +1 day shift for US local.
@@ -38,7 +39,7 @@ const STREAMING_NETWORK_IDS = new Set([
   2552, 350, 3411, 2007,  // Apple TV+
   3353, 3076,             // Peacock
   4330, 67, 4711,         // Paramount+
-  2503,                   // Tubi
+  2503,                   // Tubi (already present)
   4406, 318, 304, 1709,   // STARZ
 ])
 
@@ -161,7 +162,7 @@ async function fetchLambdaPremieres(year, month, networkLabel=null) {
 function findSeasonPremiereInRange(detail, first, last) {
   const seasons = (detail.seasons || [])
     .filter(s => s.season_number > 0 && s.air_date)
-    .map(s => ({ ...s, air_date: shiftDate(s.air_date) }))
+    .map(s => ({ ...s, air_date: s.air_date }))  // season premiere dates are correct local dates
     .filter(s => s.air_date >= first && s.air_date <= last)
   if (!seasons.length) return null
   seasons.sort((a,b) => a.air_date.localeCompare(b.air_date))
@@ -186,7 +187,12 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
   })()
 
   const langFilter    = networkIds ? '' : '&with_original_language=en'
-  const networkIdList = networkIds || [null]
+  // When "All" is selected, run every network's pass in parallel so nothing is missed.
+  // A single unfocused query relies on popularity ranking and drops lower-ranked shows
+  // (e.g. Man on Fire on Netflix may not appear in the top 3 discover pages).
+  const networkIdList = networkIds
+    ? networkIds
+    : Object.values(NETWORK_MAP).flat()
 
   const activeNetworkLabel = networkIds
     ? Object.entries(NETWORK_MAP).find(([,ids]) =>
@@ -210,7 +216,7 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
       const newShows = newShowsRaw
         .map(s => ({
           ...s,
-          first_air_date: shiftDate(s.first_air_date),
+          first_air_date: s.first_air_date,  // series premiere dates are already correct local dates — never shift
           ...(netLabel ? { _networkLabel: netLabel } : {}),
           _seasonNum:  1,
           _episodeNum: 1,

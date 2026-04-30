@@ -319,7 +319,7 @@ function CalendarModal({ show, onClose }) {
 //
 // REPLACE the existing RenewalBadge function in ShowDetailPage.jsx with this.
 
-const RENEWAL_ENABLED = true  // ← flip to true when v2.37 /renewal endpoint is live
+const RENEWAL_ENABLED = false  // ← flip to true when v2.37 /renewal endpoint is live
 
 function RenewalBadge({ showId }) {
   const [data, setData] = useState(null)
@@ -729,6 +729,15 @@ export function ShowDetailPage() {
       setMeta('twitter:image',       posterUrl, true)
       setMeta('twitter:site',        '@airdatetv', true)
       // Cleanup on unmount handled by React router navigation
+
+      // ── Correct premiere date directly from TMDB (Lambda may have shifted streaming dates +1 day) ──
+      fetch(`${TMDB}/tv/${id}?api_key=${TMDB_KEY}&language=en-US`)
+        .then(r=>r.json())
+        .then(tmdbShow => {
+          if (tmdbShow?.first_air_date) {
+            setShow(prev => prev ? { ...prev, first_air_date: tmdbShow.first_air_date } : prev)
+          }
+        }).catch(()=>{})
 
       // ── TIER 2: All secondary data in parallel ─────────────────────────────
       Promise.all([
