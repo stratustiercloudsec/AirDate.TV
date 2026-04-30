@@ -27,7 +27,6 @@ const SOURCE_COLORS = {
   'collider.com':          '#8b5cf6',
   'vulture.com':           '#ec4899',
   'avclub.com':            '#06b6d4',
-  'collider.com':          '#8b5cf6',
 }
 
 function formatSource(s) {
