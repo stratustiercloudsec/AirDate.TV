@@ -8,7 +8,7 @@ set -e
 
 BUCKET="airdate.tv"
 PROFILE="greymoonmedia"
-CF_DIST="EUFOZ7OTGUMGW"
+CF_DIST="E790ECNWOI9EN"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  AirDate Safe Deploy"

@@ -17,7 +17,7 @@ const NEXT_MONTH_NETWORK_IDS = [
 ].join('|')
 
 const CHIPS = [
-  'Premiering Tonight','Tyler Perry Produced Shows 2026','Man on Fire','Taylor Sheridan',
+  'Tyler Perry Produced Shows 2026','Man on Fire','Taylor Sheridan',
   'Netflix April 2026','HBO Max Premieres','Prime Video 2026',
 ]
 
@@ -71,10 +71,12 @@ function normalizeShow(s) {
     overview:       s.description || s.overview || '',
     vote_average:   s.user_score ? s.user_score / 10 : (s.vote_average || 0),
     backdrop_path:  s.backdrop_path || null,
+    // ── season routing: carry season_number so card links go to correct season
     season_number:  s.season_number || null,
   }
 }
 
+// Build detail URL — includes ?season=N when season_number is present
 function detailUrl(show) {
   const base = `/details/${show.id}`
   return show.season_number ? `${base}?season=${show.season_number}` : base
@@ -86,6 +88,7 @@ function parseGateway(gateway) {
     : gateway
 }
 
+// Levenshtein distance for fuzzy matching
 function levenshtein(a, b) {
   const m = a.length, n = b.length
   const dp = Array.from({length:m+1}, (_,i) => Array.from({length:n+1}, (_,j) => i===0?j:j===0?i:0))
@@ -107,10 +110,14 @@ function fuzzyScore(query, name) {
   return similarity > 0.6 ? Math.round(similarity*50) : 0
 }
 
+// ─── Autocomplete Suggestion Item ─────────────────────────────────────────────
 function SuggestionItem({ show, query, onClick }) {
+  const score  = fuzzyScore(query, show.name || '')
   const isExact = (show.name||'').toLowerCase().startsWith(query.toLowerCase().trim())
   const year   = show.first_air_date ? show.first_air_date.split('-')[0] : ''
-  const poster = show.poster_path ? `${IMAGE_BASE}/t/p/w92${show.poster_path}` : null
+  const poster = show.poster_path
+    ? `${IMAGE_BASE}/t/p/w92${show.poster_path}`
+    : null
   return (
     <button
       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-700/60 transition-colors text-left group"
@@ -119,7 +126,9 @@ function SuggestionItem({ show, query, onClick }) {
       <div className="w-8 h-11 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
         {poster
           ? <img src={poster} alt={show.name} className="w-full h-full object-cover"/>
-          : <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs font-black">{(show.name||'?')[0].toUpperCase()}</div>
+          : <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs font-black">
+              {(show.name||'?')[0].toUpperCase()}
+            </div>
         }
       </div>
       <div className="flex-1 min-w-0">
@@ -127,16 +136,19 @@ function SuggestionItem({ show, query, onClick }) {
         {year && <p className="text-[10px] text-slate-400 font-bold">{year}</p>}
       </div>
       {isExact && (
-        <span className="flex-shrink-0 px-1.5 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded text-cyan-400 text-[9px] font-black uppercase tracking-widest">EXACT</span>
+        <span className="flex-shrink-0 px-1.5 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded text-cyan-400 text-[9px] font-black uppercase tracking-widest">
+          EXACT
+        </span>
       )}
     </button>
   )
 }
 
+// ─── Search Bar with Autocomplete ─────────────────────────────────────────────
 function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, showResults }) {
-  const [suggestions, setSuggestions] = useState([])
-  const [showSuggest, setShowSuggest] = useState(false)
-  const [activeIdx,   setActiveIdx]   = useState(-1)
+  const [suggestions, setSuggestions]   = useState([])
+  const [showSuggest, setShowSuggest]   = useState(false)
+  const [activeIdx,   setActiveIdx]     = useState(-1)
   const debounceRef = useRef(null)
   const inputRef    = useRef(null)
   const wrapRef     = useRef(null)
@@ -171,20 +183,31 @@ function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, sh
     else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIdx(i => Math.max(i-1, -1)) }
     else if (e.key === 'Enter') {
       e.preventDefault()
-      if (activeIdx >= 0 && suggestions[activeIdx]) { selectSuggestion(suggestions[activeIdx]) }
-      else { setShowSuggest(false); onSearch() }
+      if (activeIdx >= 0 && suggestions[activeIdx]) {
+        selectSuggestion(suggestions[activeIdx])
+      } else {
+        setShowSuggest(false)
+        onSearch()
+      }
     }
     else if (e.key === 'Escape') { setShowSuggest(false); setActiveIdx(-1) }
   }
 
   function selectSuggestion(show) {
-    setQuery(show.name); setSuggestions([]); setShowSuggest(false); setActiveIdx(-1)
+    setQuery(show.name)
+    setSuggestions([])
+    setShowSuggest(false)
+    setActiveIdx(-1)
+    // Autocomplete picks always go to latest season (no season param)
     window.location.href = `/details/${show.id}`
   }
 
   useEffect(() => {
     function handler(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) { setShowSuggest(false); setActiveIdx(-1) }
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setShowSuggest(false)
+        setActiveIdx(-1)
+      }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -194,8 +217,11 @@ function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, sh
     <div ref={wrapRef} className="relative">
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl p-2 border border-white/10 mb-4">
         <div className="flex flex-col sm:flex-row items-center gap-2 p-1">
-          <select value={network} onChange={e => setNetwork(e.target.value)}
-            className="w-full sm:w-44 p-4 bg-slate-900/60 border-none text-white text-sm font-bold rounded-xl appearance-none cursor-pointer">
+          <select
+            value={network}
+            onChange={e => setNetwork(e.target.value)}
+            className="w-full sm:w-44 p-4 bg-slate-900/60 border-none text-white text-sm font-bold rounded-xl appearance-none cursor-pointer"
+          >
             <option value="All">All Networks</option>
             {Object.entries(NETWORKS).map(([group, nets]) => (
               <optgroup key={group} label={group}>
@@ -203,30 +229,45 @@ function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, sh
               </optgroup>
             ))}
           </select>
-          <input ref={inputRef} type="text" value={query} onChange={handleChange} onKeyDown={handleKeyDown}
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
             onFocus={() => suggestions.length > 0 && setShowSuggest(true)}
             placeholder="Try 'Netflix Series Premiering in April 2026' or 'Taylor Sheridan'"
             className="flex-1 p-4 bg-transparent border-none text-white text-base focus:ring-0 focus:outline-none min-w-0"
-            autoComplete="off"/>
+            autoComplete="off"
+          />
           <button
             onClick={() => showResults ? (onClear(), setSuggestions([]), setShowSuggest(false)) : (setShowSuggest(false), onSearch())}
-            className="w-full sm:w-auto bg-cyan-500 text-slate-950 font-black px-8 py-4 rounded-xl shadow-lg hover:bg-cyan-400 transition-colors whitespace-nowrap">
+            className="w-full sm:w-auto bg-cyan-500 text-slate-950 font-black px-8 py-4 rounded-xl shadow-lg hover:bg-cyan-400 transition-colors whitespace-nowrap"
+          >
             {showResults ? 'Clear' : 'Get the Date'}
           </button>
         </div>
       </div>
+
       {showSuggest && suggestions.length > 0 && (
         <div className="absolute left-0 right-0 top-[calc(100%-12px)] z-50 bg-slate-900 border border-white/15 rounded-2xl shadow-2xl overflow-hidden">
           <div className="py-1.5">
             {suggestions.map((show, idx) => (
-              <div key={show.id} className={`${activeIdx === idx ? 'bg-slate-700/60' : ''}`}>
+              <div
+                key={show.id}
+                className={`${activeIdx === idx ? 'bg-slate-700/60' : ''}`}
+              >
                 <SuggestionItem show={show} query={query} onClick={selectSuggestion}/>
               </div>
             ))}
           </div>
           <div className="px-3 py-2 border-t border-white/5 flex items-center justify-between">
-            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{suggestions.length} suggestions · Enter to search all</span>
-            <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">↑↓ navigate · ↵ select</span>
+            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+              {suggestions.length} suggestions · Enter to search all
+            </span>
+            <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">
+              ↑↓ navigate · ↵ select
+            </span>
           </div>
         </div>
       )}
@@ -239,9 +280,9 @@ function SkeletonCard() {
 }
 
 function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) {
-  const tracked   = isTracked(show.id)
-  const posterImg = usePoster(show.poster_path || show.poster, show.name, 342)
-  const href      = detailUrl(show)
+  const tracked    = isTracked(show.id)
+  const posterImg  = usePoster(show.poster_path || show.poster, show.name, 342)
+  const href       = detailUrl(show)
   return (
     <div className="group relative cursor-pointer" onClick={() => window.location.href = href}>
       {rank!=null && <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-yellow-400 text-slate-950 text-xs font-black rounded-full flex items-center justify-center shadow-lg">{rank}</span>}
@@ -290,31 +331,34 @@ export function HomePage() {
   const { token, isAuthenticated, isPremium } = useAuth()
   const { watchlist, toggleWatchlist, isTracked, atLimit } = useWatchlist()
 
-  const [query,         setQuery]       = useState('')
-  const [network,       setNetwork]     = useState('All')
-  const [searchResults, setResults]     = useState([])
-  const [resultsHeader, setHeader]      = useState('Search Results')
-  const [resultsCount,  setCount]       = useState('')
-  const [searching,     setSearching]   = useState(false)
-  const [showResults,   setShowResults] = useState(false)
+  const [query,       setQuery]       = useState('')
+  const [network,     setNetwork]     = useState('All')
+  const [searchResults, setResults]   = useState([])
+  const [resultsHeader, setHeader]    = useState('Search Results')
+  const [resultsCount,  setCount]     = useState('')
+  const [searching,   setSearching]   = useState(false)
+  const [showResults, setShowResults] = useState(false)
   const [premieringTonight, setPremieringTonight] = useState([])
-  const [loadTonight,   setLoadTonight] = useState(true)
-  const [page,          setPage]        = useState(1)
-  const [totalPages,    setTotalPages]  = useState(1)
-  const [trending,      setTrending]    = useState([])
-  const [top10,         setTop10]       = useState([])
-  const [thisWeek,      setThisWeek]    = useState([])
-  const [nextMonth,     setNextMonth]   = useState([])
-  const [featured,      setFeatured]    = useState([])
-  const [leaderboard,   setLeaderboard] = useState([])
-  const [loadTrend,     setLoadTrend]   = useState(true)
-  const [loadTop10,     setLoadTop10]   = useState(true)
-  const [loadWeek,      setLoadWeek]    = useState(true)
-  const [loadMonth,     setLoadMonth]   = useState(true)
-  const [modal,         setModal]       = useState(false)
-  const [modalTitle,    setModalTitle]  = useState('')
-  const [modalContent,  setModalContent] = useState('')
-  const [modalLoading,  setModalLoading] = useState(false)
+  const [loadTonight, setLoadTonight]       = useState(true)
+  const [page,        setPage]        = useState(1)
+  const [totalPages,  setTotalPages]  = useState(1)
+
+  const [trending,    setTrending]    = useState([])
+  const [top10,       setTop10]       = useState([])
+  const [thisWeek,    setThisWeek]    = useState([])
+  const [nextMonth,   setNextMonth]   = useState([])
+  const [featured,    setFeatured]    = useState([])
+  const [leaderboard, setLeaderboard] = useState([])
+
+  const [loadTrend,  setLoadTrend]  = useState(true)
+  const [loadTop10,  setLoadTop10]  = useState(true)
+  const [loadWeek,   setLoadWeek]   = useState(true)
+  const [loadMonth,  setLoadMonth]  = useState(true)
+
+  const [modal,        setModal]        = useState(false)
+  const [modalTitle,   setModalTitle]   = useState('')
+  const [modalContent, setModalContent] = useState('')
+  const [modalLoading, setModalLoading] = useState(false)
 
   useEffect(() => {
     const now = new Date()
@@ -355,8 +399,9 @@ export function HomePage() {
         setNextMonth(dedupById(await enrichWithNetwork(shows)))
       }).catch(()=>{}).finally(()=>setLoadMonth(false))
 
+    // Premiering Tonight — all networks, today only
     setLoadTonight(true)
-    const todayStr = new Date().toLocaleDateString('en-CA')
+    const todayStr = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD local
     fetch(`${TMDB}/discover/tv?api_key=${TMDB_KEY}&language=en-US`+
       `&sort_by=popularity.desc&first_air_date.gte=${todayStr}&first_air_date.lte=${todayStr}&page=1`)
       .then(r => r.json())
@@ -390,10 +435,12 @@ export function HomePage() {
       const gw   = await res.json()
       const data = parseGateway(gw)
       const results = (data.results ?? data.shows ?? []).map(normalizeShow)
+
       if (results.length === 0) {
         const tmdbRes  = await fetch(`${TMDB}/search/tv?api_key=${TMDB_KEY}&language=en-US&query=${encodeURIComponent(q)}&page=${overridePage}`)
         const tmdbData = await tmdbRes.json()
-        setResults((tmdbData.results ?? []).map(mapTMDB))
+        const tmdbMapped = (tmdbData.results ?? []).map(mapTMDB)
+        setResults(tmdbMapped)
         setHeader(`Results for "${q}"`)
         setCount(tmdbData.total_results ? `${tmdbData.total_results.toLocaleString()} results` : '')
         setTotalPages(tmdbData.total_pages ?? 1)
@@ -410,7 +457,9 @@ export function HomePage() {
     finally { setSearching(false) }
   }
 
-  function handleClear() { setShowResults(false); setQuery(''); setResults([]) }
+  function handleClear() {
+    setShowResults(false); setQuery(''); setResults([])
+  }
 
   function handleTrack(show) {
     const r = toggleWatchlist(show)
@@ -456,6 +505,7 @@ export function HomePage() {
       )}
 
       <div className="w-full max-w-[1600px] mx-auto px-6 pt-36 pb-6">
+
         <header className="mb-10">
           <SearchBar
             query={query} setQuery={setQuery}
@@ -470,31 +520,86 @@ export function HomePage() {
             </span>
             <div className="flex flex-wrap gap-2 mb-5">
               {CHIPS.map(chip => (
-                <button key={chip} onClick={() => {
-                  if (chip === 'Premiering Tonight') {
-                    setHeader('Premiering Tonight · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
-                    setResults(premieringTonight)
-                    setCount(premieringTonight.length + ' shows')
-                    setTotalPages(1); setPage(1); setShowResults(true)
-                  } else { setQuery(chip); handleSearch(chip) }
-                }}
-                  className={chip === 'Premiering Tonight'
-                    ? "flex items-center gap-2 px-3 py-1.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 hover:border-red-400/60 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
-                    : "px-3 py-1.5 bg-slate-800/60 hover:bg-slate-700 border border-white/10 hover:border-cyan-500/30 text-slate-200 hover:text-cyan-400 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all"
-                  }>
-                  {chip === 'Premiering Tonight' ? (
-                    <>
-                      <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
-                      </span>
-                      {chip}
-                    </>
-                  ) : chip}
+                <button key={chip} onClick={() => { setQuery(chip); handleSearch(chip) }}
+                  className="px-3 py-1.5 bg-slate-800/60 hover:bg-slate-700 border border-white/10 hover:border-cyan-500/30 text-slate-200 hover:text-cyan-400 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all">
+                  {chip}
                 </button>
               ))}
             </div>
 
+            {/* ── Premiering Tonight ────────────────────────────────────── */}
+            <div className="bg-slate-900/60 border border-white/8 rounded-2xl px-5 py-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  {/* Live pulse dot */}
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                  </span>
+                  <span className="text-[11px] font-black uppercase tracking-widest text-white">
+                    Premiering Tonight
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    · {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+                {!loadTonight && premieringTonight.length > 0 && (
+                  <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">
+                    {premieringTonight.length} show{premieringTonight.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+
+              {loadTonight ? (
+                // Skeleton
+                <div className="flex gap-4 overflow-x-auto pb-1">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex-shrink-0 w-24 animate-pulse">
+                      <div className="bg-slate-700/50 rounded-xl aspect-[2/3] mb-2"></div>
+                      <div className="h-2.5 bg-slate-700/50 rounded w-4/5 mb-1"></div>
+                      <div className="h-2 bg-slate-700/50 rounded w-3/5"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : premieringTonight.length === 0 ? (
+                // Empty state
+                <div className="flex items-center gap-3 py-2">
+                  <i className="fa-regular fa-calendar text-slate-600 text-sm"></i>
+                  <p className="text-slate-500 text-xs font-bold">
+                    No new series premiering on major networks tonight. Check back tomorrow.
+                  </p>
+                </div>
+              ) : (
+                // Results — horizontal scroll
+                <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
+                  {premieringTonight.map((show, i) => (
+                    <div key={`${show.id}-${i}`}
+                      className="flex-shrink-0 w-24 cursor-pointer group"
+                      onClick={() => window.location.href = detailUrl(show)}>
+                      <div className="relative overflow-hidden rounded-xl aspect-[2/3] mb-2 bg-slate-800">
+                        <img
+                          {...usePoster(show.poster_path || show.poster, show.name, 185)}
+                          alt={show.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"/>
+                        <div className="absolute top-1.5 right-1.5">
+                          <span className="px-1.5 py-0.5 bg-red-500 text-white text-[8px] font-black uppercase tracking-wider rounded-md">
+                            TONIGHT
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-white text-[10px] font-bold leading-tight line-clamp-2 mb-0.5">
+                        {show.name}
+                      </p>
+                      {show.network && (
+                        <p className="text-slate-500 text-[9px] font-bold truncate">{show.network}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -517,7 +622,7 @@ export function HomePage() {
                       catch{return 'TBA'}
                     })()}</p>
                   </div>
-                  <button onClick={e=>{e.stopPropagation();handleTrack(show)}} className="text-slate-400 hover:text-red-400 transition-colors flex-shrink-0">
+                 <button onClick={e=>{e.stopPropagation();handleTrack(show)}} className="text-slate-400 hover:text-red-400 transition-colors flex-shrink-0">
                     <i className="fa-solid fa-xmark"></i>
                   </button>
                 </div>
@@ -528,6 +633,7 @@ export function HomePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-10">
           <div className="lg:col-span-3 xl:col-span-4">
+
             {showResults && (
               <div>
                 <div className="mb-5">
@@ -543,10 +649,16 @@ export function HomePage() {
                       {totalPages>1 && (
                         <div className="flex items-center justify-center gap-2 mt-6 mb-10">
                           <button onClick={()=>handleSearch(query,page-1)} disabled={page===1}
-                            className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">← Prev</button>
-                          <span className="text-xs font-bold text-slate-400 px-3">Page {page} of {totalPages}{resultsCount ? ` (${resultsCount})` : ''}</span>
+                            className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">
+                            ← Prev
+                          </button>
+                          <span className="text-xs font-bold text-slate-400 px-3">
+                            Page {page} of {totalPages}{resultsCount ? ` (${resultsCount})` : ''}
+                          </span>
                           <button onClick={()=>handleSearch(query,page+1)} disabled={page===totalPages}
-                            className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">Next →</button>
+                            className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">
+                            Next →
+                          </button>
                         </div>
                       )}
                     </>

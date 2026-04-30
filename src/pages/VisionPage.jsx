@@ -1,4 +1,4 @@
-// src/pages/VisionPage.jsx — v2 reflecting actual AirDate v3.x product
+// src/pages/VisionPage.jsx -- v2
 import { Link } from 'react-router-dom'
 import { Footer } from '@/components/layout/Footer'
 
@@ -20,7 +20,7 @@ export function VisionPage() {
             </div>
             <h1 className="text-5xl font-black tracking-tighter text-white mb-3 italic">Track Before They Trend.</h1>
             <p className="text-slate-200 text-lg leading-relaxed">
-              AirDate is the only TV intelligence platform built for what you're <em>waiting</em> for — not just what you've watched.
+              AirDate is the only TV intelligence platform built for what you are waiting for.
             </p>
           </div>
 
@@ -33,7 +33,7 @@ export function VisionPage() {
                   </div>
                   <h2 className="text-white font-black text-xl tracking-tight">The Problem</h2>
                 </div>
-                <p>The streaming era has fractured discovery. Premiere dates shift without warning. Renewal decisions break in trade publications before fans hear about them. Recommendation engines optimize for what you've already seen — leaving the most anticipated shows invisible until it's too late to build genuine excitement.</p>
+                <p>The streaming era has fractured discovery. Premiere dates shift without warning. Renewal decisions break in trade publications before fans hear about them. Recommendation engines optimize for what you have already seen, leaving the most anticipated shows invisible until it is too late to build genuine excitement.</p>
               </section>
               <section className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 flex flex-col">
                 <div className="flex items-center gap-3 mb-4">
@@ -42,7 +42,7 @@ export function VisionPage() {
                   </div>
                   <h2 className="text-white font-black text-xl tracking-tight">The Platform</h2>
                 </div>
-                <p>AirDate is a <strong className="text-white">serverless AI intelligence platform</strong> that harmonizes authoritative metadata with live industry signals. Through a parallel RAG architecture — drawing from TMDB, trade publications, and real-time news — we deliver premiere intelligence, renewal probability, episode context, and personalized recommendations before the rest of the internet catches on.</p>
+                <p>AirDate is a <strong className="text-white">next-generation TV intelligence platform</strong> that harmonizes authoritative metadata with live industry signals. We deliver premiere intelligence, renewal probability, episode context, and personalized recommendations before the rest of the internet catches on.</p>
               </section>
             </div>
 
@@ -50,12 +50,12 @@ export function VisionPage() {
               <h2 className="text-white font-black text-xl tracking-tight mb-6">Core Intelligence Systems</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
-                  { icon:'fa-brain',         color:'text-purple-400', bg:'bg-purple-500/10', title:'RAG Orchestration',      desc:'A multi-source Lambda orchestrates Tavily, NewsAPI, TMDB, and Amazon Bedrock in parallel to synthesize live show intelligence — no training cutoffs, no stale data.' },
-                  { icon:'fa-chart-line',     color:'text-pink-400',   bg:'bg-pink-500/10',   title:'Global Hype Ranking',    desc:'Real tracking counts aggregated across the AirDate user base, weighted by velocity and recency — surfacing what audiences are genuinely anticipating.' },
-                  { icon:'fa-rotate',         color:'text-green-400',  bg:'bg-green-500/10',  title:'ML Renewal Probability', desc:'A SageMaker-trained classifier scores renewal likelihood for 270+ shows using network patterns, ratings signals, and production status — refreshed on a rolling batch schedule.' },
-                  { icon:'fa-clapperboard',   color:'text-cyan-400',   bg:'bg-cyan-500/10',   title:'Episode Intelligence',   desc:'Timezone-aware episode tracking with AI-generated recaps for the last aired episode and contextual previews for what\'s next — powered by Bedrock.' },
-                  { icon:'fa-bell',           color:'text-amber-400',  bg:'bg-amber-500/10',  title:'Premiere Alerts',        desc:'Configurable early alerts at 0, 1, 3, and 7 days before a premiere via SES email and web push — so you never miss a first episode again.' },
-                  { icon:'fa-magnifying-glass',color:'text-orange-400',bg:'bg-orange-500/10', title:'Fuzzy Search',           desc:'Levenshtein-scored search with autocomplete surfaces the right show even with typos, partial titles, or alternate names — backed by the full TMDB catalog.' },
+                  { icon:'fa-brain',           color:'text-purple-400', bg:'bg-purple-500/10', title:'Multi-Source Intelligence',  desc:'A parallel intelligence engine synthesizes live show data from multiple trade and industry sources in real time.' },
+                  { icon:'fa-chart-line',       color:'text-pink-400',   bg:'bg-pink-500/10',   title:'Global Hype Ranking',        desc:'Real tracking counts aggregated across the AirDate user base, weighted by velocity and recency.' },
+                  { icon:'fa-rotate',           color:'text-green-400',  bg:'bg-green-500/10',  title:'ML Renewal Probability',     desc:'A machine learning classifier scores renewal likelihood for 270+ shows, refreshed on a rolling schedule.' },
+                  { icon:'fa-clapperboard',     color:'text-cyan-400',   bg:'bg-cyan-500/10',   title:'Episode Intelligence',       desc:'Timezone-aware episode tracking with editorial recaps and contextual previews for upcoming episodes.' },
+                  { icon:'fa-bell',             color:'text-amber-400',  bg:'bg-amber-500/10',  title:'Premiere Alerts',            desc:'Configurable alerts at 0, 1, 3, and 7 days before a premiere via email and web push.' },
+                  { icon:'fa-magnifying-glass', color:'text-orange-400', bg:'bg-orange-500/10', title:'Smart Search',               desc:'Intelligent search with autocomplete surfaces the right show even with typos or partial titles.' },
                 ].map(item => (
                   <div key={item.title} className="bg-slate-800/40 rounded-2xl p-5 border border-white/5">
                     <div className={`w-8 h-8 ${item.bg} rounded-lg flex items-center justify-center mb-3`}>
@@ -70,10 +70,10 @@ export function VisionPage() {
 
             <section className="bg-slate-900/40 border border-white/5 rounded-3xl p-8">
               <h2 className="text-white font-black text-xl tracking-tight mb-4">Built to Scale</h2>
-              <p className="mb-6">Every layer of AirDate is serverless and cloud-native — no infrastructure to manage, no scaling ceilings. Intelligence endpoints respond in real time. Personalization data syncs across devices instantly. Show imagery is served globally from edge locations. The renewal classifier runs on a managed ML pipeline. Identity is secured without third-party auth dependencies. Notifications are delivered directly — no intermediary push services.</p>
+              <p className="mb-6">Every layer of AirDate is serverless and cloud-native. No infrastructure to manage, no scaling ceilings. Intelligence endpoints respond in real time. Personalization data syncs across devices instantly. Show imagery is served globally from edge locations. The renewal classifier runs on a managed machine learning pipeline. Notifications are delivered directly with no intermediary push services.</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
-                  { label:'Intelligence Endpoints',        value:'15+' },
+                  { label:'Intelligence Endpoints', value:'15+' },
                   { label:'Shows with Renewal Data', value:'272' },
                   { label:'Scoop Stories',            value:'397' },
                   { label:'Intelligence Sources',     value:'5'   },
@@ -93,7 +93,7 @@ export function VisionPage() {
                 </div>
                 <h2 className="text-white font-black text-xl tracking-tight">Engineered by Stratustier Innovation Labs</h2>
               </div>
-              <p>AirDate is a product of <strong className="text-white">Stratustier Innovation Labs</strong> — specializing in scalable intelligence platforms, AI-powered product experiences, and cloud-native media applications. Our engineering philosophy: build systems that are invisible to users and invincible under load.</p>
+              <p>AirDate is a product of <strong className="text-white">Stratustier Innovation Labs</strong>, specializing in scalable intelligence platforms, AI-powered product experiences, and cloud-native media applications. Our engineering philosophy: build systems that are invisible to users and invincible under load.</p>
             </section>
 
             <div className="text-center py-8">
