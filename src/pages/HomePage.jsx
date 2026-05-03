@@ -244,20 +244,37 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) 
   const href      = detailUrl(show)
   return (
     <div className="group relative cursor-pointer" onClick={() => window.location.href = href}>
-      {rank!=null && <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-yellow-400 text-slate-950 text-xs font-black rounded-full flex items-center justify-center shadow-lg">{rank}</span>}
+      {rank!=null && (
+        <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-yellow-400 text-slate-950 text-xs font-black rounded-full flex items-center justify-center shadow-lg">
+          {rank}
+        </span>
+      )}
       <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-3 bg-slate-800">
-        <img {...posterImg} alt={show.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy"/>
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"/>
+        <img {...posterImg} alt={show.name}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"/>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"/>
+
+        {/* ── Heart icon — always visible, top-right corner ── */}
         {isAuthenticated && (
-          <button onClick={e=>{e.stopPropagation();onTrack(show)}} disabled={!tracked&&atLimit}
-            className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all opacity-0 group-hover:opacity-100 whitespace-nowrap
-              ${tracked?'bg-cyan-500 text-slate-950':atLimit?'bg-slate-700 text-slate-400 cursor-not-allowed':'bg-slate-900/90 text-white border border-white/20 hover:bg-cyan-500 hover:text-slate-950'}`}>
-            {tracked?'✓ Tracking':'+ Track'}
+          <button
+            onClick={e => { e.stopPropagation(); onTrack(show) }}
+            disabled={!tracked && atLimit}
+            aria-label={tracked ? 'Untrack show' : 'Track show'}
+            className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-lg
+              ${tracked
+                ? 'bg-pink-500 text-white'
+                : atLimit
+                  ? 'bg-slate-900/70 text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-900/70 text-slate-300 hover:bg-pink-500/80 hover:text-white'
+              }`}
+          >
+            <i className={`fa-${tracked ? 'solid' : 'regular'} fa-heart text-xs`}/>
           </button>
         )}
       </div>
-      <h3 className="text-sm font-bold text-white leading-snug mb-1 line-clamp-2">{show.name}</h3>
-      {show.network && <p className="text-xs font-medium text-slate-400 mb-0.5">{show.network}</p>}
+      <h3 className="text-xs sm:text-sm font-bold text-white leading-snug mb-1 line-clamp-2">{show.name}</h3>
+      {show.network && <p className="text-[10px] sm:text-xs font-medium text-slate-400 mb-0.5">{show.network}</p>}
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{(()=>{
         const d = show.first_air_date || show.premiereDate
         if (!d) return 'TBA'
