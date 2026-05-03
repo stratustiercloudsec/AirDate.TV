@@ -52,4 +52,4 @@ export const COGNITO_CONFIG = {
 }
 
 // src/config/aws.js — add this line
-export const SCOOP_MANIFEST_URL = 'https://airdate.tv/scoop/stories.json'
+export const SCOOP_MANIFEST_URL = '/scoop/stories.json'

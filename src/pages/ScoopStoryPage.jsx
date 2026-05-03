@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Footer } from '@/components/layout/Footer'
 
-const STORY_BASE = 'https://s3.amazonaws.com/airdate.tv/scoop/stories/'
+const STORY_BASE = '/scoop/stories/'
 
 const SOURCE_COLORS = {
   'variety.com':'#9b59b6','deadline.com':'#e74c3c',
@@ -46,7 +46,7 @@ export function ScoopStoryPage() {
       .then(r => {
         if (r.ok) return r.json()
         // Fallback: find story in manifest by hash
-        return fetch('https://s3.amazonaws.com/airdate.tv/scoop/stories.json')
+        return fetch('/scoop/stories.json')
           .then(m => m.json())
           .then(manifest => {
             const items = manifest.items || []

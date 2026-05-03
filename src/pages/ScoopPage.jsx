@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Footer } from '@/components/layout/Footer'
 
-const MANIFEST_URL = 'https://airdate.tv/scoop/stories.json'
+const MANIFEST_URL = '/scoop/stories.json'
 
 const CATS = {
   premieres:     { label:'Premiere Dates',     icon:'calendar-star',  color:'#22d3ee' },

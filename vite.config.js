@@ -4,9 +4,6 @@ import path from 'path'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-
-  // If your API Gateway is a REST API, set VITE_API_STAGE=prod (or your stage name)
-  // in .env.local.  HTTP APIs ($default stage) need no prefix — leave it blank.
   const stage = env.VITE_API_STAGE ? `/${env.VITE_API_STAGE}` : ''
 
   return {
@@ -18,6 +15,16 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
+        '/scoop/stories.json': {
+          target: 'https://airdate.tv',
+          changeOrigin: true,
+          secure: true,
+        },
+        '/scoop/stories': {
+          target: 'https://airdate.tv',
+          changeOrigin: true,
+          secure: true,
+        },
         '/api': {
           target: 'https://21ave5trw7.execute-api.us-east-1.amazonaws.com',
           changeOrigin: true,
