@@ -2,33 +2,48 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # AirDate.tv — Safe Deploy Script
 # Protects all Lambda-written S3 paths from --delete wipes
-# Usage: bash deploy.sh
+# Usage: bash deploy.sh [staging|production]
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
-BUCKET="airdate.tv"
 PROFILE="greymoonmedia"
-CF_DIST="E790ECNWOI9EN"
+REGION="us-east-1"
+
+# ── Environment toggle (default: staging)
+ENV="${1:-staging}"
+
+# In deploy.sh, fix both environments to reflect reality:
+if [ "$ENV" == "production" ]; then
+  BUCKET="stage.s3.airdate.tv"   # This IS prod — airdate.tv aliases here
+  CF_DIST="E790ECNWOI9EN"
+elif [ "$ENV" == "staging" ]; then
+  BUCKET="stage.s3.airdate.tv"   # Same bucket for now
+  CF_DIST="E790ECNWOI9EN"
+fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  AirDate Safe Deploy"
+echo "  Environment : ${ENV}"
+echo "  Bucket      : ${BUCKET}"
+echo "  CF Dist     : ${CF_DIST}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # ── Step 1: Pre-flight — verify scoop manifest exists before touching anything
 echo ""
 echo "1/4  Pre-flight: verifying scoop manifest..."
 MANIFEST_CHECK=$(aws s3 ls s3://${BUCKET}/scoop/stories.json \
-  --profile ${PROFILE} 2>/dev/null | wc -l)
+  --profile ${PROFILE} \
+  --region ${REGION} 2>/dev/null | wc -l)
 
 if [ "$MANIFEST_CHECK" -eq "0" ]; then
-  echo "⚠️   WARNING: scoop/stories.json not found in S3."
+  echo "⚠️   WARNING: scoop/stories.json not found in s3://${BUCKET}."
   echo "    This may mean the pipeline hasn't run yet, or it was already wiped."
   read -p "    Continue anyway? (y/N) " -n 1 -r; echo
   [[ ! $REPLY =~ ^[Yy]$ ]] && echo "Aborted." && exit 1
 else
-  # Count stories in the manifest
   STORY_COUNT=$(aws s3 cp s3://${BUCKET}/scoop/stories.json - \
-    --profile ${PROFILE} 2>/dev/null | python3 -c \
+    --profile ${PROFILE} \
+    --region ${REGION} 2>/dev/null | python3 -c \
     "import json,sys; d=json.load(sys.stdin); print(len(d.get('items',[])))" 2>/dev/null || echo "?")
   echo "✅  scoop/stories.json found — ${STORY_COUNT} stories"
 fi
@@ -39,13 +54,14 @@ echo "2/4  Building..."
 npm run build
 echo "✅  Build complete"
 
-# ── Step 3: Sync — exclude ALL Lambda-managed paths recursively
+# ── Step 3: Sync — exclude ALL Lambda-managed paths
 echo ""
 echo "3/4  Syncing dist/ → s3://${BUCKET}/"
-echo "    Protected paths: scoop/*, images/*, assets/og/*, assets/images/*"
+echo "     Protected: scoop/*, images/*, assets/og/*, assets/images/*, .well-known/*"
 
 aws s3 sync dist/ s3://${BUCKET}/ \
   --profile ${PROFILE} \
+  --region ${REGION} \
   --delete \
   --exclude "scoop/*" \
   --exclude "scoop/stories/*" \
@@ -56,33 +72,38 @@ aws s3 sync dist/ s3://${BUCKET}/ \
 
 echo "✅  Sync complete"
 
-# ── Step 4: CloudFront invalidation (frontend assets only — not scoop paths)
+# ── Step 4: CloudFront invalidation
 echo ""
-echo "4/4  Invalidating CloudFront..."
+echo "4/4  Invalidating CloudFront (${CF_DIST})..."
 aws cloudfront create-invalidation \
   --distribution-id ${CF_DIST} \
   --paths "/*" \
   --profile ${PROFILE} \
-  --no-cli-page
+  --region ${REGION} \
+  --no-cli-pager
 
+echo "✅  Invalidation submitted (InProgress — takes ~30–60s to propagate)"
+
+# ── Post-deploy: verify scoop manifest survived the --delete sync
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# ── Post-deploy verification
 echo "  Post-deploy checks..."
 MANIFEST_AFTER=$(aws s3 ls s3://${BUCKET}/scoop/stories.json \
-  --profile ${PROFILE} 2>/dev/null | wc -l)
+  --profile ${PROFILE} \
+  --region ${REGION} 2>/dev/null | wc -l)
 
 if [ "$MANIFEST_AFTER" -eq "0" ]; then
   echo "🔴  CRITICAL: scoop/stories.json is GONE after deploy!"
-  echo "    Run the Step Functions pipeline manually to restore:"
+  echo "    Restore by running the Step Functions pipeline manually:"
+  echo ""
   echo "    aws stepfunctions start-execution \\"
   echo "      --state-machine-arn arn:aws:states:us-east-1:775443380425:stateMachine:airdate-scoop-agent \\"
-  echo "      --profile ${PROFILE} --region us-east-1"
+  echo "      --profile ${PROFILE} --region ${REGION}"
+  echo ""
 else
   echo "✅  scoop/stories.json intact after deploy"
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Done. airdate.tv is live."
+echo "  Done. ${ENV} is live."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
