@@ -5,7 +5,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Footer } from '@/components/layout/Footer'
 
-const MANIFEST_URL = '/scoop/stories.json'
+import { SCOOP_MANIFEST_URL } from '../config/aws'
+const MANIFEST_URL = SCOOP_MANIFEST_URL
 
 const CATS = {
   premieres:     { label:'Premiere Dates',     icon:'calendar-star',  color:'#22d3ee' },
