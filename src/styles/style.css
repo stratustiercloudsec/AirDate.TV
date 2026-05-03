@@ -189,3 +189,62 @@ img#show-network-logo[src*="gIAcGTjKKr0KOHL5s4O36roJ8p7"] { display: none !impor
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Mobile View Updates */
+/* ============================================
+   v2.38 Mobile View Cleanup — Premieres Cards
+   ============================================ */
+
+@media (max-width: 640px) {
+
+  /* Tighten card padding on mobile */
+  #results-grid > div {
+    padding: 0.5rem !important;
+  }
+
+  /* Prevent show title from wrapping/overflowing */
+  #results-grid .show-title,
+  #results-grid h3,
+  #results-grid [class*="font-bold"] {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-size: 0.7rem !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Episode badge / EPISODES button — pin to top of poster */
+  #results-grid .episode-btn,
+  #results-grid [class*="episodes"],
+  #results-grid button[onclick*="episode"],
+  #results-grid button[onclick*="Episode"] {
+    position: absolute !important;
+    top: 0.375rem !important;
+    right: 0.375rem !important;
+    left: auto !important;
+    bottom: auto !important;
+    font-size: 0.6rem !important;
+    padding: 0.2rem 0.4rem !important;
+    z-index: 10;
+  }
+
+  /* Poster container must be relative for absolute child */
+  #results-grid .poster-wrap,
+  #results-grid [class*="poster"],
+  #results-grid [class*="relative"] {
+    position: relative !important;
+  }
+
+  /* Shrink episode pill text on mobile */
+  #results-grid .episode-info,
+  #results-grid [class*="episode-label"] {
+    font-size: 0.65rem !important;
+  }
+
+  /* Season · Episode · Status stack — reduce spacing */
+  #results-grid .card-meta {
+    gap: 0.15rem !important;
+    font-size: 0.65rem !important;
+  }
+}

@@ -28,31 +28,28 @@ const NETWORK_MAP = {
   'Tubi':         [2503],
 }
 
-// Streaming platforms store episode air_date as UTC midnight → needs +1 day shift for US local.
-// Broadcast networks (NBC/CBS/ABC/FOX/FX/AMC) store the correct US air date already.
 const STREAMING_NETWORK_IDS = new Set([
-  213,                    // Netflix
-  49, 3186, 1565,         // HBO / Max
-  2739,                   // Disney+
-  1024, 1025, 2777,       // Prime Video
-  453,                    // Hulu
-  2552, 350, 3411, 2007,  // Apple TV+
-  3353, 3076,             // Peacock
-  4330, 67, 4711,         // Paramount+
-  2503,                   // Tubi (already present)
-  4406, 318, 304, 1709,   // STARZ
+  213,
+  49, 3186, 1565,
+  2739,
+  1024, 1025, 2777,
+  453,
+  2552, 350, 3411, 2007,
+  3353, 3076,
+  4330, 67, 4711,
+  2503,
+  4406, 318, 304, 1709,
 ])
 
 const STREAMING_NAME_KEYWORDS = ['netflix','apple tv','prime','hulu','disney','peacock','paramount','max','starz','tubi']
 
 function isStreaming(detail) {
-  // ID-based check (primary)
   if ((detail?.networks || []).some(n => STREAMING_NETWORK_IDS.has(n.id))) return true
-  // Name-based fallback — catches alternate Apple TV+ IDs and unlisted streaming networks
   return (detail?.networks || []).some(n =>
     STREAMING_NAME_KEYWORDS.some(kw => (n.name || '').toLowerCase().includes(kw))
   )
 }
+
 const NETWORKS  = ['All', ...Object.keys(NETWORK_MAP)]
 const DOW       = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 const DOW_SHORT = ['SUN','MON','TUE','WED','THU','FRI','SAT']
@@ -117,7 +114,6 @@ async function batchFetchDetails(ids) {
   const results = {}
   const chunks = []
   for (let i=0; i<ids.length; i+=20) chunks.push(ids.slice(i,i+20))
-  // Fetch ALL chunks in parallel (not sequentially) for speed
   await Promise.all(
     chunks.map(chunk =>
       Promise.all(
@@ -162,20 +158,13 @@ async function fetchLambdaPremieres(year, month, networkLabel=null) {
 function findSeasonPremiereInRange(detail, first, last) {
   const seasons = (detail.seasons || [])
     .filter(s => s.season_number > 0 && s.air_date)
-    .map(s => ({ ...s, air_date: s.air_date }))  // season premiere dates are correct local dates
+    .map(s => ({ ...s, air_date: s.air_date }))
     .filter(s => s.air_date >= first && s.air_date <= last)
   if (!seasons.length) return null
   seasons.sort((a,b) => a.air_date.localeCompare(b.air_date))
   return seasons[0]
 }
 
-// ─── Main fetcher ─────────────────────────────────────────────────────────────
-// Four source types, all parallel / additive:
-//   Pass A  — first_air_date in month  (brand-new series, S1E1)
-//   Pass B  — air_date in month + seasons[] (returning season premieres, E1 of new season)
-//   Pass C  — continuing shows: next_episode_to_air OR last_episode_to_air lands this month
-//             catches both upcoming weekly shows AND full-season drops already aired (e.g. Apple TV+)
-//   Lambda  — curated data for networks TMDB misses (STARZ, etc.)
 async function fetchMonthPremieres(year, month, networkIds=null) {
   const first = `${year}-${pad(month)}-01`
   const last  = `${year}-${pad(month)}-${new Date(year, month, 0).getDate()}`
@@ -187,28 +176,18 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
   })()
 
   const langFilter    = networkIds ? '' : '&with_original_language=en'
-  // When "All" is selected, run every network's pass in parallel so nothing is missed.
-  // A single unfocused query relies on popularity ranking and drops lower-ranked shows
-  // (e.g. Man on Fire on Netflix may not appear in the top 3 discover pages).
   const networkIdList = networkIds
     ? networkIds
     : Object.values(NETWORK_MAP).flat()
 
-  const activeNetworkLabel = networkIds
-    ? Object.entries(NETWORK_MAP).find(([,ids]) =>
-        ids.some(id => networkIds.includes(id))
-      )?.[0] || null
-    : null
-
   const [lambdaShows, ...tmdbPerNetwork] = await Promise.all([
-    Promise.resolve([]),   // GET /premieres/calendar not yet deployed — TMDB passes cover all data
+    Promise.resolve([]),
     ...networkIdList.map(async (networkId) => {
       const netParam = networkId ? `&with_networks=${networkId}` : ''
       const netLabel = networkId
         ? (Object.entries(NETWORK_MAP).find(([,ids])=>ids.includes(networkId))?.[0] || '')
         : ''
 
-      // Pass A: brand-new series (first_air_date in month)
       const baseA = `${TMDB}/discover/tv?api_key=${TMDB_KEY}&language=en-US`
         + `&first_air_date.gte=${qStart}&first_air_date.lte=${last}`
         + `&sort_by=popularity.desc` + langFilter + netParam
@@ -216,7 +195,7 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
       const newShows = newShowsRaw
         .map(s => ({
           ...s,
-          first_air_date: s.first_air_date,  // series premiere dates are already correct local dates — never shift
+          first_air_date: s.first_air_date,
           ...(netLabel ? { _networkLabel: netLabel } : {}),
           _seasonNum:  1,
           _episodeNum: 1,
@@ -224,7 +203,6 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
         }))
         .filter(s => s.first_air_date >= first && s.first_air_date <= last)
 
-      // Pass B: returning shows — air_date query + seasons[] batch
       const baseB = `${TMDB}/discover/tv?api_key=${TMDB_KEY}&language=en-US`
         + `&air_date.gte=${qStart}&air_date.lte=${last}`
         + `&sort_by=popularity.desc` + langFilter + netParam
@@ -233,10 +211,6 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
       const newIds     = new Set(newShows.map(s=>s.id))
       const candidates = airingShows.filter(s=>!newIds.has(s.id))
 
-      // Fetch details in two separate batches so newShows are GUARANTEED inclusion.
-      // If we merged into one slice(0,60), candidates (often 60+) crowd out newShows entirely.
-      //   newShowsDetails → Pass C continuing episode check (e.g. YF&N premieres Apr 3, Ep4 Apr 24)
-      //   candidateDetails → Pass B season premieres + Pass C continuing check
       const [newShowsDetails, candidateDetails] = await Promise.all([
         newShows.length > 0
           ? batchFetchDetails(newShows.slice(0, 40).map(s=>s.id))
@@ -247,8 +221,7 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
       ])
       const detailsMap = { ...candidateDetails, ...newShowsDetails }
 
-      // Pass B: season premieres (E1 of a new season landing this month)
-      const seasonPremierIds = new Map()  // id → premiere air_date
+      const seasonPremierIds = new Map()
       const seasonPremieres  = []
       for (const show of candidates) {
         const detail = detailsMap[show.id]
@@ -266,14 +239,6 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
         })
       }
 
-      // Pass C: continuing shows — premiered in a prior month, episodes still airing now
-      // Also processes newShows: a show that premiered this month (Pass A) may have
-      // additional episodes airing later the same month (e.g. Your Friends & Neighbors
-      // premieres Apr 3, Ep4 airs Apr 25 — both should appear on the calendar).
-      // Two-check fallback so we catch both:
-      //   • Weekly shows where next_episode_to_air is upcoming this month
-      //   • Full-season drops (e.g. Apple TV+) where all eps already aired and
-      //     next_episode_to_air is null — use last_episode_to_air instead
       const continuingShows = []
       for (const show of [...candidates, ...newShows]) {
         const detail = detailsMap[show.id]
@@ -283,9 +248,6 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
         let episodeNum  = null
         let seasonNum   = null
 
-        // Check 1: next_episode_to_air — upcoming weekly episodes
-        // Streaming platforms (Netflix, Apple TV+, etc.) store UTC midnight dates → shift +1 for US.
-        // Broadcast networks (NBC, CBS, ABC, FOX) already store the correct US air date.
         const streaming = isStreaming(detail)
         const nextEp = detail.next_episode_to_air
         if (nextEp?.air_date) {
@@ -297,8 +259,6 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
           }
         }
 
-        // Check 2: last_episode_to_air — catches shows mid-run or full-season drops
-        // where next_episode_to_air is null because episodes already aired this month
         if (!episodeDate) {
           const lastEp = detail.last_episode_to_air
           if (lastEp?.air_date) {
@@ -311,17 +271,11 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
           }
         }
 
-        if (!episodeDate) continue  // genuinely no episodes this month
+        if (!episodeDate) continue
 
-        // NOW safe to check: skip only if episodeDate == the season premiere date
-        // (Pass B already placed it). Don't skip entirely — later episodes still needed.
         if (seasonPremierIds.has(show.id) && episodeDate === seasonPremierIds.get(show.id)) continue
-
-        // For shows that premiered this month (in newShows), skip continuing entry
-        // if episodeDate == their premiere date — Pass A already placed them there
         if (newIds.has(show.id) && episodeDate === show.first_air_date) continue
 
-        // Primary entry — next_episode_to_air (upcoming) or last_episode_to_air (recently aired)
         continuingShows.push({
           ...show,
           first_air_date: episodeDate,
@@ -332,9 +286,6 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
           _isContinuing:  true,
         })
 
-        // Secondary entry — if we used next_episode_to_air, ALSO show last_episode_to_air
-        // if it aired earlier this month (different date). This lets weekly shows like
-        // Law & Order appear on BOTH the date they aired AND the upcoming date.
         const usedNext = episodeDate === nextEp?.air_date
         if (usedNext && detail.last_episode_to_air?.air_date) {
           const lastDate = streaming ? shiftDate(detail.last_episode_to_air.air_date) : detail.last_episode_to_air.air_date
@@ -358,7 +309,6 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
     }),
   ])
 
-  // Merge all sources, sort by premiere date, dedupe (TMDB wins over Lambda on dupes)
   const seen = new Set()
   return [...tmdbPerNetwork.flat(), ...lambdaShows]
     .sort((a,b) => (a.first_air_date||'').localeCompare(b.first_air_date||''))
@@ -405,7 +355,7 @@ function CalendarSkeleton() {
   )
 }
 
-// ─── Episode schedule drawer (lazy loaded on demand) ─────────────────────────
+// ─── Episode schedule drawer ──────────────────────────────────────────────────
 function EpisodeDrawer({ show, monthFirst, monthLast }) {
   const [episodes, setEpisodes] = useState(null)
   const [loading,  setLoading]  = useState(false)
@@ -480,7 +430,6 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
                   : 'bg-slate-900/60 border-cyan-500/10 hover:border-cyan-500/20'
               }`}
           >
-            {/* Episode badge */}
             <span className={`flex-shrink-0 min-w-[38px] text-center text-xs font-black px-2 py-1 rounded-lg
               ${isToday
                 ? 'bg-red-500/25 text-red-300 border border-red-500/40'
@@ -491,13 +440,11 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
               E{String(ep.episode_number).padStart(2,'0')}
             </span>
 
-            {/* Title */}
             <span className={`flex-1 text-sm font-semibold truncate
               ${isToday ? 'text-white' : isPast ? 'text-slate-400' : 'text-slate-100'}`}>
               {ep.name || `Episode ${ep.episode_number}`}
             </span>
 
-            {/* Air date */}
             {isToday ? (
               <span className="flex-shrink-0 flex items-center gap-1.5 text-xs font-black text-red-400">
                 <span className="relative flex h-2 w-2">
@@ -519,7 +466,7 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
   )
 }
 
-// ─── Show card (list view) ────────────────────────────────────────────────────
+// ─── Show card (list view) — v2.38 mobile fix ────────────────────────────────
 function ShowListCard({ show, onTrack, isTracked, atLimit, isAuthenticated, monthFirst, monthLast }) {
   const [expanded, setExpanded] = useState(false)
   const netName = show._networkLabel || show.networks?.[0]?.name || show.network || ''
@@ -541,51 +488,72 @@ function ShowListCard({ show, onTrack, isTracked, atLimit, isAuthenticated, mont
     <div className={`bg-slate-800/40 border rounded-2xl transition-all
       ${expanded ? 'border-cyan-500/20 bg-slate-800/60' : 'border-white/5 hover:border-cyan-500/20 hover:bg-slate-800/60'}`}>
 
+      {/* ── Card header row ── */}
       <div
-        className="flex items-center gap-3 p-3 cursor-pointer group"
+        className="flex items-start gap-3 p-3 cursor-pointer group"
         onClick={()=>window.location.href=`/details/${show.id}`}
       >
+        {/* Poster */}
         <img {...poster} alt={show.name}
           className="w-12 h-16 object-cover rounded-xl flex-shrink-0 group-hover:scale-105 transition-transform duration-200"/>
+
+        {/* Text + buttons stacked vertically — full width available */}
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 mb-1">{show.name}</h4>
+          {/* Title — gets full width, no competing column */}
+          <h4 className="text-xs sm:text-sm font-bold text-white leading-snug line-clamp-2 mb-1">
+            {show.name}
+          </h4>
+
+          {/* Network */}
           <div className="flex items-center gap-1.5 mb-0.5">
             <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background:getNetworkColor(netName)}}/>
             <p className="text-[10px] font-bold text-slate-400 truncate">{netName||'Unknown'}</p>
           </div>
+
+          {/* Episode label */}
           {epLabel && (
             <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5
               ${show._isContinuing ? 'text-amber-400/80' : 'text-cyan-500/70'}`}>
               {epLabel}
             </p>
           )}
-          {genre && <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">{genre}</p>}
-        </div>
 
-        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          {isAuthenticated && (
-            <button
-              onClick={e=>{e.stopPropagation();onTrack(show)}}
-              disabled={!tracked&&atLimit}
-              className={`w-7 h-7 rounded-lg text-[10px] font-black transition-all flex items-center justify-center opacity-0 group-hover:opacity-100
-                ${tracked?'bg-cyan-500 text-slate-950':'bg-slate-700 text-slate-400 hover:bg-cyan-500/20 hover:text-cyan-400'}`}>
-              {tracked?'✓':'+'}
-            </button>
+          {/* Genre */}
+          {genre && (
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
+              {genre}
+            </p>
           )}
-          {canExpand && (
-            <button
-              onClick={e=>{e.stopPropagation();setExpanded(v=>!v)}}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all
-                ${expanded
-                  ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                  : 'bg-slate-700/60 border-white/10 text-slate-400 hover:border-cyan-500/20 hover:text-cyan-400'}`}>
-              <i className={`fa-solid ${expanded ? 'fa-chevron-up' : 'fa-list'} text-[9px]`}/>
-              {expanded ? 'Hide' : 'Episodes'}
-            </button>
-          )}
+
+          {/* Action buttons — inline row below text, always visible on mobile */}
+          <div className="flex items-center gap-2 mt-1" onClick={e=>e.stopPropagation()}>
+            {canExpand && (
+              <button
+                onClick={()=>setExpanded(v=>!v)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all
+                  ${expanded
+                    ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                    : 'bg-slate-700/60 border-white/10 text-slate-400 hover:border-cyan-500/20 hover:text-cyan-400'}`}>
+                <i className={`fa-solid ${expanded ? 'fa-chevron-up' : 'fa-list'} text-[8px]`}/>
+                {expanded ? 'Hide' : 'Episodes'}
+              </button>
+            )}
+            {isAuthenticated && (
+              <button
+                onClick={()=>onTrack(show)}
+                disabled={!tracked&&atLimit}
+                className={`w-6 h-6 rounded-lg text-[10px] font-black transition-all flex items-center justify-center flex-shrink-0
+                  ${tracked
+                    ? 'bg-cyan-500 text-slate-950'
+                    : 'bg-slate-700 text-slate-400 hover:bg-cyan-500/20 hover:text-cyan-400'}`}>
+                {tracked?'✓':'+'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
+      {/* ── Episode drawer ── */}
       {expanded && (
         <div className="px-3 pb-3">
           <EpisodeDrawer show={show} monthFirst={monthFirst} monthLast={monthLast}/>
@@ -847,7 +815,7 @@ export function PremieresCalendarPage() {
                         )}
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                        {shows.map(show=><ShowListCard key={show.id} show={show} {...cardProps}/>)}
+                        {shows.map(show=><ShowListCard key={`${show.id}_${show.first_air_date}`} show={show} {...cardProps}/>)}
                       </div>
                     </div>
                   )
@@ -942,7 +910,7 @@ export function PremieresCalendarPage() {
                       ) : (
                         <div className="space-y-3">
                           {selectedShows.map(show=>(
-                            <DayPanelCard key={show.id} show={show} {...cardProps}/>
+                            <DayPanelCard key={`${show.id}_${show.first_air_date}`} show={show} {...cardProps}/>
                           ))}
                         </div>
                       )}
