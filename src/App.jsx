@@ -26,6 +26,7 @@ import { PrivacyPage }           from '@/pages/PrivacyPage'
 import { UpdatePage }            from '@/pages/UpdatePage'
 import { UpdateSuccessPage }     from '@/pages/UpdateSuccessPage'
 import { NotFoundPage }          from '@/pages/NotFoundPage'
+import { AboutPage }             from '@/pages/AboutPage'
 
 // ── Protected pages ─────────────────────────────────────────────────────────
 import { MyPulsePage }       from '@/pages/AccountPage'
@@ -53,8 +54,8 @@ export default function App() {
                 <Route path="/"                element={<HomePage />} />
                 <Route path="/trending"        element={<TrendingPage />} />
                 <Route path="/premieres"       element={<PremieresCalendarPage />} />
-                <Route path="/scoop" element={<ScoopPage />} />
-              <Route path="/scoop/:hash" element={<ScoopStoryPage />} />
+                <Route path="/scoop"           element={<ScoopPage />} />
+                <Route path="/scoop/:hash"     element={<ScoopStoryPage />} />
                 <Route path="/details/:id"     element={<ShowDetailPage />} />
                 <Route path="/contact"         element={<ContactPage />} />
                 <Route path="/vision"          element={<VisionPage />} />
@@ -62,6 +63,7 @@ export default function App() {
                 <Route path="/privacy"         element={<PrivacyPage />} />
                 <Route path="/upgrade"         element={<UpdatePage />} />
                 <Route path="/upgrade-success" element={<UpdateSuccessPage />} />
+                <Route path="/about"           element={<AboutPage />} />
 
                 {/* ── Auth routes (no Navbar wrapper needed — pages are self-contained) */}
                 <Route path="/auth/login"           element={<LoginPage />} />

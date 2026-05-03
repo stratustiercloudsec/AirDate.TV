@@ -5,29 +5,22 @@ import { useAuth }          from '@/context/AuthContext'
 import { useNotifications } from '@/context/NotificationContext'
 
 export function Navbar() {
-  // FIX 1: useAuth exports signOut, not logout
-  // FIX 2: user shape is { email, name, sub, tier } — not Amplify's signInDetails
   const { isAuthenticated, user, signOut } = useAuth()
   const { unreadCount, notifications, markAllRead } = useNotifications()
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
 
-  // Close mobile menu on route change
   useEffect(() => setMobileOpen(false), [location])
 
-  // FIX 1: was `logout()` — now `signOut()`
   async function handleLogout() {
     await signOut()
     navigate('/')
   }
 
-  // FIX 2: was user?.signInDetails?.loginId — now user?.email
   const displayEmail = user?.email ?? ''
   const displayName  = user?.name  ?? displayEmail.split('@')[0] ?? 'Account'
 
-  // Auth pages should render without the navbar chrome interfering —
-  // hide the navbar on auth routes so the full-screen auth layout shows cleanly
   const isAuthRoute = location.pathname.startsWith('/auth')
   if (isAuthRoute) return null
 
@@ -70,24 +63,16 @@ export function Navbar() {
             </Link>
           )}
 
-          {/* About dropdown */}
-          <div className="relative group">
-            <button className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-slate-200 hover:text-white hover:bg-white/5 flex items-center gap-1.5 transition-all">
-              <i className="fa-solid fa-circle-info"/>About
-              <i className="fa-solid fa-chevron-down text-[8px] opacity-50 group-hover:rotate-180 transition-transform"/>
-            </button>
-            <div className="absolute top-full left-0 mt-1 w-40 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
-              <Link to="/vision"  className="flex items-center gap-2 px-4 py-3 text-xs font-bold text-slate-200 hover:text-white hover:bg-white/5 transition-colors"><i className="fa-solid fa-rocket w-4"/>Vision</Link>
-              <Link to="/privacy" className="flex items-center gap-2 px-4 py-3 text-xs font-bold text-slate-200 hover:text-white hover:bg-white/5 transition-colors"><i className="fa-solid fa-shield w-4"/>Privacy</Link>
-              <Link to="/terms"   className="flex items-center gap-2 px-4 py-3 text-xs font-bold text-slate-200 hover:text-white hover:bg-white/5 transition-colors"><i className="fa-solid fa-file-lines w-4"/>Terms</Link>
-            </div>
-          </div>
+          {/* About — direct link, no dropdown */}
+          <Link to="/about" className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-slate-200 hover:text-white hover:bg-white/5 transition-all">
+            <i className="fa-solid fa-circle-info mr-1.5"/>About
+          </Link>
         </div>
 
         {/* Right side: bell + auth */}
         <div className="flex items-center gap-3">
 
-          {/* Notification bell (authenticated only) */}
+          {/* Notification bell */}
           {isAuthenticated && (
             <div className="relative group" id="notif-bell">
               <button
@@ -138,7 +123,6 @@ export function Navbar() {
           {isAuthenticated ? (
             <div className="relative group" id="auth-dropdown-wrapper">
               <button className="flex items-center gap-2 px-4 py-2 bg-slate-800/60 hover:bg-slate-800 border border-white/10 hover:border-cyan-500/30 rounded-xl transition-all group-hover:border-cyan-500/30">
-                {/* Show avatar if Google user has picture, else generic icon */}
                 {user?.picture
                   ? <img src={user.picture} alt={displayName} className="w-5 h-5 rounded-full object-cover"/>
                   : <i className="fa-solid fa-circle-check text-green-400 text-sm"/>
@@ -152,7 +136,6 @@ export function Navbar() {
               {/* Account dropdown */}
               <div className="absolute right-0 top-full mt-2 w-52 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
                 <div className="px-4 py-3 border-b border-white/5">
-                  {/* FIX 2: use user.email directly */}
                   <p className="text-white text-xs font-bold truncate">{displayEmail}</p>
                   <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5
                     ${user?.tier === 'premium' ? 'text-amber-400' : 'text-cyan-400'}`}>
@@ -178,7 +161,6 @@ export function Navbar() {
                   </div>
                 )}
                 <div className="border-t border-white/5 py-1">
-                  {/* FIX 1: was handleLogout → signOut (renamed for clarity) */}
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-colors"
@@ -189,7 +171,6 @@ export function Navbar() {
               </div>
             </div>
           ) : (
-            // FIX 3: was loginWithHostedUI() — now navigates to custom LoginPage
             <button
               onClick={() => navigate('/auth/login')}
               className="flex items-center gap-2 px-4 py-2 bg-slate-800/60 hover:bg-slate-800 border border-white/10 hover:border-cyan-500/30 rounded-xl transition-all"
@@ -221,13 +202,11 @@ export function Navbar() {
             <Link to="/trending"  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-white/5"><i className="fa-solid fa-arrow-trend-up w-4"/>Trending</Link>
             <Link to="/scoop"     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-white/5"><i className="fa-solid fa-fire w-4"/>The Scoop</Link>
             {isAuthenticated && (
-              <Link to="/pulse" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-white/5"><i className="fa-solid fa-heart w-4"/>My Pulse</Link>
+              <Link to="/pulse"   className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-white/5"><i className="fa-solid fa-heart w-4"/>My Pulse</Link>
             )}
-            <div className="border-t border-white/5 mt-2 pt-2">
-              <Link to="/vision"  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-white/5"><i className="fa-solid fa-rocket w-4"/>Vision</Link>
-              <Link to="/privacy" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-white/5"><i className="fa-solid fa-shield w-4"/>Privacy</Link>
-              <Link to="/terms"   className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-white/5"><i className="fa-solid fa-file-lines w-4"/>Terms</Link>
-            </div>
+            {/* About — direct link in mobile menu */}
+            <Link to="/about"     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-white/5"><i className="fa-solid fa-circle-info w-4"/>About</Link>
+
             <div className="border-t border-white/5 mt-2 pt-2">
               {isAuthenticated ? (
                 <button
@@ -237,7 +216,6 @@ export function Navbar() {
                   <i className="fa-solid fa-right-from-bracket w-4"/>Sign Out
                 </button>
               ) : (
-                // FIX 3: navigate to custom login page instead of hosted UI
                 <button
                   onClick={() => navigate('/auth/login')}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-cyan-400 hover:bg-white/5 w-full text-left"
