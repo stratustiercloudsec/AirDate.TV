@@ -16,15 +16,21 @@ const NEXT_MONTH_NETWORK_IDS = [
   6,16,2,19,3436,71,49,88,174,67,528,
 ].join('|')
 
+// Replace CHIPS const
 const CHIPS = [
-  'Premiering Tonight','Tyler Perry Produced Shows 2026','Man on Fire','Taylor Sheridan',
-  'Netflix April 2026','HBO Max Premieres','Prime Video 2026',
+  'Premiering Tonight',
+  'Taylor Sheridan',
+  'Netflix May 2026',
+  'Marvel Cinematic TV Shows',
+  'Comedy Premieres 2026',
+  'Ted Lasso',
+  'Power Universe',
 ]
 
 const NETWORKS = {
   Streaming: ['Netflix','Hulu','Disney+','Paramount+','Max','Apple TV+','Prime Video','Peacock','STARZ','BET+','Tubi','YouTube'],
   Broadcast:  ['CBS','NBC','ABC','FOX','The CW'],
-  Cable:      ['FX','AMC','USA Network','Bravo','Syfy','Freeform','OWN','Comedy Central','BET'],
+  Cable:      ['FX','AMC','USA Network','Bravo','Syfy','Freeform','OWN','Comedy Central','BET','Showtime'],
 }
 
 function startOfWeek() {
@@ -60,7 +66,9 @@ async function enrichWithNetwork(shows) {
 function dedupById(shows) {
   const seen = new Set()
   return shows.filter(s => {
-    const key = s.id ? String(s.id) : (s.name || s.title || '')
+    const key = s.id
+      ? `${s.id}-${s.season_number ?? ''}`
+      : (s.name || s.title || '')
     if (!key || seen.has(key)) return false
     seen.add(key); return true
   })
@@ -73,7 +81,8 @@ function mapTMDB(s) {
 function normalizeShow(s) {
   return {
     id:             s.id,
-    name:           s.title || s.name || s.seriesTitle || '',
+    name:           s.seriesTitle || s.title || s.name || '',
+    series_title:   s.seriesTitle || s.title || s.name || '',
     poster_path:    s.poster_path || null,
     poster:         s.poster || null,
     first_air_date: s.premiereDate || s.premiere || s.first_air_date || null,
@@ -81,7 +90,7 @@ function normalizeShow(s) {
     overview:       s.description || s.overview || '',
     vote_average:   s.user_score ? s.user_score / 10 : (s.vote_average || 0),
     backdrop_path:  s.backdrop_path || null,
-    season_number:  s.season_number || null,
+    season_number:  s.season_number || null,   // ← preserve for badge
     content_rating: s.content_rating || '',
   }
 }
@@ -317,6 +326,12 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) 
       <h3 className="text-xs sm:text-sm font-bold text-white leading-snug mb-1 line-clamp-2">
         {show.name}
       </h3>
+      {show.season_number && (
+        <span className="inline-block px-1.5 py-0.5 bg-cyan-500/20 border border-cyan-500/30 
+          rounded text-cyan-400 text-[9px] font-black uppercase tracking-widest mb-1">
+          Season {show.season_number}
+        </span>
+      )}
 
       {/* Network */}
       {show.network && (
