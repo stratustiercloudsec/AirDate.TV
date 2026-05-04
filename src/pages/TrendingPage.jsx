@@ -5,8 +5,8 @@ import { useWatchlist } from '@/context/WatchlistContext'
 import { usePoster }    from '@/utils/poster'
 import { Footer }       from '@/components/layout/Footer'
 
-const TMDB_KEY  = '9e7202516e78494f2b18ec86d29a4309'
-const TMDB      = 'https://api.themoviedb.org/3'
+const TMDB_KEY   = '9e7202516e78494f2b18ec86d29a4309'
+const TMDB       = 'https://api.themoviedb.org/3'
 const IMAGE_BASE = 'https://image.tmdb.org'
 
 // TMDB network IDs
@@ -40,38 +40,91 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
+// ─── Rating helpers (mirror of HomePage) ─────────────────────────────────────
+function ratingColor(rating) {
+  if (!rating) return 'border-white/20 text-slate-400'
+  if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
+  if (rating === 'TV-14')  return 'border-orange-500/50 text-orange-400'
+  if (rating === 'TV-PG')  return 'border-yellow-500/50 text-yellow-400'
+  if (['TV-G','TV-Y','TV-Y7'].includes(rating)) return 'border-green-500/50 text-green-400'
+  return 'border-white/20 text-slate-400'
+}
+
+// ─── Non-blocking ratings enrichment ─────────────────────────────────────────
+// Fires AFTER cards render — never blocks card display
+async function fetchRatingsMap(shows) {
+  if (!shows?.length) return {}
+  const results = await Promise.allSettled(
+    shows.map(s =>
+      fetch(`${TMDB}/tv/${s.id}/content_ratings?api_key=${TMDB_KEY}`)
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null)
+    )
+  )
+  const map = {}
+  shows.forEach((s, i) => {
+    const data = results[i].status === 'fulfilled' ? results[i].value : null
+    map[s.id] = data?.results?.find(r => r.iso_3166_1 === 'US')?.rating || ''
+  })
+  return map
+}
+
 function SkeletonCard() {
   return (
     <div className="animate-pulse">
-      <div className="bg-slate-700/50 rounded-2xl aspect-[2/3] mb-3"></div>
-      <div className="h-4 bg-slate-700/50 rounded w-3/4 mb-1"></div>
-      <div className="h-3 bg-slate-700/50 rounded w-1/2"></div>
+      <div className="bg-slate-700/50 rounded-2xl aspect-[2/3] mb-3"/>
+      <div className="h-4 bg-slate-700/50 rounded w-3/4 mb-1"/>
+      <div className="h-3 bg-slate-700/50 rounded w-1/2"/>
     </div>
   )
 }
 
-function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = 'normal' }) {
-  const tracked   = isTracked(show.id)
-  const posterImg = usePoster(show.poster_path, show.name, 342)
+// ─── ShowCard — heart icon + rating badge (mirrors HomePage pattern) ──────────
+function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = 'normal', ratingsMap = {} }) {
+  const tracked    = isTracked(show.id)
+  const posterImg  = usePoster(show.poster_path, show.name, 342)
+  const rating     = show.content_rating || ratingsMap[show.id] || ''
+
   return (
     <div className="group relative cursor-pointer"
       onClick={() => window.location.href = `/details/${show.id}`}>
+
       <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-3 bg-slate-800">
         <img {...posterImg} alt={show.name}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"/>
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"/>
-        {isAuthenticated && (
-          <button onClick={e => { e.stopPropagation(); onTrack(show) }}
-            disabled={!tracked && atLimit}
-            className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all opacity-0 group-hover:opacity-100 whitespace-nowrap
-              ${tracked ? 'bg-cyan-500 text-slate-950'
-                : atLimit ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                : 'bg-slate-900/90 text-white border border-white/20 hover:bg-cyan-500 hover:text-slate-950'}`}>
-            {tracked ? '✓ Tracking' : '+ Track'}
-          </button>
+
+        {/* Hover gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"/>
+
+        {/* ── Heart button — always visible, top-right ── */}
+        <button
+          onClick={e => {
+            e.stopPropagation()
+            if (!isAuthenticated) { window.location.href = '/auth/login'; return }
+            onTrack(show)
+          }}
+          disabled={isAuthenticated && !tracked && atLimit}
+          aria-label={tracked ? 'Untrack show' : 'Track show'}
+          className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-lg
+            ${tracked
+              ? 'bg-pink-500 text-white'
+              : isAuthenticated && atLimit
+                ? 'bg-slate-900/70 text-slate-600 cursor-not-allowed'
+                : 'bg-slate-900/70 text-slate-300 hover:bg-pink-500/90 hover:text-white'
+            }`}
+        >
+          <i className={`fa-${tracked ? 'solid' : 'regular'} fa-heart text-xs`}/>
+        </button>
+
+        {/* ── Content rating badge — bottom-right ── */}
+        {rating && (
+          <span className={`absolute bottom-2 right-2 z-10 px-1.5 py-0.5 bg-slate-950/85 border rounded text-[9px] font-black tracking-widest backdrop-blur-sm ${ratingColor(rating)}`}>
+            {rating}
+          </span>
         )}
       </div>
+
       <h3 className={`font-bold text-white leading-snug mb-1 line-clamp-2 ${size === 'small' ? 'text-xs' : 'text-sm'}`}>
         {show.name}
       </h3>
@@ -103,13 +156,18 @@ function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthentica
         <p className="text-[9px] text-purple-400 font-black uppercase tracking-widest mt-1">{voteStr}</p>
       </div>
       {isAuthenticated && (
-        <button onClick={e => { e.stopPropagation(); onTrack(show) }}
+        <button
+          onClick={e => { e.stopPropagation(); onTrack(show) }}
           disabled={!tracked && atLimit}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-            ${tracked ? 'bg-cyan-500 text-slate-950'
-              : atLimit ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-              : 'bg-slate-800 border border-white/10 text-slate-200 hover:bg-cyan-500/20 hover:border-cyan-500/30 hover:text-cyan-400'}`}>
-          {tracked ? '✓' : '+'}
+          className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-lg
+            ${tracked
+              ? 'bg-pink-500 text-white'
+              : atLimit
+                ? 'bg-slate-900/70 text-slate-600 cursor-not-allowed'
+                : 'bg-slate-900/70 text-slate-300 hover:bg-pink-500/90 hover:text-white'
+            }`}
+        >
+          <i className={`fa-${tracked ? 'solid' : 'regular'} fa-heart text-xs`}/>
         </button>
       )}
     </div>
@@ -135,6 +193,12 @@ export function TrendingPage() {
   const [networkShows, setNetworkShows] = useState([])
   const [genreShows,   setGenreShows]   = useState([])
 
+  // Ratings maps — keyed by show id, populated after cards load
+  const [weekRatings,    setWeekRatings]    = useState({})
+  const [risingRatings,  setRisingRatings]  = useState({})
+  const [networkRatings, setNetworkRatings] = useState({})
+  const [genreRatings,   setGenreRatings]   = useState({})
+
   const [activeNetwork, setActiveNetwork] = useState(NETWORKS[0])
   const [activeGenre,   setActiveGenre]   = useState(GENRES[0])
   const [activeSection, setSection]       = useState('trending-week')
@@ -151,7 +215,7 @@ export function TrendingPage() {
 
   const cardProps = { isTracked, onTrack: handleTrack, atLimit, isAuthenticated }
 
-  // Trending this week + Rising (day vs week popularity delta proxy)
+  // ── Trending This Week + Rising ───────────────────────────────────────────
   useEffect(() => {
     setLoad('week', true)
     setLoad('rising', true)
@@ -160,13 +224,17 @@ export function TrendingPage() {
       tmdb('/trending/tv/day'),
     ]).then(([week, day]) => {
       setTrendingWeek(week)
-      // "Rising" = in day trending but ranked higher than their week position, or just day list deduped from week top-5
-      const weekIds = new Set(week.slice(0, 5).map(s => s.id))
+      const weekIds    = new Set(week.slice(0, 5).map(s => s.id))
       const risingShows = day.filter(s => !weekIds.has(s.id)).slice(0, 12)
-      setRising(risingShows.length >= 4 ? risingShows : day.slice(0, 12))
+      const finalRising = risingShows.length >= 4 ? risingShows : day.slice(0, 12)
+      setRising(finalRising)
+
+      // Non-blocking ratings enrichment — fires after cards render
+      fetchRatingsMap(week).then(setWeekRatings).catch(() => {})
+      fetchRatingsMap(finalRising).then(setRisingRatings).catch(() => {})
     }).catch(() => {}).finally(() => { setLoad('week', false); setLoad('rising', false) })
 
-    // Most Anticipated — upcoming shows sorted by popularity, premiere date in future
+    // Most Anticipated
     setLoad('anticipated', true)
     tmdb(`/discover/tv?sort_by=popularity.desc&first_air_date.gte=${todayISO()}&with_original_language=en`)
       .then(r => setAnticipated(r.slice(0, 12)))
@@ -174,20 +242,26 @@ export function TrendingPage() {
       .finally(() => setLoad('anticipated', false))
   }, [])
 
-  // By Network
+  // ── By Network ────────────────────────────────────────────────────────────
   useEffect(() => {
     setLoad('network', true)
     tmdb(`/discover/tv?sort_by=popularity.desc&with_networks=${activeNetwork.id}`)
-      .then(r => setNetworkShows(r))
+      .then(r => {
+        setNetworkShows(r)
+        fetchRatingsMap(r).then(setNetworkRatings).catch(() => {})
+      })
       .catch(() => {})
       .finally(() => setLoad('network', false))
   }, [activeNetwork])
 
-  // By Genre
+  // ── By Genre ──────────────────────────────────────────────────────────────
   useEffect(() => {
     setLoad('genre', true)
     tmdb(`/discover/tv?sort_by=popularity.desc&with_genres=${activeGenre.id}`)
-      .then(r => setGenreShows(r))
+      .then(r => {
+        setGenreShows(r)
+        fetchRatingsMap(r).then(setGenreRatings).catch(() => {})
+      })
       .catch(() => {})
       .finally(() => setLoad('genre', false))
   }, [activeGenre])
@@ -202,7 +276,7 @@ export function TrendingPage() {
 
   const SectionHeader = ({ icon, color, title, subtitle }) => (
     <div className="flex items-center gap-3 mb-5 border-b border-white/5 pb-4">
-      <i className={`fa-solid ${icon} ${color} text-lg`}></i>
+      <i className={`fa-solid ${icon} ${color} text-lg`}/>
       <h2 className="text-xl font-black text-white tracking-tighter uppercase">{title}</h2>
       {subtitle && <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">{subtitle}</span>}
     </div>
@@ -214,7 +288,7 @@ export function TrendingPage() {
 
         <div className="mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold uppercase tracking-widest mb-4">
-            <i className="fa-solid fa-fire animate-pulse"></i> Live Trending Intelligence
+            <i className="fa-solid fa-fire animate-pulse"/> Live Trending Intelligence
           </div>
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-3">What's Trending</h1>
           <p className="text-slate-400 text-base max-w-2xl">Real-time signals across TMDB popularity, weekly spikes, and upcoming premiere anticipation.</p>
@@ -230,7 +304,7 @@ export function TrendingPage() {
               }}
                 className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all
                   ${activeSection === t.id ? 'bg-white/8 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-                <i className={`fa-solid ${t.icon} ${t.color}`}></i>{t.label}
+                <i className={`fa-solid ${t.icon} ${t.color}`}/>{t.label}
               </button>
             ))}
           </div>
@@ -244,10 +318,14 @@ export function TrendingPage() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
-                {trendingWeek.slice(0, 3).map(s => <ShowCard key={s.id} show={s} size="normal" {...cardProps}/>)}
+                {trendingWeek.slice(0, 3).map(s => (
+                  <ShowCard key={s.id} show={s} size="normal" ratingsMap={weekRatings} {...cardProps}/>
+                ))}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
-                {trendingWeek.slice(3, 10).map(s => <ShowCard key={s.id} show={s} size="small" {...cardProps}/>)}
+                {trendingWeek.slice(3, 10).map(s => (
+                  <ShowCard key={s.id} show={s} size="small" ratingsMap={weekRatings} {...cardProps}/>
+                ))}
               </div>
             </>
           )}
@@ -261,17 +339,19 @@ export function TrendingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="animate-pulse bg-slate-800/40 rounded-2xl p-4 flex gap-4">
-                  <div className="bg-slate-700/50 rounded-xl w-16 h-24 flex-shrink-0"></div>
+                  <div className="bg-slate-700/50 rounded-xl w-16 h-24 flex-shrink-0"/>
                   <div className="flex-1 space-y-2 py-1">
-                    <div className="h-4 bg-slate-700/50 rounded w-3/4"></div>
-                    <div className="h-3 bg-slate-700/50 rounded w-1/2"></div>
+                    <div className="h-4 bg-slate-700/50 rounded w-3/4"/>
+                    <div className="h-3 bg-slate-700/50 rounded w-1/2"/>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {anticipated.map((s, i) => <AnticipatedCard key={s.id} show={s} rank={i + 1} {...cardProps}/>)}
+              {anticipated.map((s, i) => (
+                <AnticipatedCard key={s.id} show={s} rank={i + 1} {...cardProps}/>
+              ))}
             </div>
           )}
         </section>
@@ -283,7 +363,11 @@ export function TrendingPage() {
           {loading.rising ? (
             <div className={GRID_CLASS}>{Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i}/>)}</div>
           ) : (
-            <div className={GRID_CLASS}>{rising.map(s => <ShowCard key={s.id} show={s} {...cardProps}/>)}</div>
+            <div className={GRID_CLASS}>
+              {rising.map(s => (
+                <ShowCard key={s.id} show={s} ratingsMap={risingRatings} {...cardProps}/>
+              ))}
+            </div>
           )}
         </section>
 
@@ -304,7 +388,11 @@ export function TrendingPage() {
           {loading.network ? (
             <div className={GRID_CLASS}>{Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i}/>)}</div>
           ) : (
-            <div className={GRID_CLASS}>{networkShows.map(s => <ShowCard key={s.id} show={s} {...cardProps}/>)}</div>
+            <div className={GRID_CLASS}>
+              {networkShows.map(s => (
+                <ShowCard key={s.id} show={s} ratingsMap={networkRatings} {...cardProps}/>
+              ))}
+            </div>
           )}
         </section>
 
@@ -325,7 +413,11 @@ export function TrendingPage() {
           {loading.genre ? (
             <div className={GRID_CLASS}>{Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i}/>)}</div>
           ) : (
-            <div className={GRID_CLASS}>{genreShows.map(s => <ShowCard key={s.id} show={s} {...cardProps}/>)}</div>
+            <div className={GRID_CLASS}>
+              {genreShows.map(s => (
+                <ShowCard key={s.id} show={s} ratingsMap={genreRatings} {...cardProps}/>
+              ))}
+            </div>
           )}
         </section>
 

@@ -19,24 +19,44 @@ const ALERT_LABELS  = {
 const GENRES          = ['Drama','Comedy','Thriller','Sci-Fi','Crime','Horror','Fantasy','Documentary','Reality','Animation']
 const NETWORK_OPTIONS = ['Netflix','HBO / Max','Prime Video','Apple TV+','Hulu','Disney+','Peacock','Paramount+','AMC','FX','Showtime','BritBox','Starz']
 
+// ── Rating helpers ────────────────────────────────────────────────────────────
+function ratingColor(rating) {
+  if (!rating) return 'border-white/20 text-slate-400'
+  if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
+  if (rating === 'TV-14')  return 'border-orange-500/50 text-orange-400'
+  if (rating === 'TV-PG')  return 'border-yellow-500/50 text-yellow-400'
+  if (['TV-G','TV-Y','TV-Y7'].includes(rating)) return 'border-green-500/50 text-green-400'
+  return 'border-white/20 text-slate-400'
+}
+
 // ── ShowCard ──────────────────────────────────────────────────────────────────
 // v2.38: remove button always visible on mobile (touch has no hover)
+// Rating badge shown bottom-left (remove button is top-right)
 function ShowCard({ show, onRemove }) {
   const navigate = useNavigate()
   const poster   = usePoster(show?.poster_path ?? show?.poster, show?.name, 185)
   if (!show) return null
+  const rating = show.content_rating || ''
   return (
-    <div className="relative cursor-pointer" onClick={() => navigate(`/details/${show.id}`)}>
+    <div className="relative cursor-pointer group" onClick={() => navigate(`/details/${show.id}`)}>
       <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-2 bg-slate-800">
         <img {...poster} alt={show.name ?? ''} className="w-full h-full object-cover"/>
-        {/* Always visible on mobile (sm:opacity-0 sm:group-hover:opacity-100), visible always on touch */}
+
+        {/* Remove button — top-right, always visible on mobile */}
         <button
           onClick={e => { e.stopPropagation(); onRemove(show) }}
-          className="absolute top-1.5 right-1.5 w-7 h-7 bg-red-500/90 hover:bg-red-500 rounded-full flex items-center justify-center transition-opacity sm:opacity-0 sm:group-hover:opacity-100 group"
+          className="absolute top-1.5 right-1.5 w-7 h-7 bg-red-500/90 hover:bg-red-500 rounded-full flex items-center justify-center transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
           aria-label={`Remove ${show.name}`}
         >
           <i className="fa-solid fa-xmark text-white text-[10px]"/>
         </button>
+
+        {/* Rating badge — bottom-right */}
+        {rating && (
+          <span className={`absolute bottom-1.5 right-1.5 z-10 px-1.5 py-0.5 bg-slate-950/85 border rounded text-[9px] font-black tracking-widest backdrop-blur-sm ${ratingColor(rating)}`}>
+            {rating}
+          </span>
+        )}
       </div>
       <h3 className="text-[10px] sm:text-xs font-bold text-white truncate">{show.name ?? ''}</h3>
     </div>

@@ -10,6 +10,7 @@ import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
 import { API_BASE, IMAGE_BASE } from '@/config/aws'
 import { usePoster, createDefaultPoster } from '@/utils/poster'
+import { RatingBadge } from '@/utils/contentRating.jsx'
 import { getProviderUrl } from '@/utils/providers'
 
 const TMDB_KEY = '9e7202516e78494f2b18ec86d29a4309'

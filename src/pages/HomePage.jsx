@@ -36,15 +36,25 @@ function endOfWeek() {
   return d.toISOString().split('T')[0]
 }
 
+// ─── enrichWithNetwork — adds network + US content rating ────────────────────
 async function enrichWithNetwork(shows) {
   const details = await Promise.all(shows.map(s =>
-    fetch(`${TMDB}/tv/${s.id}?api_key=${TMDB_KEY}&language=en-US`)
-      .then(r => r.ok ? r.json() : null).catch(() => null)
+    Promise.all([
+      fetch(`${TMDB}/tv/${s.id}?api_key=${TMDB_KEY}&language=en-US`)
+        .then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${TMDB}/tv/${s.id}/content_ratings?api_key=${TMDB_KEY}`)
+        .then(r => r.ok ? r.json() : null).catch(() => null),
+    ])
   ))
-  return shows.map((s, i) => ({
-    ...s,
-    network: s.network || details[i]?.networks?.[0]?.name || '',
-  }))
+  return shows.map((s, i) => {
+    const [detail, ratings] = details[i]
+    const usRating = ratings?.results?.find(r => r.iso_3166_1 === 'US')?.rating || ''
+    return {
+      ...s,
+      network:        s.network || detail?.networks?.[0]?.name || '',
+      content_rating: usRating,
+    }
+  })
 }
 
 function dedupById(shows) {
@@ -72,6 +82,7 @@ function normalizeShow(s) {
     vote_average:   s.user_score ? s.user_score / 10 : (s.vote_average || 0),
     backdrop_path:  s.backdrop_path || null,
     season_number:  s.season_number || null,
+    content_rating: s.content_rating || '',
   }
 }
 
@@ -238,49 +249,87 @@ function SkeletonCard() {
   return <div className="animate-pulse"><div className="bg-slate-700/50 rounded-2xl aspect-[2/3] mb-3"></div><div className="h-4 bg-slate-700/50 rounded w-3/4 mb-2"></div><div className="h-3 bg-slate-700/50 rounded w-1/2"></div></div>
 }
 
+function ratingColor(rating) {
+  if (!rating) return 'border-white/20 text-slate-400'
+  if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
+  if (rating === 'TV-14')  return 'border-orange-500/50 text-orange-400'
+  if (rating === 'TV-PG')  return 'border-yellow-500/50 text-yellow-400'
+  if (['TV-G','TV-Y','TV-Y7'].includes(rating)) return 'border-green-500/50 text-green-400'
+  return 'border-white/20 text-slate-400'
+}
+
+// ─── ShowCard — heart icon + rating badge ────────────────────────────────────
 function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) {
   const tracked   = isTracked(show.id)
   const posterImg = usePoster(show.poster_path || show.poster, show.name, 342)
   const href      = detailUrl(show)
+
   return (
     <div className="group relative cursor-pointer" onClick={() => window.location.href = href}>
-      {rank!=null && (
+
+      {/* Rank badge */}
+      {rank != null && (
         <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-yellow-400 text-slate-950 text-xs font-black rounded-full flex items-center justify-center shadow-lg">
           {rank}
         </span>
       )}
+
       <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-3 bg-slate-800">
-        <img {...posterImg} alt={show.name}
+        <img
+          {...posterImg}
+          alt={show.name}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          loading="lazy"/>
+          loading="lazy"
+        />
+
+        {/* Hover gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"/>
 
-        {/* ── Heart icon — always visible, top-right corner ── */}
-        {isAuthenticated && (
-          <button
-            onClick={e => { e.stopPropagation(); onTrack(show) }}
-            disabled={!tracked && atLimit}
-            aria-label={tracked ? 'Untrack show' : 'Track show'}
-            className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-lg
-              ${tracked
-                ? 'bg-pink-500 text-white'
-                : atLimit
-                  ? 'bg-slate-900/70 text-slate-500 cursor-not-allowed'
-                  : 'bg-slate-900/70 text-slate-300 hover:bg-pink-500/80 hover:text-white'
-              }`}
-          >
-            <i className={`fa-${tracked ? 'solid' : 'regular'} fa-heart text-xs`}/>
-          </button>
+        {/* ── Heart button — always visible, top-right ── */}
+        <button
+          onClick={e => {
+            e.stopPropagation()
+            if (!isAuthenticated) { window.location.href = '/auth/login'; return }
+            onTrack(show)
+          }}
+          disabled={isAuthenticated && !tracked && atLimit}
+          aria-label={tracked ? 'Untrack show' : 'Track show'}
+          className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-lg
+            ${tracked
+              ? 'bg-pink-500 text-white'
+              : isAuthenticated && atLimit
+                ? 'bg-slate-900/70 text-slate-600 cursor-not-allowed'
+                : 'bg-slate-900/70 text-slate-300 hover:bg-pink-500/90 hover:text-white'
+            }`}
+        >
+          <i className={`fa-${tracked ? 'solid' : 'regular'} fa-heart text-xs`}/>
+        </button>
+
+        {/* ── Content rating badge — bottom-right ── */}
+        {show.content_rating && (
+          <span className={`absolute bottom-2 right-2 z-10 px-1.5 py-0.5 bg-slate-950/85 border rounded text-[9px] font-black tracking-widest backdrop-blur-sm ${ratingColor(show.content_rating)}`}>
+            {show.content_rating}
+          </span>
         )}
       </div>
-      <h3 className="text-xs sm:text-sm font-bold text-white leading-snug mb-1 line-clamp-2">{show.name}</h3>
-      {show.network && <p className="text-[10px] sm:text-xs font-medium text-slate-400 mb-0.5">{show.network}</p>}
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{(()=>{
+
+      {/* Title */}
+      <h3 className="text-xs sm:text-sm font-bold text-white leading-snug mb-1 line-clamp-2">
+        {show.name}
+      </h3>
+
+      {/* Network */}
+      {show.network && (
+        <p className="text-[10px] sm:text-xs font-medium text-slate-400 mb-0.5">{show.network}</p>
+      )}
+
+      {/* Date */}
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{(() => {
         const d = show.first_air_date || show.premiereDate
         if (!d) return 'TBA'
         try {
-          const dt = new Date(d.includes('T') ? d : d+'T12:00:00')
-          return isNaN(dt.getTime()) ? 'TBA' : dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+          const dt = new Date(d.includes('T') ? d : d + 'T12:00:00')
+          return isNaN(dt.getTime()) ? 'TBA' : dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
         } catch { return 'TBA' }
       })()}</p>
     </div>
