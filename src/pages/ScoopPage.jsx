@@ -297,11 +297,11 @@ export function ScoopPage() {
                 AI-Synthesized Intelligence
               </span>
             </div>
-            <h1 className="text-white font-black tracking-tight leading-none"
-              style={{fontSize:'clamp(2rem, 6vw, 4.5rem)', letterSpacing:'-0.02em'}}>
+            // AFTER
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-2">
               The Scoop
             </h1>
-            <p className="text-slate-500 text-sm mt-1.5">Real-time TV industry intelligence, synthesized by AI</p>
+            <p className="text-slate-300 text-sm mt-1.5">Real-time TV industry intelligence, synthesized by AI</p>
           </div>
 
           <div className="flex items-center gap-3 mb-1">
