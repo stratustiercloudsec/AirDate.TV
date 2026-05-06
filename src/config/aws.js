@@ -3,12 +3,12 @@ const hostname = window.location.hostname
 const origin   = window.location.origin   // e.g. https://main.d2l7c6jhjkopde.amplifyapp.com
 
 const isDev =
-  hostname === 'dev.airdate.tv'                               ||
-  hostname === 'localhost'                                    ||
-  hostname.match(/^\d+\.\d+\.\d+\.\d+$/)                    || // any raw IP (EC2)
-  hostname.endsWith('.amplifyapp.com')                       || // Amplify preview URLs
-  hostname.endsWith('.s3-website-us-east-1.amazonaws.com')  || // S3 static staging
-  hostname.endsWith('.s3-website.us-east-1.amazonaws.com')     // S3 alt region format
+  hostname === 'dev.airdate.tv'                              ||
+  hostname === 'localhost'                                   ||
+  hostname.match(/^\d+\.\d+\.\d+\.\d+$/)                   || // raw IP (EC2 dev)
+  hostname.endsWith('.s3-website-us-east-1.amazonaws.com')  ||
+  hostname.endsWith('.s3-website.us-east-1.amazonaws.com')
+  // NOTE: main.d2l7c6jhjkopde.amplifyapp.com = PROD — uses prod Cognito + Stripe
 
 // Dynamic redirect URI — always uses the ACTUAL current origin so Cognito
 // sends the auth code back to wherever the app is currently running.

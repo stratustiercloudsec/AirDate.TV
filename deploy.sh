@@ -12,13 +12,12 @@ REGION="us-east-1"
 # ── Environment toggle (default: staging)
 ENV="${1:-staging}"
 
-# In deploy.sh, fix both environments to reflect reality:
 if [ "$ENV" == "production" ]; then
-  BUCKET="stage.s3.airdate.tv"   # This IS prod — airdate.tv aliases here
-  CF_DIST="E790ECNWOI9EN"
+  BUCKET="stage.s3.airdate.tv"    # React app prod → d3t7gopk4cip9i.cloudfront.net
+  CF_DIST="E2FVOUR7O26Q7P"        # React app CloudFront — NOT E790ECNWOI9EN
 elif [ "$ENV" == "staging" ]; then
-  BUCKET="stage.s3.airdate.tv"   # Same bucket for now
-  CF_DIST="E790ECNWOI9EN"
+  BUCKET="stage.s3.airdate.tv"    # Same for now — Amplify handles its own
+  CF_DIST="E2FVOUR7O26Q7P"
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
