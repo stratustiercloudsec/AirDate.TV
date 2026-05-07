@@ -1,15 +1,7 @@
 // src/pages/UpdateSuccessPage.jsx
-// Shown after successful Stripe checkout — upgrade-success.html
 import { Link } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
-import { useEffect } from 'react'
 
 export function UpdateSuccessPage() {
-  const { loadSession } = useAuth()
-
-  // Re-load the session so the new Pro tier is reflected immediately
-  useEffect(() => { loadSession() }, [loadSession])
-
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center">
       <div className="text-center max-w-md mx-auto px-4">

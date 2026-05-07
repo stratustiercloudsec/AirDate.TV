@@ -1,16 +1,23 @@
 // src/context/NotificationContext.jsx
-// Fixed: correct API routes from aws apigatewayv2 get-routes output
 //
-// Actual routes:
-//   GET  /user/{sub}/notifications          ← fetch notifications
-//   PUT  /user/{sub}/notifications/read-all ← mark all read
-//   PUT  /user/{sub}/notifications/read     ← mark one read
+// Data shape from DynamoDB (airdate-notifications):
+//   PK: user_id (string)
+//   SK: created_at (ISO string)
+//   shows: [{ title, network, premiere_date, days_until, poster, id }]
+//   read: boolean
+//   alert_date: string
+//   type: "premiere_alert"
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { API_BASE } from '@/config/aws'
 
 const NotificationContext = createContext(null)
+
+// Resolve the correct user sub regardless of how AuthContext exposes it
+function getUserSub(user) {
+  return user?.sub ?? user?.userId ?? user?.username ?? ''
+}
 
 export function NotificationProvider({ children }) {
   const { token, user, isAuthenticated } = useAuth()
@@ -19,73 +26,76 @@ export function NotificationProvider({ children }) {
   const [loading,       setLoading]       = useState(false)
   const isFetching = useRef(false)
 
-  // ── Fetch notifications ────────────────────────────────────────────────────
+  // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchNotifications = useCallback(async () => {
-    if (!token || !isAuthenticated || !user?.sub || isFetching.current) return
+    const sub = getUserSub(user)
+    if (!token || !isAuthenticated || !sub || isFetching.current) return
     isFetching.current = true
     setLoading(true)
     try {
-      // Correct route: GET /user/{sub}/notifications
-      const res = await fetch(`${API_BASE}/user/${user.sub}/notifications`, {
-        method: 'GET',
+      const res = await fetch(`${API_BASE}/user/${sub}/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) return
       const data = await res.json()
-      const notifs = data.notifications ?? data.items ?? []
+
+      // Filter out any records with no shows (data integrity guard)
+      const notifs = (data.notifications ?? data.items ?? []).filter(
+        n => !n.shows || n.shows.length > 0
+      )
       setNotifications(notifs)
-      setUnreadCount(notifs.filter(n => !n.read).length)
+      setUnreadCount(data.unread_count ?? notifs.filter(n => !n.read).length)
     } catch {
-      // Silently fail — never log CORS/network errors
+      // Silently fail — never surface CORS / network errors to the user
     } finally {
       setLoading(false)
       isFetching.current = false
     }
-  }, [token, isAuthenticated, user?.sub])
+  }, [token, isAuthenticated, user?.sub, user?.userId, user?.username])
 
-  // Fetch on sign in, clear on sign out
   useEffect(() => {
-    if (isAuthenticated && token && user?.sub) {
+    if (isAuthenticated && token && getUserSub(user)) {
       fetchNotifications()
     } else {
       setNotifications([])
       setUnreadCount(0)
     }
-  }, [isAuthenticated, token, user?.sub])
+  }, [isAuthenticated, token, user?.sub, user?.userId, user?.username])
 
-  // ── Mark all read ──────────────────────────────────────────────────────────
+  // ── Mark all read ────────────────────────────────────────────────────────
   const markAllRead = useCallback(async () => {
-    if (!token || !user?.sub) return
-    // Optimistic update
+    const sub = getUserSub(user)
+    if (!token || !sub) return
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     setUnreadCount(0)
-    // Correct route: PUT /user/{sub}/notifications/read-all
-    fetch(`${API_BASE}/user/${user.sub}/notifications/read-all`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
+    fetch(`${API_BASE}/user/${sub}/notifications/read-all`, {
+      method:  'PUT',
+      headers: { Authorization: `Bearer ${token}` },
     }).catch(() => {})
-  }, [token, user?.sub])
+  }, [token, user?.sub, user?.userId, user?.username])
 
-  // ── Mark single notification read ──────────────────────────────────────────
-  const markRead = useCallback(async (notifId) => {
-    if (!token || !user?.sub) return
+  // ── Mark single read ─────────────────────────────────────────────────────
+  // Lambda expects { created_at } in the request body (not notifId)
+  // because created_at is the DynamoDB sort key
+  const markRead = useCallback(async (createdAt) => {
+    const sub = getUserSub(user)
+    if (!token || !sub || !createdAt) return
+
+    // Optimistic update keyed on created_at
     setNotifications(prev =>
-      prev.map(n => n.id === notifId ? { ...n, read: true } : n)
+      prev.map(n => n.created_at === createdAt ? { ...n, read: true } : n)
     )
     setUnreadCount(prev => Math.max(0, prev - 1))
-    // Correct route: PUT /user/{sub}/notifications/read
-    fetch(`${API_BASE}/user/${user.sub}/notifications/read`, {
-      method: 'PUT',
+
+    fetch(`${API_BASE}/user/${sub}/notifications/read`, {
+      method:  'PUT',
       headers: {
         'Content-Type':  'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization:   `Bearer ${token}`,
       },
-      body: JSON.stringify({ notifId }),
+      body: JSON.stringify({ created_at: createdAt }),
     }).catch(() => {})
-  }, [token, user?.sub])
+  }, [token, user?.sub, user?.userId, user?.username])
 
   return (
     <NotificationContext.Provider value={{
