@@ -47,7 +47,7 @@ export function usePushSubscription() {
     setIsSupported(true)
 
     navigator.serviceWorker
-      .register(`${API_BASE}/sw.js`, { scope: '/' })
+      .register('/sw.js', { scope: '/' })
       .then(async reg => {
         setSwReg(reg)
         const existing = await reg.pushManager.getSubscription()
