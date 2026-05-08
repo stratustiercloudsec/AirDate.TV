@@ -1,6 +1,5 @@
 // src/pages/AccountPage.jsx
-// v2.38 mobile fixes: card grid, always-visible remove button, responsive banner,
-// sidebar stacks on mobile, save button full-width on mobile
+// v2.39 — added Danger Zone / Delete Account flow
 import { useEffect, useState } from 'react'
 import { Link, useNavigate }   from 'react-router-dom'
 import { useAuth }             from '@/context/AuthContext'
@@ -19,7 +18,6 @@ const ALERT_LABELS  = {
 const GENRES          = ['Drama','Comedy','Thriller','Sci-Fi','Crime','Horror','Fantasy','Documentary','Reality','Animation']
 const NETWORK_OPTIONS = ['Netflix','HBO / Max','Prime Video','Apple TV+','Hulu','Disney+','Peacock','Paramount+','AMC','FX','Showtime','BritBox','Starz']
 
-// ── Rating helpers ────────────────────────────────────────────────────────────
 function ratingColor(rating) {
   if (!rating) return 'border-white/20 text-slate-400'
   if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
@@ -29,9 +27,6 @@ function ratingColor(rating) {
   return 'border-white/20 text-slate-400'
 }
 
-// ── ShowCard ──────────────────────────────────────────────────────────────────
-// v2.38: remove button always visible on mobile (touch has no hover)
-// Rating badge shown bottom-left (remove button is top-right)
 function ShowCard({ show, onRemove }) {
   const navigate = useNavigate()
   const poster   = usePoster(show?.poster_path ?? show?.poster, show?.name, 185)
@@ -41,8 +36,6 @@ function ShowCard({ show, onRemove }) {
     <div className="relative cursor-pointer group" onClick={() => navigate(`/details/${show.id}`)}>
       <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-2 bg-slate-800">
         <img {...poster} alt={show.name ?? ''} className="w-full h-full object-cover"/>
-
-        {/* Remove button — top-right, always visible on mobile */}
         <button
           onClick={e => { e.stopPropagation(); onRemove(show) }}
           className="absolute top-1.5 right-1.5 w-7 h-7 bg-red-500/90 hover:bg-red-500 rounded-full flex items-center justify-center transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
@@ -50,8 +43,6 @@ function ShowCard({ show, onRemove }) {
         >
           <i className="fa-solid fa-xmark text-white text-[10px]"/>
         </button>
-
-        {/* Rating badge — bottom-right */}
         {rating && (
           <span className={`absolute bottom-1.5 right-1.5 z-10 px-1.5 py-0.5 bg-slate-950/85 border rounded text-[9px] font-black tracking-widest backdrop-blur-sm ${ratingColor(rating)}`}>
             {rating}
@@ -68,6 +59,7 @@ export function AccountPage() {
   const { watchlist, toggleWatchlist } = useWatchlist()
   const navigate = useNavigate()
 
+  // ── State ─────────────────────────────────────────────────────────────────
   const [userData,        setUserData]      = useState(null)
   const [preferences,     setPreferences]   = useState({
     networks:      [],
@@ -77,10 +69,17 @@ export function AccountPage() {
   })
   const [networkInput,    setNetworkInput]   = useState('')
   const [toast,           setToast]         = useState(null)
+  const [prefSaving,      setPrefSaving]    = useState(false)
+  const [actionLoading,   setActionLoading] = useState(false)
+
+  // Subscription modals
   const [cancelModal,     setCancelModal]   = useState(false)
   const [reactivateModal, setReactivate]    = useState(false)
-  const [actionLoading,   setActionLoading] = useState(false)
-  const [prefSaving,      setPrefSaving]    = useState(false)
+
+  // Delete account modal
+  const [deleteModal,     setDeleteModal]   = useState(false)
+  const [deleteConfirm,   setDeleteConfirm] = useState('')
+  const [deleteLoading,   setDeleteLoading] = useState(false)
 
   const email = user?.email ?? ''
   const sub   = user?.sub   ?? ''
@@ -112,12 +111,12 @@ export function AccountPage() {
         .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : ''
 
-  async function handleLogout() { await signOut(); navigate('/') }
-
   const networks   = preferences.networks      ?? []
   const genrePrefs = preferences.genres        ?? []
   const notifsOn   = preferences.notifications ?? false
   const alertDays  = preferences.alertDays     ?? 1
+
+  async function handleLogout() { await signOut(); navigate('/') }
 
   function addNetwork() {
     if (!networkInput || networks.includes(networkInput)) return
@@ -188,10 +187,28 @@ export function AccountPage() {
     finally { setActionLoading(false) }
   }
 
+  async function confirmDelete() {
+    if (deleteConfirm !== 'DELETE') return
+    setDeleteLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/user/${sub}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      await signOut()
+      navigate('/')
+    } catch {
+      showToast('Could not delete account. Contact operations@airdate.tv.', 'red')
+      setDeleteLoading(false)
+      setDeleteModal(false)
+    }
+  }
+
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen">
 
-      {/* ── Upgrade banner — responsive ── */}
+      {/* ── Upgrade banner ── */}
       {isAuthenticated && !isProTier && (
         <div className="fixed top-16 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-xl border-b border-cyan-500/20 px-4 sm:px-6 py-2">
           <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-3">
@@ -221,20 +238,13 @@ export function AccountPage() {
       <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 pt-28 sm:pt-36 pb-6">
         <main className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-10">
 
-          {/* ── Sidebar ──
-              Mobile: horizontal profile strip (not sticky, not full-height card)
-              Desktop: sticky vertical sidebar card               ── */}
-
           {/* Mobile profile strip */}
           <div className="lg:hidden bg-slate-900/60 border border-white/10 rounded-2xl p-5 flex items-center gap-4">
             {user?.picture
-              ? <img src={user.picture} alt={user.name}
-                  className="w-14 h-14 rounded-full flex-shrink-0 object-cover border border-white/10"/>
+              ? <img src={user.picture} alt={user.name} className="w-14 h-14 rounded-full flex-shrink-0 object-cover border border-white/10"/>
               : (
                 <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex-shrink-0 flex items-center justify-center">
-                  <span className="text-xl font-black text-white">
-                    {(user?.name || email || '?')[0].toUpperCase()}
-                  </span>
+                  <span className="text-xl font-black text-white">{(user?.name || email || '?')[0].toUpperCase()}</span>
                 </div>
               )
             }
@@ -257,13 +267,10 @@ export function AccountPage() {
           <aside className="hidden lg:block lg:col-span-1">
             <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-8 text-center sticky top-24">
               {user?.picture
-                ? <img src={user.picture} alt={user.name}
-                    className="w-20 h-20 rounded-full mx-auto mb-5 object-cover shadow-2xl border border-white/10"/>
+                ? <img src={user.picture} alt={user.name} className="w-20 h-20 rounded-full mx-auto mb-5 object-cover shadow-2xl border border-white/10"/>
                 : (
                   <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full mx-auto mb-5 flex items-center justify-center shadow-2xl">
-                    <span className="text-3xl font-black text-white">
-                      {(user?.name || email || '?')[0].toUpperCase()}
-                    </span>
+                    <span className="text-3xl font-black text-white">{(user?.name || email || '?')[0].toUpperCase()}</span>
                   </div>
                 )
               }
@@ -307,7 +314,7 @@ export function AccountPage() {
               <i className="fa-solid fa-bolt absolute -right-4 -bottom-4 text-white/5 text-[10rem] rotate-12"/>
             </div>
 
-            {/* Subscription Card */}
+            {/* ── Subscription Card ── */}
             {userData && (
               <div>
                 {isProTier && !cancelPending && (
@@ -376,7 +383,7 @@ export function AccountPage() {
               </div>
             )}
 
-            {/* ── Tracked Productions ── */}
+            {/* ── Tracked Shows ── */}
             <div>
               <div className="flex items-center justify-between mb-5 sm:mb-6">
                 <div className="flex items-center gap-3">
@@ -389,15 +396,12 @@ export function AccountPage() {
                   </h2>
                 </div>
               </div>
-
               {watchlist.length === 0 ? (
                 <div className="text-center p-10 text-slate-500 text-sm uppercase tracking-widest border border-dashed border-white/5 rounded-2xl">
                   <i className="fa-solid fa-heart text-3xl text-slate-700 mb-3 block"/>
                   No shows tracked yet
                 </div>
               ) : (
-                // v2.38: 2-col on mobile so poster cards are usable, scale up from there
-                // ShowCard remove button is always visible on mobile (no hover on touch)
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 group">
                   {watchlist.filter(Boolean).map(show => (
                     <ShowCard key={show.id} show={show} onRemove={toggleWatchlist}/>
@@ -432,7 +436,6 @@ export function AccountPage() {
                       ))}
                     </div>
                   )}
-                  {/* Network select + add — stack on mobile */}
                   <div className="flex flex-col sm:flex-row gap-2">
                     <select value={networkInput} onChange={e => setNetworkInput(e.target.value)}
                       className="flex-1 bg-slate-800 border border-white/10 rounded-xl px-3 py-2.5 text-slate-200 text-xs font-bold focus:outline-none focus:border-cyan-500/50">
@@ -493,7 +496,6 @@ export function AccountPage() {
                         <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[9px] font-black uppercase tracking-widest rounded-full">Pro</span>
                       </div>
                       <p className="text-slate-400 text-xs mb-4">How far in advance do you want to be notified?</p>
-                      {/* 2-col on mobile, 4-col sm+ */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {ALERT_DAYS.map(d => (
                           <button key={d} onClick={() => handleSetAlertDays(d)}
@@ -510,7 +512,7 @@ export function AccountPage() {
                   )}
                 </div>
 
-                {/* Save — full width on mobile */}
+                {/* Save */}
                 <div className="flex justify-end">
                   <button onClick={savePreferences} disabled={prefSaving}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 text-xs font-black uppercase tracking-widest hover:bg-cyan-500/30 transition-all disabled:opacity-50">
@@ -518,6 +520,31 @@ export function AccountPage() {
                       ? <><i className="fa-solid fa-spinner fa-spin"/> Saving…</>
                       : <><i className="fa-solid fa-floppy-disk"/> Save Preferences</>
                     }
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Danger Zone ── */}
+            <div>
+              <div className="flex items-center gap-3 mb-5 sm:mb-6">
+                <div className="w-9 h-9 bg-red-500/20 rounded-xl flex items-center justify-center">
+                  <i className="fa-solid fa-triangle-exclamation text-red-400 text-sm"/>
+                </div>
+                <h2 className="text-white font-black text-base sm:text-lg uppercase tracking-widest">Danger Zone</h2>
+              </div>
+              <div className="bg-slate-900/60 border border-red-500/20 rounded-3xl p-5 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Delete Account</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
+                      Permanently remove your account, watchlist, and all personal data. This action cannot be undone.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { setDeleteModal(true); setDeleteConfirm('') }}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex-shrink-0">
+                    <i className="fa-solid fa-trash"/> Delete Account
                   </button>
                 </div>
               </div>
@@ -552,10 +579,7 @@ export function AccountPage() {
               </button>
               <button onClick={confirmCancel} disabled={actionLoading}
                 className="flex-1 h-12 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-xs font-bold uppercase tracking-widest hover:bg-red-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-60">
-                {actionLoading
-                  ? <i className="fa-solid fa-spinner fa-spin"/>
-                  : <><i className="fa-solid fa-xmark"/> Yes, Cancel Plan</>
-                }
+                {actionLoading ? <i className="fa-solid fa-spinner fa-spin"/> : <><i className="fa-solid fa-xmark"/> Yes, Cancel Plan</>}
               </button>
             </div>
           </div>
@@ -581,10 +605,52 @@ export function AccountPage() {
               </button>
               <button onClick={confirmReactivate} disabled={actionLoading}
                 className="flex-1 h-12 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-60">
-                {actionLoading
-                  ? <i className="fa-solid fa-spinner fa-spin"/>
-                  : <><i className="fa-solid fa-check"/> Yes, Keep Pro</>
-                }
+                {actionLoading ? <i className="fa-solid fa-spinner fa-spin"/> : <><i className="fa-solid fa-check"/> Yes, Keep Pro</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Account Modal ── */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={e => e.target === e.currentTarget && setDeleteModal(false)}>
+          <div className="bg-slate-900 border border-red-500/20 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
+            <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full mx-auto mb-5 flex items-center justify-center">
+              <i className="fa-solid fa-trash text-red-400 text-2xl"/>
+            </div>
+            <h3 className="text-white font-black text-xl text-center mb-2">Delete Your Account?</h3>
+            <p className="text-slate-400 text-sm text-center mb-6 leading-relaxed">
+              This will permanently delete your account, watchlist, preferences, and all personal data.{' '}
+              <span className="text-red-400 font-bold">This cannot be undone.</span>
+            </p>
+            <ul className="space-y-2 mb-6 bg-slate-800/40 border border-white/5 rounded-2xl p-4">
+              <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> Your watchlist will be permanently deleted</li>
+              <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> Your preferences and history will be removed</li>
+              <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> Active Pro subscriptions will be cancelled</li>
+              <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> You will be signed out immediately</li>
+            </ul>
+            <div className="mb-6">
+              <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">
+                Type <span className="text-red-400">DELETE</span> to confirm
+              </label>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={e => setDeleteConfirm(e.target.value)}
+                placeholder="DELETE"
+                className="w-full bg-slate-800 border border-white/10 focus:border-red-500/50 rounded-xl px-4 py-3 text-white text-sm font-bold placeholder-slate-600 focus:outline-none transition-colors"
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button onClick={() => setDeleteModal(false)}
+                className="flex-1 h-12 bg-slate-800 border border-white/10 rounded-xl text-slate-200 text-xs font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all">
+                Cancel
+              </button>
+              <button onClick={confirmDelete} disabled={deleteConfirm !== 'DELETE' || deleteLoading}
+                className="flex-1 h-12 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-xs font-bold uppercase tracking-widest hover:bg-red-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                {deleteLoading ? <i className="fa-solid fa-spinner fa-spin"/> : <><i className="fa-solid fa-trash"/> Delete Forever</>}
               </button>
             </div>
           </div>
