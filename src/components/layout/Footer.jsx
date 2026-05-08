@@ -18,7 +18,7 @@ export function Footer() {
       </div>
       <div className="flex flex-col md:flex-row justify-between items-center gap-x-6 gap-y-4 px-8 border-t border-white/5 pt-3">
         <div className="flex flex-wrap items-center gap-x-2 text-center md:text-left text-slate-400/80">
-          <span className="font-bold text-slate-400">© 2026 AirDate.</span>
+          <span className="font-bold text-slate-400">© 2026 AirDate.TV.</span>
           <span>All Rights Reserved.</span>
           <span className="mx-1 opacity-20">|</span>
           <span>Metadata Orchestration Platform</span>
@@ -33,6 +33,7 @@ export function Footer() {
           <Link to="/vision"  className="hover:text-cyan-400 transition-colors">Vision</Link>
           <Link to="/terms"   className="hover:text-cyan-400 transition-colors">Terms</Link>
           <Link to="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</Link>
+          <Link to="/faq" className="hover:text-cyan-400 transition-colors">FAQ</Link>
           <Link to="/contact" className="hover:text-cyan-400 transition-colors">Contact</Link>
         </div>
       </div>

@@ -16,8 +16,8 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { HomePage }              from '@/pages/HomePage'
 import { TrendingPage }          from '@/pages/TrendingPage'
 import { PremieresCalendarPage } from '@/pages/PremieresCalendarPage'
-import { ScoopPage } from '@/pages/ScoopPage'
-import { ScoopStoryPage } from '@/pages/ScoopStoryPage'
+import { ScoopPage }             from '@/pages/ScoopPage'
+import { ScoopStoryPage }        from '@/pages/ScoopStoryPage'
 import { ShowDetailPage }        from '@/pages/ShowDetailPage'
 import { ContactPage }           from '@/pages/ContactPage'
 import { VisionPage }            from '@/pages/VisionPage'
@@ -27,9 +27,10 @@ import { UpdatePage }            from '@/pages/UpdatePage'
 import { UpdateSuccessPage }     from '@/pages/UpdateSuccessPage'
 import { NotFoundPage }          from '@/pages/NotFoundPage'
 import { AboutPage }             from '@/pages/AboutPage'
+import { FAQPage }               from '@/pages/FAQPage'
 
 // ── Protected pages ─────────────────────────────────────────────────────────
-import { MyPulsePage }       from '@/pages/AccountPage'
+import { MyPulsePage }       from '@/pages/MyPulsePage'
 import { NotificationsPage } from '@/pages/NotificationsPage'
 
 // ── Auth pages ──────────────────────────────────────────────────────────────
@@ -38,7 +39,7 @@ import { SignUpPage }         from '@/pages/auth/SignUpPage'
 import { VerifyEmailPage }    from '@/pages/auth/VerifyEmailPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { CallbackPage }       from '@/pages/auth/CallbackPage'
-import { ProfilePage }        from '@/pages/auth/ProfilePage'
+import { AccountPage }        from '@/pages/AccountPage'
 
 export default function App() {
   return (
@@ -64,6 +65,7 @@ export default function App() {
                 <Route path="/upgrade"         element={<UpdatePage />} />
                 <Route path="/upgrade-success" element={<UpdateSuccessPage />} />
                 <Route path="/about"           element={<AboutPage />} />
+                <Route path="/faq"           element={<FAQPage />} />
 
                 {/* ── Auth routes (no Navbar wrapper needed — pages are self-contained) */}
                 <Route path="/auth/login"           element={<LoginPage />} />
@@ -74,7 +76,7 @@ export default function App() {
 
                 {/* ── Protected routes ─────────────────────────────────── */}
                 <Route path="/account" element={
-                  <ProtectedRoute><ProfilePage /></ProtectedRoute>
+                  <ProtectedRoute><AccountPage /></ProtectedRoute>
                 } />
                 <Route path="/pulse" element={
                   <ProtectedRoute><MyPulsePage /></ProtectedRoute>

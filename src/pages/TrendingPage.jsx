@@ -69,6 +69,23 @@ async function fetchRatingsMap(shows) {
   return map
 }
 
+async function fetchNetworksMap(shows) {
+  if (!shows?.length) return {}
+  const results = await Promise.allSettled(
+    shows.map(s =>
+      fetch(`${TMDB}/tv/${s.id}?api_key=${TMDB_KEY}&language=en-US`)
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null)
+    )
+  )
+  const map = {}
+  shows.forEach((s, i) => {
+    const data = results[i].status === 'fulfilled' ? results[i].value : null
+    map[s.id] = data?.networks?.[0]?.name || ''
+  })
+  return map
+}
+
 function SkeletonCard() {
   return (
     <div className="animate-pulse">
@@ -80,10 +97,11 @@ function SkeletonCard() {
 }
 
 // ─── ShowCard — heart icon + rating badge (mirrors HomePage pattern) ──────────
-function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = 'normal', ratingsMap = {} }) {
+function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = 'normal', ratingsMap = {}, networksMap = {} }) {
   const tracked    = isTracked(show.id)
   const posterImg  = usePoster(show.poster_path, show.name, 342)
   const rating     = show.content_rating || ratingsMap[show.id] || ''
+  const network    = show.network || networksMap[show.id] || ''
 
   return (
     <div className="group relative cursor-pointer"
@@ -128,6 +146,9 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = '
       <h3 className={`font-bold text-white leading-snug mb-1 line-clamp-2 ${size === 'small' ? 'text-xs' : 'text-sm'}`}>
         {show.name}
       </h3>
+      {network && (
+        <p className="text-[10px] sm:text-xs font-medium text-slate-400 mb-0.5">{network}</p>
+      )}
       {show.first_air_date && (
         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
           {new Date(show.first_air_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
@@ -144,7 +165,7 @@ function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthentica
   return (
     <div className="flex items-center gap-4 bg-slate-800/40 border border-white/5 rounded-2xl p-4 hover:border-cyan-500/20 transition-all cursor-pointer"
       onClick={() => window.location.href = `/details/${show.id}`}>
-      <span className="w-6 text-center text-[10px] font-black text-slate-400 flex-shrink-0">{rank}</span>
+      <span className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center text-white text-base font-black flex-shrink-0">{rank}</span>
       <img {...posterImg} alt={show.name} className="w-16 h-24 object-cover rounded-xl flex-shrink-0"/>
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-bold text-white truncate mb-1">{show.name}</h3>
@@ -198,6 +219,10 @@ export function TrendingPage() {
   const [risingRatings,  setRisingRatings]  = useState({})
   const [networkRatings, setNetworkRatings] = useState({})
   const [genreRatings,   setGenreRatings]   = useState({})
+  const [weekNetworks,    setWeekNetworks]    = useState({})
+  const [risingNetworks,  setRisingNetworks]  = useState({})
+  const [networkNetworks, setNetworkNetworks] = useState({})
+  const [genreNetworks,   setGenreNetworks]   = useState({})
 
   const [activeNetwork, setActiveNetwork] = useState(NETWORKS[0])
   const [activeGenre,   setActiveGenre]   = useState(GENRES[0])
@@ -232,6 +257,8 @@ export function TrendingPage() {
       // Non-blocking ratings enrichment — fires after cards render
       fetchRatingsMap(week).then(setWeekRatings).catch(() => {})
       fetchRatingsMap(finalRising).then(setRisingRatings).catch(() => {})
+      fetchNetworksMap(week).then(setWeekNetworks).catch(() => {})
+      fetchNetworksMap(finalRising).then(setRisingNetworks).catch(() => {})
     }).catch(() => {}).finally(() => { setLoad('week', false); setLoad('rising', false) })
 
     // Most Anticipated
@@ -249,6 +276,7 @@ export function TrendingPage() {
       .then(r => {
         setNetworkShows(r)
         fetchRatingsMap(r).then(setNetworkRatings).catch(() => {})
+        fetchNetworksMap(r).then(setNetworkNetworks).catch(() => {})
       })
       .catch(() => {})
       .finally(() => setLoad('network', false))
@@ -261,6 +289,7 @@ export function TrendingPage() {
       .then(r => {
         setGenreShows(r)
         fetchRatingsMap(r).then(setGenreRatings).catch(() => {})
+        fetchNetworksMap(r).then(setGenreNetworks).catch(() => {})
       })
       .catch(() => {})
       .finally(() => setLoad('genre', false))
@@ -319,12 +348,12 @@ export function TrendingPage() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
                 {trendingWeek.slice(0, 3).map(s => (
-                  <ShowCard key={s.id} show={s} size="normal" ratingsMap={weekRatings} {...cardProps}/>
+                  <ShowCard key={s.id} show={s} size="normal" ratingsMap={weekRatings} networksMap={weekNetworks} {...cardProps}/>
                 ))}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
                 {trendingWeek.slice(3, 10).map(s => (
-                  <ShowCard key={s.id} show={s} size="small" ratingsMap={weekRatings} {...cardProps}/>
+                  <ShowCard key={s.id} show={s} size="small" ratingsMap={weekRatings} networksMap={weekNetworks} {...cardProps}/>
                 ))}
               </div>
             </>
@@ -365,7 +394,7 @@ export function TrendingPage() {
           ) : (
             <div className={GRID_CLASS}>
               {rising.map(s => (
-                <ShowCard key={s.id} show={s} ratingsMap={risingRatings} {...cardProps}/>
+                <ShowCard key={s.id} show={s} ratingsMap={risingRatings} networksMap={risingNetworks} {...cardProps}/>
               ))}
             </div>
           )}
@@ -390,7 +419,7 @@ export function TrendingPage() {
           ) : (
             <div className={GRID_CLASS}>
               {networkShows.map(s => (
-                <ShowCard key={s.id} show={s} ratingsMap={networkRatings} {...cardProps}/>
+                <ShowCard key={s.id} show={s} ratingsMap={networkRatings} networksMap={networkNetworks} {...cardProps}/>
               ))}
             </div>
           )}
@@ -415,7 +444,7 @@ export function TrendingPage() {
           ) : (
             <div className={GRID_CLASS}>
               {genreShows.map(s => (
-                <ShowCard key={s.id} show={s} ratingsMap={genreRatings} {...cardProps}/>
+                <ShowCard key={s.id} show={s} ratingsMap={genreRatings} networksMap={genreNetworks} {...cardProps}/>
               ))}
             </div>
           )}

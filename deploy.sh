@@ -1,9 +1,11 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# AirDate.tv — Safe Deploy Script v2.0
-# Protects all Lambda-written S3 paths from --delete wipes
-# Waits for CloudFront invalidation to complete before declaring success
-# Runs smoke test to verify site is live
+# AirDate.tv — Safe Deploy Script v3.0
+# - Wipes Vite transform cache before every build (fixes stale JS bundles)
+# - Forces no-cache headers on HTML + JS/CSS assets
+# - Protects all Lambda-written S3 paths from --delete wipes
+# - Waits for CloudFront invalidation to complete before declaring success
+# - Runs smoke test to verify site is live
 # Usage: bash deploy.sh [staging|production]
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
@@ -34,7 +36,7 @@ else
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  AirDate Safe Deploy v2.0"
+echo "  AirDate Safe Deploy v3.0"
 echo "  Environment : ${ENV}"
 echo "  Bucket      : ${BUCKET}"
 echo "  CF Dist     : ${CF_DIST}"
@@ -63,17 +65,30 @@ else
   echo "✅  stories/ folder — ${STORY_FILE_COUNT} files"
 fi
 
-# ── Step 2: Build ─────────────────────────────────────────────────────────────
+# ── Step 2: Clean build (wipe Vite cache first) ───────────────────────────────
 echo ""
-echo "2/6  Building with VITE_SCOOP_MANIFEST_URL=${VITE_SCOOP_MANIFEST_URL}..."
+echo "2/6  Clearing Vite cache + building..."
+echo "     Wiping node_modules/.vite and dist/..."
+rm -rf node_modules/.vite dist
+echo "✅  Cache cleared"
+
 VITE_SCOOP_MANIFEST_URL=${VITE_SCOOP_MANIFEST_URL} npm run build
 echo "✅  Build complete"
 
-# ── Step 3: Sync (protected paths excluded) ───────────────────────────────────
+# ── Step 3: Sync HTML with no-cache headers ───────────────────────────────────
 echo ""
 echo "3/6  Syncing dist/ → s3://${BUCKET}/"
-echo "     Protected: scoop/*, scoop/stories/*, images/*, assets/og/*, .well-known/*"
+echo "     Protected: scoop/*, images/*, assets/og/*, .well-known/*"
 
+# index.html — always no-cache so browser never serves stale HTML
+aws s3 cp dist/index.html s3://${BUCKET}/index.html \
+  --profile ${PROFILE} \
+  --region ${REGION} \
+  --content-type "text/html" \
+  --cache-control "no-cache, no-store, must-revalidate"
+
+# JS/CSS assets — content-hashed filenames, long cache is fine
+# but we force upload to ensure S3 is fresh
 aws s3 sync dist/ s3://${BUCKET}/ \
   --profile ${PROFILE} \
   --region ${REGION} \
@@ -85,7 +100,8 @@ aws s3 sync dist/ s3://${BUCKET}/ \
   --exclude "images/*" \
   --exclude "assets/og/*" \
   --exclude "assets/images/no-poster.png" \
-  --exclude ".well-known/*"
+  --exclude ".well-known/*" \
+  --exclude "index.html"
 
 echo "✅  Sync complete"
 
@@ -99,12 +115,12 @@ STORY_FILES_AFTER=$(aws s3 ls s3://${BUCKET}/scoop/stories/ \
   --profile ${PROFILE} --region ${REGION} 2>/dev/null | wc -l)
 
 if [ "$STORY_JSON_AFTER" -eq "0" ]; then
-  echo "🔴  CRITICAL: scoop/stories.json was WIPED — restoring from airdate.tv..."
+  echo "🔴  CRITICAL: scoop/stories.json was WIPED — restoring..."
   aws s3 sync s3://airdate.tv/scoop/ s3://${BUCKET}/scoop/ \
     --content-type application/json \
     --cache-control "max-age=900" \
     --profile ${PROFILE} --region ${REGION}
-  echo "✅  Restored from airdate.tv"
+  echo "✅  Restored"
 else
   echo "✅  stories.json intact (${STORY_COUNT} stories)"
   echo "✅  stories/ files intact (${STORY_FILES_AFTER} files)"
@@ -132,17 +148,16 @@ echo "✅  CloudFront invalidation complete"
 # ── Step 6: Smoke test ────────────────────────────────────────────────────────
 echo ""
 echo "6/6  Smoke test: ${SMOKE_URL}..."
-sleep 5
+sleep 3
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${SMOKE_URL}" 2>/dev/null)
 if [ "$HTTP_CODE" == "200" ]; then
   echo "✅  Smoke test passed (HTTP ${HTTP_CODE})"
 else
-  echo "🔴  Smoke test FAILED (HTTP ${HTTP_CODE}) — check CloudFront and S3"
-  echo "    Manual check: curl -I ${SMOKE_URL}"
+  echo "🔴  Smoke test FAILED (HTTP ${HTTP_CODE})"
   exit 1
 fi
 
-# ── Production: also trigger Amplify rebuild ──────────────────────────────────
+# ── Production: trigger Amplify rebuild ──────────────────────────────────────
 if [ "$ENV" == "production" ] && [ -n "$AMPLIFY_APP_ID" ]; then
   echo ""
   echo "  Triggering Amplify rebuild for airdate.tv..."
@@ -154,7 +169,6 @@ if [ "$ENV" == "production" ] && [ -n "$AMPLIFY_APP_ID" ]; then
     --region ${REGION} \
     --query 'jobSummary.jobId' --output text)
   echo "✅  Amplify job ${JOB_ID} triggered"
-  echo "    Monitor: aws amplify get-job --app-id ${AMPLIFY_APP_ID} --branch-name ${AMPLIFY_BRANCH} --job-id ${JOB_ID} --profile ${PROFILE} --region ${REGION} --query 'job.summary.status' --output text"
 fi
 
 echo ""
