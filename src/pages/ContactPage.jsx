@@ -1,4 +1,5 @@
-// src/pages/ContactPage.jsx — v2.0
+// src/pages/ContactPage.jsx — v3.0
+// Consolidated to support@airdate.tv — honeypot bot protection added
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Footer } from '@/components/layout/Footer'
@@ -12,41 +13,12 @@ const INQUIRY_TYPES = [
   { value: 'error',       label: 'Report an Issue' },
 ]
 
-const CONTACT_CARDS = [
-  {
-    icon:    'fa-solid fa-envelope',
-    color:   'text-cyan-400',
-    bg:      'bg-cyan-500/10',
-    border:  'border-cyan-500/20',
-    label:   'General Inquiries',
-    value:   'hello@airdate.tv',
-    href:    'mailto:hello@airdate.tv',
-  },
-  {
-    icon:    'fa-solid fa-handshake',
-    color:   'text-purple-400',
-    bg:      'bg-purple-500/10',
-    border:  'border-purple-500/20',
-    label:   'Partnerships',
-    value:   'partners@airdate.tv',
-    href:    'mailto:partners@airdate.tv',
-  },
-  {
-    icon:    'fa-solid fa-circle-question',
-    color:   'text-pink-400',
-    bg:      'bg-pink-500/10',
-    border:  'border-pink-500/20',
-    label:   'Support',
-    value:   'support@airdate.tv',
-    href:    'mailto:support@airdate.tv',
-  },
-]
-
 export function ContactPage() {
-  const [form, setForm]       = useState({ name: '', email: '', type: 'general', message: '' })
-  const [submitting, setSub]  = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError]     = useState('')
+  const [form, setForm]         = useState({ name: '', email: '', type: 'general', message: '' })
+  const [honeypot, setHoneypot] = useState('')  // bot trap — never filled by humans
+  const [submitting, setSub]    = useState(false)
+  const [success, setSuccess]   = useState(false)
+  const [error, setError]       = useState('')
 
   function handleChange(e) {
     const key = e.target.id.replace('form-', '')
@@ -55,6 +27,7 @@ export function ContactPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (honeypot) return  // silently reject bots
     setSub(true); setError('')
     try {
       await fetch(`${API_BASE}/contact`, {
@@ -64,7 +37,7 @@ export function ContactPage() {
       })
       setSuccess(true)
     } catch {
-      setError('Something went wrong. Email us directly at hello@airdate.tv')
+      setError('Something went wrong. Email us directly at support@airdate.tv')
     } finally {
       setSub(false)
     }
@@ -74,70 +47,75 @@ export function ContactPage() {
     <div className="bg-slate-950 text-slate-100 min-h-screen">
       <div className="w-full max-w-[1400px] mx-auto px-6 pt-28 pb-20">
 
-        {/* ── Breadcrumb ─────────────────────────────────────────────── */}
+        {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-16">
           <Link to="/" className="hover:text-slate-300 transition-colors">Home</Link>
           <i className="fa-solid fa-chevron-right text-[7px]"></i>
           <span className="text-slate-400">Contact</span>
         </div>
 
-        {/* ── Page header ────────────────────────────────────────────── */}
+        {/* Page header */}
         <div className="mb-16">
           <div className="flex items-center gap-3 mb-4">
             <span className="w-10 h-px bg-cyan-400"></span>
             <span className="text-cyan-400 text-[10px] font-black uppercase tracking-[0.3em]">Get in Touch</span>
           </div>
-          <h1 className="text-white font-black tracking-tight leading-none normal-case"
+          <h1 className="text-white font-black tracking-tight leading-none normal-case mb-4"
             style={{fontSize:'clamp(2rem, 4vw, 3rem)', letterSpacing:'-0.02em'}}>
             Let's Talk.
           </h1>
-                    <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
+          <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
             Whether you're a network, streamer, journalist, or fan — we want to hear from you.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
 
-          {/* ── Left column ────────────────────────────────────────────── */}
+          {/* Left column */}
           <div className="lg:col-span-2 space-y-10">
 
-            {/* Contact cards */}
+            {/* Single contact card */}
+            <a href="mailto:support@airdate.tv"
+              className="flex items-center gap-4 p-5 bg-slate-900/50 border border-cyan-500/20 rounded-2xl hover:bg-slate-900/80 transition-all group">
+              <div className="w-11 h-11 bg-cyan-500/10 border border-cyan-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i className="fa-solid fa-envelope text-cyan-400 text-base"></i>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-0.5">Email Us</p>
+                <p className="text-sm font-bold text-cyan-400 group-hover:underline truncate">support@airdate.tv</p>
+              </div>
+              <i className="fa-solid fa-arrow-up-right text-slate-600 text-[10px] ml-auto group-hover:text-slate-400 transition-colors"></i>
+            </a>
+
+            <div className="h-px bg-white/5"></div>
+
+            {/* What to expect */}
             <div className="space-y-4">
-              {CONTACT_CARDS.map(card => (
-                <a key={card.value} href={card.href}
-                  className={`flex items-center gap-4 p-5 bg-slate-900/50 border ${card.border} rounded-2xl hover:bg-slate-900/80 transition-all group`}>
-                  <div className={`w-11 h-11 ${card.bg} border ${card.border} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                    <i className={`${card.icon} ${card.color} text-base`}></i>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-0.5">{card.label}</p>
-                    <p className={`text-sm font-bold ${card.color} group-hover:underline truncate`}>{card.value}</p>
-                  </div>
-                  <i className="fa-solid fa-arrow-up-right text-slate-600 text-[10px] ml-auto group-hover:text-slate-400 transition-colors"></i>
-                </a>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">What to Expect</p>
+              {[
+                { icon: 'fa-clock',               color: 'text-cyan-400',  text: 'We typically respond within 1–2 business days.' },
+                { icon: 'fa-triangle-exclamation', color: 'text-amber-400', text: 'For urgent issues, select "Report an Issue" and we\'ll prioritize your message.' },
+                { icon: 'fa-shield-halved',        color: 'text-green-400', text: 'Your message is never shared or sold to third parties.' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <i className={`fa-solid ${item.icon} ${item.color} text-xs mt-1 flex-shrink-0`}></i>
+                  <p className="text-slate-400 text-xs leading-relaxed">{item.text}</p>
+                </div>
               ))}
             </div>
 
-            {/* Divider */}
             <div className="h-px bg-white/5"></div>
-
-            {/* Response time note */}
-            <div className="flex items-start gap-3 px-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse mt-1.5 flex-shrink-0"></span>
-              <p className="text-slate-500 text-xs leading-relaxed">
-                We typically respond within <span className="text-slate-300 font-bold">1–2 business days</span>.
-                For urgent data issues, use the "Report an Issue" type and we'll prioritize it.
-              </p>
-            </div>
 
             {/* Social links */}
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">Find Us</p>
               <div className="flex gap-3">
                 {[
-                  { icon:'fa-brands fa-x-twitter', href:'https://x.com/airdatetv',     label:'X' },
-                  { icon:'fa-brands fa-instagram',  href:'https://instagram.com/airdatetv', label:'Instagram' },
-                  { icon:'fa-brands fa-linkedin',   href:'https://linkedin.com/company/airdatetv', label:'LinkedIn' },
+                  { icon:'fa-brands fa-instagram', href:'https://www.instagram.com/airdatetv/', label:'Instagram' },
+                  { icon:'fa-brands fa-facebook',  href:'https://facebook.com/airdatetv',       label:'Facebook' },
+                  { icon:'fa-brands fa-tiktok',    href:'https://tiktok.com/@airdatetv',        label:'TikTok' },
+                  { icon:'fa-brands fa-youtube',   href:'https://youtube.com/@airdatetv',       label:'YouTube' },
+                  { icon:'fa-brands fa-x-twitter', href:'https://x.com/airdatetv',              label:'X' },
                 ].map(s => (
                   <a key={s.label} href={s.href} target="_blank" rel="noreferrer"
                     className="w-10 h-10 bg-slate-800/60 hover:bg-slate-700 border border-white/5 hover:border-cyan-500/20 rounded-xl flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-all">
@@ -148,7 +126,7 @@ export function ContactPage() {
             </div>
           </div>
 
-          {/* ── Right column — Form ─────────────────────────────────────── */}
+          {/* Right column — Form */}
           <div className="lg:col-span-3">
             {success ? (
               <div className="h-full flex flex-col items-center justify-center text-center bg-slate-900/40 border border-green-500/20 rounded-3xl p-16">
@@ -166,6 +144,20 @@ export function ContactPage() {
             ) : (
               <form onSubmit={handleSubmit}
                 className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 md:p-10 space-y-6">
+
+                {/* Honeypot — visually hidden, bots fill it, humans never see it */}
+                <div style={{position:'absolute', left:'-9999px', opacity:0, height:0, overflow:'hidden'}} aria-hidden="true">
+                  <label htmlFor="contact_url">Leave this empty</label>
+                  <input
+                    id="contact_url"
+                    name="contact_url"
+                    type="text"
+                    value={honeypot}
+                    onChange={e => setHoneypot(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                </div>
 
                 {/* Name + Email */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">

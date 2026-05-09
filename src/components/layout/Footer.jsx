@@ -5,10 +5,28 @@ export function Footer() {
   return (
     <footer className="w-full py-6 mt-16 border-t border-white/10 text-[11px] font-medium text-slate-400 uppercase tracking-widest bg-[#03060b]">
       <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 px-8 mb-2">
-        <Link to="/" className="flex flex-col items-center md:items-start flex-none">
-          <img src="/assets/images/official-airdate-logo.png" alt="AirDate" className="h-10 w-auto object-contain mb-1" />
-          <p className="text-slate-400 text-[9px] font-normal tracking-wider lowercase opacity-70">track tv premieres before they trend.</p>
-        </Link>
+        <div className="flex flex-col items-center md:items-start gap-3">
+          <div className="flex items-center gap-5">
+            <Link to="/" className="flex flex-col items-center md:items-start flex-none">
+              <img src="/assets/images/official-airdate-logo.png" alt="AirDate" className="h-10 w-auto object-contain mb-1" />
+              <p className="text-slate-400 text-[9px] font-normal tracking-wider lowercase opacity-70">track tv premieres before they trend.</p>
+            </Link>
+            <div className="flex gap-2.5">
+              {[
+                { icon: 'fa-brands fa-instagram', href: 'https://www.instagram.com/airdatetv/', label: 'Instagram' },
+                { icon: 'fa-brands fa-facebook',  href: 'https://facebook.com/airdatetv',       label: 'Facebook' },
+                { icon: 'fa-brands fa-tiktok',    href: 'https://tiktok.com/@airdatetv',        label: 'TikTok' },
+                { icon: 'fa-brands fa-youtube',   href: 'https://youtube.com/@airdatetv',       label: 'YouTube' },
+                { icon: 'fa-brands fa-x-twitter', href: 'https://x.com/airdatetv',              label: 'X' },
+              ].map(s => (
+                <a key={s.label} href={s.href} target="_blank" rel="noreferrer" aria-label={s.label}
+                  className="w-8 h-8 bg-slate-800/60 hover:bg-slate-700 border border-white/10 hover:border-cyan-500/30 rounded-lg flex items-center justify-center text-slate-300 hover:text-cyan-400 transition-all">
+                  <i className={`${s.icon} text-sm`}></i>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-x-8 gap-y-2 justify-center md:justify-end text-slate-400">
           <Link to="/trending"  className="hover:text-cyan-400 transition-colors">Trending</Link>
           <Link to="/premieres" className="hover:text-cyan-400 transition-colors">Premieres</Link>

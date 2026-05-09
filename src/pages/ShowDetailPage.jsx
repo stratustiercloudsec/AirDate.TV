@@ -40,8 +40,14 @@ function formatDate(s) {
 function formatScoop(raw) {
   if (!raw || typeof raw !== 'string') return raw
   let text = raw.trim()
+  // Strip "Here is a 382-word ... style." type preamble sentences
+  text = text.replace(/^Here(?:'s| is) a[^.!?]{0,300}[.!?]\s*/i, '')
+  // Strip residual "in an engaging insider style." sentence if still present
+  text = text.replace(/^[^.!?]{0,120}in an engaging insider style[^.!?]*[.!?]\s*/i, '')
+  // Strip "Here is a ... :" colon-terminated preamble
   text = text.replace(/^Here(?:'s| is) a[^:]{0,250}:\s*/i, '')
-  text = text.replace(/^Here(?:'s| is) a[^.!?\n]*[.!?]\s*/i, '')
+  // Strip any remaining "Here is/Here's" opener sentence
+  text = text.replace(/^Here(?:'s| is)[^.!?\n]*[.!?]\s*/i, '')
   return text.trim()
 }
 
@@ -474,7 +480,7 @@ function EpisodeIntelligence({ showId, showTitle, showData }) {
             body:JSON.stringify({series_title:`${showTitle} Season ${last.season_number} Episode ${last.episode_number}: ${last.name}`})})
             .then(r=>r.json()).then(raw=>{
               const d=gw(raw);const r=d.recap||null
-              if (r&&r.length>(last.overview?.length||0)+40) setRecap(r)
+              if (r&&r.length>(last.overview?.length||0)+40) setRecap(formatScoop(r))
             }).catch(()=>{})
         }
       } catch(e) { console.warn('[AirDate] Episode intelligence failed:',e);setEps({lastAired:null,nextAiring:null}) }
