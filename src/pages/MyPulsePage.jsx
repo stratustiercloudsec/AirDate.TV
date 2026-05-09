@@ -314,6 +314,30 @@ export function MyPulsePage() {
               <i className="fa-solid fa-bolt absolute -right-4 -bottom-4 text-white/5 text-[10rem] rotate-12"/>
             </div>
 
+
+            {/* ── Scoop Archive shortcut — Pro only ── */}
+            {isProTier && (
+              <div
+                onClick={() => navigate('/scoop/archive')}
+                className="cursor-pointer group bg-slate-900/60 border border-amber-500/20 hover:border-amber-500/40 rounded-3xl p-5 sm:p-6 transition-all hover:bg-slate-900/80">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500/20 transition-all">
+                      <i className="fa-solid fa-box-archive text-amber-400 text-lg"/>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-white font-black text-sm uppercase tracking-widest">Story Archive</p>
+                        <span className="bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">Pro</span>
+                      </div>
+                      <p className="text-slate-400 text-xs">30 days of AirDate TV Originals — every story, always accessible. Save your favorites.</p>
+                    </div>
+                  </div>
+                  <i className="fa-solid fa-arrow-right text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-1 transition-all flex-shrink-0"/>
+                </div>
+              </div>
+            )}
+
             {/* ── Subscription Card ── */}
             {userData && (
               <div>

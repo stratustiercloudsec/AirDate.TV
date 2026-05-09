@@ -5,6 +5,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Footer } from '@/components/layout/Footer'
+import { useAuth } from '@/context/AuthContext'
 
 import { SCOOP_MANIFEST_URL } from '../config/aws'
 const MANIFEST_URL = SCOOP_MANIFEST_URL
@@ -234,6 +235,10 @@ function SkeletonGrid({ n=8 }) {
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export function ScoopPage() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const isPro = user?.tier === 'pro' || user?.tier === 'premium'
+
   const [all,         setAll]         = useState([])
   const [feed,        setFeed]        = useState({})
   const [counts,      setCounts]      = useState({})
@@ -317,6 +322,14 @@ export function ScoopPage() {
               <i className={`fa-solid fa-rotate text-cyan-400 text-xs ${loading?'animate-spin':''}`}/>
               Refresh
             </button>
+            {isPro && (
+              <button
+                onClick={() => navigate('/scoop/archive')}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/40 rounded-xl text-amber-400 text-xs font-bold transition-all">
+                <i className="fa-solid fa-box-archive text-[10px]"/>
+                30-Day Archive
+              </button>
+            )}
           </div>
         </div>
 
