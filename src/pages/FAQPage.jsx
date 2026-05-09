@@ -13,7 +13,7 @@ const FAQ_SECTIONS = [
       { q: 'What is the difference between Free and Pro?', a: 'The Free plan lets you track up to 5 shows, browse the Premiere Calendar, and explore Trending & Top 10. Pro unlocks an unlimited watchlist, early premiere alerts, full access to The Scoop, and AI-powered show recaps.' },
       { q: 'Is there a free trial?', a: "AirDate's Free plan gives you full access to the core platform with no time limit — it's a genuine free tier, not a trial. Upgrade to Pro whenever you need unlimited tracking and The Scoop." },
       { q: 'Can I switch between monthly and annual billing?', a: 'Yes. You can switch from monthly to annual at any time — the annual plan takes effect at your next billing cycle. Contact operations@stratustierlabs.com for assistance.' },
-      { q: 'What happens to my watchlist if I downgrade?', a: "Your watchlist data is never deleted. You can still view all tracked shows, but you won't be able to add new ones beyond the 5-show free limit until you re-upgrade." },
+      { q: 'What happens to my watchlist if I downgrade?', a: "Your watchlist data is never deleted. You can still view all tracked shows, but you won't be able to add new ones beyond the 5-show free limit until you re-upgrade. Note: if you remove a tracked show while on the free tier, you won't be able to re-add it until you upgrade again." },
     ],
   },
   {

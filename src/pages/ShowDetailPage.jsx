@@ -528,7 +528,7 @@ function EpisodeIntelligence({ showId, showTitle, showData }) {
   )
 }
 
-// ─── Scoop (Tier 3 — never blocks) ───────────────────────────────────────────
+// ─── The Recap (Tier 3 — never blocks) ─────────────────────────────────────────
 function ScoopSection({ showId, showTitle }) {
   const [html, setHtml] = useState(null)
   useEffect(()=>{
@@ -544,7 +544,7 @@ function ScoopSection({ showId, showTitle }) {
     <section>
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-purple-500/10 rounded-lg"><i className="fa-solid fa-sparkles text-purple-400 text-xl"></i></div>
-        <h2 className="text-2xl font-black text-white uppercase tracking-tight">The Scoop</h2>
+        <h2 className="text-2xl font-black text-white uppercase tracking-tight">The Recap</h2>
       </div>
       <div className="bg-slate-800/40 rounded-2xl p-6 border border-white/10 min-h-[80px]">
         {html===null?(
@@ -902,7 +902,7 @@ export function ShowDetailPage() {
             {/* TIER 2: Episode Intelligence */}
             <EpisodeIntelligence showId={id} showTitle={show.name} showData={show}/>
 
-            {/* TIER 3: The Scoop — Bedrock RAG, never blocks */}
+            {/* TIER 3: The Recap — Bedrock RAG, never blocks */}
             <ScoopSection showId={id} showTitle={show.name}/>
 
             {/* Where to Watch */}
