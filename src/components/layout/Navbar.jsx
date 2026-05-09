@@ -67,7 +67,7 @@ export function Navbar() {
         {/* Logo */}
         <Link to="/" className="flex-shrink-0 transition-opacity hover:opacity-80">
           <img
-            src="/assets/images/official-airdate-logo.png"
+            src="/assets/images/adtv-logo.png"
             alt="AirDate"
             className="h-16 w-auto object-contain mb-1"
           />

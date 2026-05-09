@@ -8,7 +8,7 @@ export function Footer() {
         <div className="flex flex-col items-center md:items-start gap-3">
           <div className="flex items-center gap-5">
             <Link to="/" className="flex flex-col items-center md:items-start flex-none">
-              <img src="/assets/images/official-airdate-logo.png" alt="AirDate" className="h-10 w-auto object-contain mb-1" />
+              <img src="/assets/images/adtv-logo.png" alt="AirDate" className="h-10 w-auto object-contain mb-1" />
               <p className="text-slate-400 text-[9px] font-normal tracking-wider lowercase opacity-70">track tv premieres before they trend.</p>
             </Link>
             <div className="flex gap-2.5">

@@ -52,7 +52,7 @@ export function ForgotPasswordPage() {
   return (
     <div className="bg-slate-950 min-h-screen flex flex-col items-center justify-center px-4 py-12">
       <a href="/" className="flex flex-col items-center mb-10 group">
-        <img src="/assets/images/official-airdate-logo.png" alt="AirDate"
+        <img src="/assets/images/adtv-logo.png" alt="AirDate"
           className="h-14 w-auto object-contain mb-1 group-hover:opacity-80 transition-opacity"/>
       </a>
 

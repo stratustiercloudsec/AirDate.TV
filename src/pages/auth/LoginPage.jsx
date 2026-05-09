@@ -101,7 +101,7 @@ export function LoginPage() {
         {/* Logo */}
         <a href="/" className="flex flex-col items-center mb-10 group">
           <img
-            src="/assets/images/official-airdate-logo.png"
+            src="/assets/images/adtv-logo.png"
             alt="AirDate"
             className="h-14 w-auto object-contain mb-1 group-hover:opacity-80 transition-opacity"
           />

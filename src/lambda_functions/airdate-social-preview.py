@@ -100,7 +100,7 @@ function generateHTML(show) {
     const description = show.overview || show.description || 'Track this premiere on AirDate';
     const premiereDate = show.premiereDate || show.premiere;
     const network = show.network || 'Streaming';
-    const poster = show.poster || 'https://airdate.tv/assets/images/official-airdate-logo.png';
+    const poster = show.poster || 'https://airdate.tv/assets/images/adtv-logo.png';
     const showId = show.id;
     
     const fullTitle = `${title} - ${network} | AirDate`;

@@ -79,7 +79,7 @@ export function SignUpPage() {
         {/* Logo */}
         <a href="/" className="flex flex-col items-center mb-10 group">
           <img
-            src="/assets/images/official-airdate-logo.png" alt="AirDate"
+            src="/assets/images/adtv-logo.png" alt="AirDate"
             className="h-14 w-auto object-contain mb-1 group-hover:opacity-80 transition-opacity"
           />
           <p className="text-slate-400 text-xs tracking-widest uppercase font-bold">
