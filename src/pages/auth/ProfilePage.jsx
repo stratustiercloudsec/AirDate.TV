@@ -139,7 +139,7 @@ export function ProfilePage() {
               <div className="flex justify-end"><SaveButton loading={nameLoading} saved={nameSaved}/></div>
             </form>
           </div>
-          <div className="h-px bg-white/5"/>
+          <div className="h-px bg-transparent"/>
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Subscription</p>
             <h2 className="text-lg font-black text-white mb-6">Your Plan</h2>
@@ -161,7 +161,7 @@ export function ProfilePage() {
               )}
             </div>
           </div>
-          <div className="h-px bg-white/5"/>
+          <div className="h-px bg-transparent"/>
           {!isGoogleUser ? (
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Security</p>
@@ -216,7 +216,7 @@ export function ProfilePage() {
               </div>
             </div>
           )}
-          <div className="h-px bg-white/5"/>
+          <div className="h-px bg-transparent"/>
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Session</p>
             <h2 className="text-lg font-black text-white mb-6">Sign Out</h2>
@@ -227,7 +227,7 @@ export function ProfilePage() {
               </button>
             </div>
           </div>
-          <div className="h-px bg-white/5"/>
+          <div className="h-px bg-transparent"/>
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/60 mb-1">Danger Zone</p>
             <h2 className="text-lg font-black text-white mb-6">Delete Account</h2>

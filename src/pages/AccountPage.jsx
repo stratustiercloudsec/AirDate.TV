@@ -15,8 +15,8 @@ const PW_RULES = [
 
 function Section({ title, subtitle, children }) {
   return (
-    <div className="bg-slate-900 border border-white/8 rounded-3xl overflow-hidden">
-      <div className="px-5 sm:px-6 py-5 border-b border-white/8">
+    <div className="bg-slate-900 rounded-3xl overflow-hidden">
+      <div className="px-5 sm:px-6 py-5">
         <h2 className="text-base font-black text-white">{title}</h2>
         {subtitle && <p className="text-slate-400 text-xs mt-0.5">{subtitle}</p>}
       </div>
