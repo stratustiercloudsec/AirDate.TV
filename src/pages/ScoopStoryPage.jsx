@@ -67,7 +67,7 @@ function ProPaywall({ headline }) {
         </div>
         <p className="text-slate-600 text-[10px] mt-5">
           Already Pro?{' '}
-          <Link to="/login" className="text-cyan-600 hover:text-cyan-400 transition-colors">Sign in to continue reading →</Link>
+          <Link to="/auth/login" className="text-cyan-600 hover:text-cyan-400 transition-colors">Sign in to continue reading →</Link>
         </p>
       </div>
     </div>
