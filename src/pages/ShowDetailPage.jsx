@@ -51,6 +51,23 @@ function formatScoop(raw) {
   return text.trim()
 }
 
+function renderRecapMarkdown(raw) {
+  if (!raw || typeof raw !== 'string') return raw
+  const blocks = raw.trim().split(/\n\n+/)
+  return blocks.map(block => {
+    if (!block.trim()) return ''
+    let html = block
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\*\*([^*]+?:)\*\*/g,
+        '</p><p class="text-cyan-400 font-black text-xs uppercase tracking-widest mt-4 mb-1">$1</p><p class="text-slate-200 text-sm leading-relaxed mb-3">')
+      .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em class="italic text-slate-300">$1</em>')
+    return '<p class="text-slate-200 text-sm leading-relaxed mb-3">' + html + '</p>'
+  }).filter(Boolean).join('\n')
+}
+
+
+
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 function SkeletonHero() {
   return (
@@ -480,7 +497,7 @@ function EpisodeIntelligence({ showId, showTitle, showData }) {
             body:JSON.stringify({series_title:`${showTitle} Season ${last.season_number} Episode ${last.episode_number}: ${last.name}`})})
             .then(r=>r.json()).then(raw=>{
               const d=gw(raw);const r=d.recap||null
-              if (r&&r.length>(last.overview?.length||0)+40) setRecap(formatScoop(r))
+              if (r&&r.length>(last.overview?.length||0)+40) setRecap(renderRecapMarkdown(formatScoop(r)))
             }).catch(()=>{})
         }
       } catch(e) { console.warn('[AirDate] Episode intelligence failed:',e);setEps({lastAired:null,nextAiring:null}) }
@@ -543,7 +560,7 @@ function ScoopSection({ showId, showTitle }) {
       body:JSON.stringify({series_title:showTitle,tmdb_id:showId})})
       .then(r=>r.json()).then(raw=>{
         const d=gw(raw);const text=d.recap||d.intel||null
-        setHtml(text?formatScoop(text):'')
+        setHtml(text?renderRecapMarkdown(formatScoop(text)):'')
       }).catch(()=>setHtml(''))
   },[showId,showTitle])
   return (
