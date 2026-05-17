@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
 
 const SOCIAL = [
   { icon: 'fa-brands fa-instagram', href: 'https://www.instagram.com/airdatetv/', label: 'Instagram' },
@@ -10,47 +9,37 @@ const SOCIAL = [
 ]
 
 export function Footer() {
-  // Safe destructure — isAuthenticated defaults false if context unavailable
   let isAuthenticated = false
   try {
-    const auth = useAuth()
-    isAuthenticated = auth?.isAuthenticated ?? false
+    const s = localStorage.getItem('airdate_session')
+    if (s) { const p = JSON.parse(s); isAuthenticated = !!(p && p.AccessToken) }
   } catch (_) {}
-
   return (
     <footer className="w-full py-6 mt-16 border-t border-white/10 text-[11px] font-medium text-slate-400 uppercase tracking-widest bg-[#03060b]">
       <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 px-8 mb-2">
-
-        {/* ── Left: Logo + Social Icons ── */}
-        <div className="flex items-center gap-5">
+        <div style={{display:'flex',alignItems:'center',gap:'20px'}}>
           <Link to="/" className="flex flex-col items-center md:items-start flex-none">
             <img src="/assets/images/adtv-logo.png" alt="AirDate" className="h-10 w-auto object-contain mb-1" />
-            <p className="text-slate-400 text-[9px] font-normal tracking-wider lowercase opacity-70">
-              track tv premieres before they trend.
-            </p>
+            <p className="text-slate-400 text-[9px] font-normal tracking-wider lowercase opacity-70">track tv premieres before they trend.</p>
           </Link>
-          <div className="flex gap-2.5">
+          <div style={{display:'flex',gap:'10px'}}>
             {SOCIAL.map(s => (
               <a key={s.label} href={s.href} target="_blank" rel="noreferrer" aria-label={s.label}
-                className="w-8 h-8 bg-slate-800/60 hover:bg-slate-700 border border-white/10 hover:border-cyan-500/30 rounded-lg flex items-center justify-center text-slate-300 hover:text-cyan-400 transition-all">
-                <i className={`${s.icon} text-sm`}></i>
+                style={{width:'32px',height:'32px',borderRadius:'8px',display:'flex',alignItems:'center',
+                        justifyContent:'center',background:'rgba(30,41,59,0.6)',
+                        border:'1px solid rgba(255,255,255,0.1)',color:'#CBD5E1',textDecoration:'none'}}>
+                <i className={s.icon} style={{fontSize:'14px'}}></i>
               </a>
             ))}
           </div>
         </div>
-
-        {/* ── Right: Nav links ── */}
         <div className="flex flex-wrap gap-x-8 gap-y-2 justify-center md:justify-end text-slate-400">
           <Link to="/trending"  className="hover:text-cyan-400 transition-colors">Trending</Link>
           <Link to="/premieres" className="hover:text-cyan-400 transition-colors">Premieres</Link>
           <Link to="/scoop"     className="hover:text-cyan-400 transition-colors">The Scoop</Link>
-          {isAuthenticated && (
-            <Link to="/account" className="hover:text-cyan-400 transition-colors">My Pulse</Link>
-          )}
+          {isAuthenticated && <Link to="/account" className="hover:text-cyan-400 transition-colors">My Pulse</Link>}
         </div>
       </div>
-
-      {/* ── Bottom bar ── */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-x-6 gap-y-4 px-8 border-t border-white/5 pt-3">
         <div className="flex flex-wrap items-center gap-x-2 text-center md:text-left text-slate-400/80">
           <span className="font-bold text-slate-400">© 2026 AirDate.TV.</span>
@@ -75,3 +64,5 @@ export function Footer() {
     </footer>
   )
 }
+
+// v1779054460
