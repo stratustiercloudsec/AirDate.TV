@@ -6,9 +6,8 @@ import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
 import { API_BASE } from '@/config/aws'
 import { usePoster } from '@/utils/poster'
+import { tmdbFetch, tmdbShow, tmdbContentRatings, tmdbSearchTV, tmdbTrending, tmdbPopular, tmdbDiscover } from '../utils/tmdb'
 
-const TMDB_KEY = '9e7202516e78494f2b18ec86d29a4309'
-const TMDB     = 'https://api.themoviedb.org/3'
 const IMAGE_BASE = 'https://image.tmdb.org'
 
 const NEXT_MONTH_NETWORK_IDS = [
@@ -46,9 +45,9 @@ function endOfWeek() {
 async function enrichWithNetwork(shows) {
   const details = await Promise.all(shows.map(s =>
     Promise.all([
-      fetch(`${TMDB}/tv/${s.id}?api_key=${TMDB_KEY}&language=en-US`)
+      tmdbShow(s.id)
         .then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`${TMDB}/tv/${s.id}/content_ratings?api_key=${TMDB_KEY}`)
+      tmdbContentRatings(s.id)
         .then(r => r.ok ? r.json() : null).catch(() => null),
     ])
   ))
@@ -164,7 +163,7 @@ function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, sh
   const fetchSuggestions = useCallback(async (q) => {
     if (q.trim().length < 2) { setSuggestions([]); return }
     try {
-      const res  = await fetch(`${TMDB}/search/tv?api_key=${TMDB_KEY}&language=en-US&query=${encodeURIComponent(q)}&page=1`)
+      const res  = await tmdbSearchTV(encodeURIComponent(q), 1)
       const data = await res.json()
       const results = (data.results || []).slice(0, 8)
       results.sort((a,b) => fuzzyScore(q,b.name||'') - fuzzyScore(q,a.name||''))
@@ -403,23 +402,20 @@ export function HomePage() {
     const nmMonth = new Date(now.getFullYear(), now.getMonth()+1, 1).getMonth()+1
 
     setLoadTrend(true)
-    fetch(`${TMDB}/trending/tv/week?api_key=${TMDB_KEY}&language=en-US`)
-      .then(r=>r.json()).then(async d=>{
+    tmdbTrending('week').then(async d=>{
         const shows = (d.results||[]).slice(0,10).map(mapTMDB)
         setTrending(dedupById(await enrichWithNetwork(shows)))
       }).catch(()=>{}).finally(()=>setLoadTrend(false))
 
     setLoadTop10(true)
-    fetch(`${TMDB}/tv/popular?api_key=${TMDB_KEY}&language=en-US&page=1`)
-      .then(r=>r.json()).then(async d=>{
+    tmdbPopular(1).then(async d=>{
         const shows = (d.results||[]).slice(0,10).map(mapTMDB)
         setTop10(dedupById(await enrichWithNetwork(shows)))
       }).catch(()=>{}).finally(()=>setLoadTop10(false))
 
     setLoadWeek(true)
-    fetch(`${TMDB}/discover/tv?api_key=${TMDB_KEY}&language=en-US&sort_by=popularity.desc`+
-      `&first_air_date.gte=${startOfWeek()}&first_air_date.lte=${endOfWeek()}&with_original_language=en&page=1`)
-      .then(r=>r.json()).then(async d=>{
+    tmdbDiscover({ sort_by:'popularity.desc', 'first_air_date.gte':startOfWeek(), 'first_air_date.lte':endOfWeek(), with_original_language:'en', page:1 })
+      .then(async d=>{
         const shows = (d.results||[]).slice(0,20).map(mapTMDB)
         setThisWeek(dedupById(await enrichWithNetwork(shows)))
       }).catch(()=>{}).finally(()=>setLoadWeek(false))
@@ -428,19 +424,15 @@ export function HomePage() {
     const lastDay = new Date(nmYear, nmMonth, 0).getDate()
     const gte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-01`
     const lte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`
-    fetch(`${TMDB}/discover/tv?api_key=${TMDB_KEY}&language=en-US&sort_by=popularity.desc`+
-      `&with_original_language=en&with_networks=${encodeURIComponent(NEXT_MONTH_NETWORK_IDS)}`+
-      `&first_air_date.gte=${gte}&first_air_date.lte=${lte}&page=1`)
-      .then(r=>r.json()).then(async d=>{
+    tmdbDiscover({ sort_by:'popularity.desc', with_original_language:'en', with_networks:encodeURIComponent(NEXT_MONTH_NETWORK_IDS), 'first_air_date.gte':gte, 'first_air_date.lte':lte, page:1 })
+      .then(async d=>{
         const shows = (d.results||[]).slice(0,20).map(mapTMDB)
         setNextMonth(dedupById(await enrichWithNetwork(shows)))
       }).catch(()=>{}).finally(()=>setLoadMonth(false))
 
     setLoadTonight(true)
     const todayStr = new Date().toLocaleDateString('en-CA')
-    fetch(`${TMDB}/discover/tv?api_key=${TMDB_KEY}&language=en-US`+
-      `&sort_by=popularity.desc&first_air_date.gte=${todayStr}&first_air_date.lte=${todayStr}&page=1`)
-      .then(r => r.json())
+    tmdbDiscover({ sort_by:'popularity.desc', 'first_air_date.gte':todayStr, 'first_air_date.lte':todayStr, page:1 })
       .then(async d => {
         const shows = (d.results || []).map(mapTMDB)
         setPremieringTonight(dedupById(await enrichWithNetwork(shows)))
@@ -472,8 +464,7 @@ export function HomePage() {
       const data = parseGateway(gw)
       const results = (data.results ?? data.shows ?? []).map(normalizeShow)
       if (results.length === 0) {
-        const tmdbRes  = await fetch(`${TMDB}/search/tv?api_key=${TMDB_KEY}&language=en-US&query=${encodeURIComponent(q)}&page=${overridePage}`)
-        const tmdbData = await tmdbRes.json()
+        const tmdbData = await tmdbSearchTV(q, overridePage)
         setResults((tmdbData.results ?? []).map(mapTMDB))
         setHeader(`Results for "${q}"`)
         setCount(tmdbData.total_results ? `${tmdbData.total_results.toLocaleString()} results` : '')

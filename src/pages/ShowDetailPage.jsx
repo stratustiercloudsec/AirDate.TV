@@ -12,9 +12,7 @@ import { API_BASE, IMAGE_BASE } from '@/config/aws'
 import { usePoster, createDefaultPoster } from '@/utils/poster'
 import { RatingBadge } from '@/utils/contentRating.jsx'
 import { getProviderUrl } from '@/utils/providers'
-
-const TMDB_KEY = '9e7202516e78494f2b18ec86d29a4309'
-const TMDB     = 'https://api.themoviedb.org/3'
+import { tmdbShow, tmdbCredits, tmdbProviders, tmdbRecommendations, tmdbVideos, tmdbSeason, tmdbDiscover } from '../utils/tmdb'
 
 function gw(raw) {
   if (!raw) return {}
@@ -461,15 +459,13 @@ function EpisodeIntelligence({ showId, showTitle, showData }) {
         let currentSeason = showData?.next_episode_to_air?.season_number || showData?.last_episode_to_air?.season_number || null
         if (!currentSeason) {
           try {
-            const r=await fetch(`${TMDB}/tv/${showId}?api_key=${TMDB_KEY}`)
-            const d=await r.json()
+            const d=await tmdbShow(showId)
             currentSeason=d.last_episode_to_air?.season_number||d.number_of_seasons||1
           } catch { currentSeason=1 }
         }
         const seasons=currentSeason>1?[currentSeason-1,currentSeason]:[currentSeason]
         const fetched=await Promise.all(seasons.map(n=>
-          fetch(`${TMDB}/tv/${showId}/season/${n}?api_key=${TMDB_KEY}`)
-            .then(r=>r.ok?r.json():{episodes:[]})
+          tmdbSeason(showId, n)
             .then(d=>(d.episodes||[]).sort((a,b)=>a.episode_number-b.episode_number).map(ep=>{
               if (!ep.air_date) return ep
               const d2=new Date(ep.air_date+'T12:00:00');d2.setDate(d2.getDate()+1)
@@ -755,7 +751,7 @@ export function ShowDetailPage() {
       // Cleanup on unmount handled by React router navigation
 
       // ── Correct premiere date directly from TMDB (Lambda may have shifted streaming dates +1 day) ──
-      fetch(`${TMDB}/tv/${id}?api_key=${TMDB_KEY}&language=en-US`)
+      tmdbShow(id)
         .then(r=>r.json())
         .then(tmdbShow => {
           if (tmdbShow?.first_air_date) {
@@ -766,17 +762,17 @@ export function ShowDetailPage() {
       // ── TIER 2: All secondary data in parallel ─────────────────────────────
       Promise.all([
         // Credits — TMDB direct (Lambda credits returns empty results)
-        fetch(`${TMDB}/tv/${id}/credits?api_key=${TMDB_KEY}`).then(r=>r.json()).catch(()=>({})),
+        tmdbCredits(id),
         // Providers — Lambda first, fall back to TMDB if empty
         fetch(`${API_BASE}/show/${id}/providers`).then(r=>r.json()).then(gw).catch(()=>({})),
         // Recommendations — Lambda first, fall back to TMDB if empty
         fetch(`${API_BASE}/show/${id}/recommendations`).then(r=>r.json()).then(gw).catch(()=>({})),
         // Videos — direct TMDB (no Lambda route for this)
-        fetch(`${TMDB}/tv/${id}/videos?api_key=${TMDB_KEY}`).then(r=>r.json()).catch(()=>({})),
+        tmdbVideos(id),
         // TMDB providers fallback
-        fetch(`${TMDB}/tv/${id}/watch/providers?api_key=${TMDB_KEY}`).then(r=>r.json()).catch(()=>({})),
+        tmdbProviders(id),
         // TMDB recommendations fallback
-        fetch(`${TMDB}/tv/${id}/recommendations?api_key=${TMDB_KEY}&language=en-US&page=1`).then(r=>r.json()).catch(()=>({})),
+        tmdbRecommendations(id),
       ]).then(([castData,provData,recsData,videoData,tmdbProv,tmdbRecs])=>{
         // Cast
         setCast(castData.cast||[])

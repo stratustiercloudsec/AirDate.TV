@@ -5,9 +5,7 @@ import { useWatchlist } from '@/context/WatchlistContext'
 import { usePoster }    from '@/utils/poster'
 import { Footer }       from '@/components/layout/Footer'
 import { API_BASE }     from '@/config/aws'
-
-const TMDB_KEY = '9e7202516e78494f2b18ec86d29a4309'
-const TMDB     = 'https://api.themoviedb.org/3'
+import { tmdbFetch, tmdbShow, tmdbDiscover } from '../utils/tmdb'
 
 const NETWORK_MAP = {
   'Netflix':      [213],
@@ -118,7 +116,7 @@ async function batchFetchDetails(ids) {
     chunks.map(chunk =>
       Promise.all(
         chunk.map(id =>
-          fetch(`${TMDB}/tv/${id}?api_key=${TMDB_KEY}&language=en-US`)
+          tmdbShow(id)
             .then(r=>r.json())
             .then(d=>{ results[id]=d })
             .catch(()=>{})
@@ -188,9 +186,8 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
         ? (Object.entries(NETWORK_MAP).find(([,ids])=>ids.includes(networkId))?.[0] || '')
         : ''
 
-      const baseA = `${TMDB}/discover/tv?api_key=${TMDB_KEY}&language=en-US`
-        + `&first_air_date.gte=${qStart}&first_air_date.lte=${last}`
-        + `&sort_by=popularity.desc` + langFilter + netParam
+      const _proxyBase = 'https://21ave5trw7.execute-api.us-east-1.amazonaws.com/tmdb-proxy'
+      const baseA = `${_proxyBase}?path=/discover/tv&language=en-US&first_air_date.gte=${qStart}&first_air_date.lte=${last}&sort_by=popularity.desc` + langFilter.replace('&with_original_language','&with_original_language') + netParam
       const newShowsRaw = await fetchAllPages(baseA, 3)
       const newShows = newShowsRaw
         .map(s => ({
@@ -203,9 +200,7 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
         }))
         .filter(s => s.first_air_date >= first && s.first_air_date <= last)
 
-      const baseB = `${TMDB}/discover/tv?api_key=${TMDB_KEY}&language=en-US`
-        + `&air_date.gte=${qStart}&air_date.lte=${last}`
-        + `&sort_by=popularity.desc` + langFilter + netParam
+      const baseB = `${_proxyBase}?path=/discover/tv&language=en-US&air_date.gte=${qStart}&air_date.lte=${last}&sort_by=popularity.desc` + langFilter.replace('&with_original_language','&with_original_language') + netParam
       const airingShows = await fetchAllPages(baseB, 2)
 
       const newIds     = new Set(newShows.map(s=>s.id))
@@ -367,7 +362,7 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
       setError(false)
       try {
         const seasonNum = show._seasonNum || 1
-        const res  = await fetch(`${TMDB}/tv/${show.id}/season/${seasonNum}?api_key=${TMDB_KEY}&language=en-US`)
+        const res  = await tmdbSeason(show.id, seasonNum)
         const data = await res.json()
         const eps  = (data.episodes || [])
           .map(ep => ({ ...ep, air_date: shiftDate(ep.air_date) }))

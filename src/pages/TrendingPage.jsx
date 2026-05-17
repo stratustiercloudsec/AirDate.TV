@@ -4,9 +4,8 @@ import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
 import { usePoster }    from '@/utils/poster'
 import { Footer }       from '@/components/layout/Footer'
+import { tmdbFetch, tmdbShow, tmdbContentRatings, tmdbCredits, tmdbSeason } from '../utils/tmdb'
 
-const TMDB_KEY   = '9e7202516e78494f2b18ec86d29a4309'
-const TMDB       = 'https://api.themoviedb.org/3'
 const IMAGE_BASE = 'https://image.tmdb.org'
 
 // TMDB network IDs
@@ -56,7 +55,7 @@ async function fetchRatingsMap(shows) {
   if (!shows?.length) return {}
   const results = await Promise.allSettled(
     shows.map(s =>
-      fetch(`${TMDB}/tv/${s.id}/content_ratings?api_key=${TMDB_KEY}`)
+      tmdbContentRatings(s.id)
         .then(r => r.ok ? r.json() : null)
         .catch(() => null)
     )
@@ -73,7 +72,7 @@ async function fetchNetworksMap(shows) {
   if (!shows?.length) return {}
   const results = await Promise.allSettled(
     shows.map(s =>
-      fetch(`${TMDB}/tv/${s.id}?api_key=${TMDB_KEY}&language=en-US`)
+      tmdbShow(s.id)
         .then(r => r.ok ? r.json() : null)
         .catch(() => null)
     )
@@ -199,7 +198,7 @@ const GRID_CLASS = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-
 
 async function tmdb(path) {
   const sep = path.includes('?') ? '&' : '?'
-  const r = await fetch(`${TMDB}${path}${sep}api_key=${TMDB_KEY}&language=en-US`)
+  const r = await tmdbFetch(path, { language: 'en-US' })
   const d = await r.json()
   return d.results || []
 }
