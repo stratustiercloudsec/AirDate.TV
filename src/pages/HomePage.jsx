@@ -18,7 +18,7 @@ const NEXT_MONTH_NETWORK_IDS = [
 
 // Replace CHIPS const
 const CHIPS = [
-  'Premiering Tonight',
+  'Premiering Today',
   'Taylor Sheridan',
   'Netflix May 2026',
   'Marvel Cinematic TV Shows',
@@ -544,18 +544,18 @@ export function HomePage() {
             <div className="flex flex-wrap gap-2 mb-5">
               {CHIPS.map(chip => (
                 <button key={chip} onClick={() => {
-                  if (chip === 'Premiering Tonight') {
+                  if (chip === 'Premiering Today') {
                     setHeader('Premiering Tonight · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
                     setResults(premieringTonight)
                     setCount(premieringTonight.length + ' shows')
                     setTotalPages(1); setPage(1); setShowResults(true)
                   } else { setQuery(chip); handleSearch(chip) }
                 }}
-                  className={chip === 'Premiering Tonight'
+                  className={chip === 'Premiering Today'
                     ? "flex items-center gap-2 px-3 py-1.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 hover:border-red-400/60 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
                     : "px-3 py-1.5 bg-slate-800/60 hover:bg-slate-700 border border-white/10 hover:border-cyan-500/30 text-slate-200 hover:text-cyan-400 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all"
                   }>
-                  {chip === 'Premiering Tonight' ? (
+                  {chip === 'Premiering Today' ? (
                     <>
                       <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
