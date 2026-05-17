@@ -7,6 +7,7 @@ import { useWatchlist } from '@/context/WatchlistContext'
 import { API_BASE } from '@/config/aws'
 import { usePoster } from '@/utils/poster'
 import { tmdbFetch, tmdbShow, tmdbContentRatings, tmdbSearchTV, tmdbTrending, tmdbPopular, tmdbDiscover } from '../utils/tmdb'
+import { Footer } from '@/components/layout/Footer'
 
 const IMAGE_BASE = 'https://image.tmdb.org'
 
@@ -703,34 +704,7 @@ export function HomePage() {
           </aside>
         </div>
 
-        <footer className="w-full py-6 mt-16 border-t border-white/10 text-[11px] font-medium text-slate-400 uppercase tracking-widest">
-          <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 px-2 mb-2">
-            <a href="/" className="flex flex-col items-center md:items-start flex-none">
-              <img src="/assets/images/adtv-logo.png" alt="AirDate" className="h-10 w-auto object-contain mb-1"/>
-              <p className="text-slate-400 text-[9px] font-normal tracking-wider lowercase opacity-70">track tv premieres before they trend.</p>
-            </a>
-            <div className="flex flex-wrap gap-x-8 gap-y-2 justify-center md:justify-end">
-              {[['Trending','/trending'],['Premieres','/premieres'],['The Scoop','/scoop'],['My Pulse','/account']].map(([l,h])=>(
-                <a key={h} href={h} className="hover:text-cyan-400 transition-colors">{l}</a>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row justify-between items-center gap-x-6 gap-y-4 px-2 border-t border-white/5 pt-3">
-            <div className="flex flex-wrap items-center gap-x-2 text-center md:text-left text-slate-400/80">
-              <span className="font-bold text-slate-400">© 2026 AirDate.</span><span>All Rights Reserved.</span>
-              <span className="mx-1 opacity-20">|</span><span>Metadata Orchestration Platform</span>
-              <span className="mx-2 opacity-20 text-white">|</span>
-              <a href="https://stratustierlabs.com" target="_blank" rel="noreferrer" className="group">
-                ENGINEERED BY <span className="text-white font-black group-hover:text-cyan-400 transition-colors">STRATUSTIER</span>{' '}<span className="text-cyan-400">INNOVATION LABS</span>
-              </a>
-            </div>
-            <div className="flex gap-8 justify-center md:justify-end">
-              {[['Vision','/vision'],['Terms','/terms'],['Privacy','/privacy'],['Contact','/contact']].map(([l,h])=>(
-                <a key={h} href={h} className="hover:text-cyan-400 transition-colors">{l}</a>
-              ))}
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </div>
 
       {modal && (
