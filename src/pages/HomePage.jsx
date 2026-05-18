@@ -47,9 +47,9 @@ async function enrichWithNetwork(shows) {
   const details = await Promise.all(shows.map(s =>
     Promise.all([
       tmdbShow(s.id)
-        .then(r => r.ok ? r.json() : null).catch(() => null),
+        .then(r => (r && typeof r.json === 'function') ? r.json() : r).catch(() => null),
       tmdbContentRatings(s.id)
-        .then(r => r.ok ? r.json() : null).catch(() => null),
+        .then(r => (r && typeof r.json === 'function') ? r.json() : r).catch(() => null),
     ])
   ))
   return shows.map((s, i) => {
@@ -164,13 +164,14 @@ function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, sh
   const fetchSuggestions = useCallback(async (q) => {
     if (q.trim().length < 2) { setSuggestions([]); return }
     try {
-      const res  = await tmdbSearchTV(encodeURIComponent(q), 1)
-      const data = await res.json()
+      // tmdbFetch already returns parsed JSON — no .json() needed
+      const raw  = await tmdbSearchTV(encodeURIComponent(q), 1)
+      const data = (raw && typeof raw.json === 'function') ? await raw.json() : raw
       const results = (data.results || []).slice(0, 8)
       results.sort((a,b) => fuzzyScore(q,b.name||'') - fuzzyScore(q,a.name||''))
       setSuggestions(results)
       setShowSuggest(results.length > 0)
-    } catch { setSuggestions([]) }
+    } catch(e) { console.error('Suggestions failed', e); setSuggestions([]) }
   }, [])
 
   function handleChange(e) {
@@ -425,11 +426,15 @@ export function HomePage() {
     const lastDay = new Date(nmYear, nmMonth, 0).getDate()
     const gte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-01`
     const lte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`
-    tmdbDiscover({ sort_by:'popularity.desc', with_original_language:'en', with_networks:encodeURIComponent(NEXT_MONTH_NETWORK_IDS), 'first_air_date.gte':gte, 'first_air_date.lte':lte, page:1 })
-      .then(async d=>{
-        const shows = (d.results||[]).slice(0,20).map(mapTMDB)
-        setNextMonth(dedupById(await enrichWithNetwork(shows)))
-      }).catch(()=>{}).finally(()=>setLoadMonth(false))
+    const _nmBase = { sort_by:'popularity.desc', with_original_language:'en', with_networks:encodeURIComponent(NEXT_MONTH_NETWORK_IDS) }
+    // Pass A: new series (first_air_date) + Pass B: returning seasons (air_date)
+    Promise.all([
+      tmdbDiscover({ ..._nmBase, 'first_air_date.gte':gte, 'first_air_date.lte':lte, page:1 }),
+      tmdbDiscover({ ..._nmBase, 'air_date.gte':gte, 'air_date.lte':lte, page:1 }),
+    ]).then(async ([passA, passB]) => {
+      const combined = [...(passA.results||[]), ...(passB.results||[])].map(mapTMDB)
+      setNextMonth(dedupById(await enrichWithNetwork(combined)).slice(0,20))
+    }).catch(()=>{}).finally(()=>setLoadMonth(false))
 
     setLoadTonight(true)
     const todayStr = new Date().toLocaleDateString('en-CA')

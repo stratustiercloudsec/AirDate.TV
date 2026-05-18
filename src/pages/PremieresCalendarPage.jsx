@@ -41,6 +41,21 @@ const STREAMING_NETWORK_IDS = new Set([
 
 const STREAMING_NAME_KEYWORDS = ['netflix','apple tv','prime','hulu','disney','peacock','paramount','max','starz','tubi']
 
+// Curated show IDs per network — ensures high-profile returning seasons
+// are always checked regardless of TMDB discover limitations
+const CURATED_IDS = {
+  'Apple TV+':   [203744,95403,85765,97546,119051,125988,209867,125932,136311,76479,114461],
+  'Netflix':     [66732,100088,71446,76479,76669,63174,90462,203737,154385],
+  'HBO / Max':   [1399,94997,63351,37854,60735,83867,108978,202555,119051],
+  'Disney+':     [92782,114461,203085,202555,88396],
+  'Prime Video': [63639,83867,101299,110492,162854],
+  'Hulu':        [87108,97180,67915,154385],
+  'Peacock':     [100088,73586,2788],
+  'Paramount+':  [63174,60735,110492,73586],
+}
+
+
+
 function isStreaming(detail) {
   if ((detail?.networks || []).some(n => STREAMING_NETWORK_IDS.has(n.id))) return true
   return (detail?.networks || []).some(n =>
@@ -163,7 +178,7 @@ function findSeasonPremiereInRange(detail, first, last) {
   return seasons[0]
 }
 
-async function fetchMonthPremieres(year, month, networkIds=null) {
+async function fetchMonthPremieres(year, month, networkIds=null, selectedNetworkLabel=null) {
   const first = `${year}-${pad(month)}-01`
   const last  = `${year}-${pad(month)}-${new Date(year, month, 0).getDate()}`
 
@@ -206,19 +221,55 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
       const newIds     = new Set(newShows.map(s=>s.id))
       const candidates = airingShows.filter(s=>!newIds.has(s.id))
 
+      // Pass C: Popular returning shows (last 3 yrs) — catches S2+ that air_date discover misses
+      // Only run when a specific network is selected (not "All") to keep API calls reasonable
+      let passCCandidates = []
+      let candidateDetailsMerge = {}
+      // Pass C: resolve curated show IDs for this network to catch returning seasons
+      // that TMDB's discover API misses (e.g. Sugar S2 on Apple TV network ID 350)
+      if (netLabel && CURATED_IDS[netLabel]) {
+        try {
+          const existingIds = new Set([...newShows.map(s=>s.id), ...airingShows.map(s=>s.id)])
+          const curatedToFetch = CURATED_IDS[netLabel].filter(id => !existingIds.has(id))
+          console.log('[Curated] netLabel=' + netLabel + ' curatedToFetch=' + curatedToFetch.length + ' hasSugar=' + curatedToFetch.includes(203744) + ' sugarInExisting=' + existingIds.has(203744))
+          if (curatedToFetch.length > 0) {
+            const curatedDetails = await batchFetchDetails(curatedToFetch)
+            Object.assign(candidateDetailsMerge, curatedDetails)
+            passCCandidates = curatedToFetch
+              .filter(id => curatedDetails[id])
+              .map(id => ({ id, ...curatedDetails[id] }))
+            // Debug Sugar
+            if (curatedDetails[203744]) {
+              const sd = curatedDetails[203744]
+              const seasons = (sd.seasons||[]).map(s=>s.season_number+':'+s.air_date)
+              console.log('[Curated] Sugar detail found, seasons:', seasons, 'first='+first, 'last='+last)
+              const match = (sd.seasons||[]).find(s=>s.season_number>0&&s.air_date&&s.air_date>=first&&s.air_date<=last)
+              console.log('[Curated] season in range:', match ? 'S'+match.season_number+' '+match.air_date : 'NONE')
+            } else {
+              console.log('[Curated] Sugar (203744) NOT in curatedDetails for netLabel=' + netLabel)
+            }
+          }
+        } catch(e) { /* non-fatal */ }
+      }
+      const allCandidates = [...candidates, ...passCCandidates]
+
       const [newShowsDetails, candidateDetails] = await Promise.all([
         newShows.length > 0
           ? batchFetchDetails(newShows.slice(0, 40).map(s=>s.id))
           : Promise.resolve({}),
-        candidates.length > 0
-          ? batchFetchDetails(candidates.slice(0, 40).map(s=>s.id))
+        allCandidates.length > 0
+          ? batchFetchDetails(allCandidates.slice(0, 60).map(s=>s.id))
           : Promise.resolve({}),
       ])
-      const detailsMap = { ...candidateDetails, ...newShowsDetails }
+      const detailsMap = { ...candidateDetails, ...newShowsDetails, ...candidateDetailsMerge }
+      if (detailsMap[203744]) {
+        const sd = detailsMap[203744]
+        console.log('[Sugar] detail found, seasons:', (sd.seasons||[]).map(s=>s.season_number+':'+s.air_date))
+      } else { console.log('[Sugar] NOT in detailsMap for networkId=' + networkId) }
 
       const seasonPremierIds = new Map()
       const seasonPremieres  = []
-      for (const show of candidates) {
+      for (const show of allCandidates) {
         const detail = detailsMap[show.id]
         if (!detail) continue
         const season = findSeasonPremiereInRange(detail, first, last)
@@ -235,7 +286,7 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
       }
 
       const continuingShows = []
-      for (const show of [...candidates, ...newShows]) {
+      for (const show of [...allCandidates, ...newShows]) {
         const detail = detailsMap[show.id]
         if (!detail) continue
 
@@ -304,8 +355,21 @@ async function fetchMonthPremieres(year, month, networkIds=null) {
     }),
   ])
 
+  // Static curated premieres — known returning seasons TMDB discover misses
+  const STATIC_PREMIERES = [
+    { id:203744, name:'Sugar', first_air_date:'2026-06-17', _networkLabel:'Apple TV+', _seasonNum:2, _episodeNum:1, _isSeason:true, genre_ids:[18] },
+    { id:76479,  name:'For All Mankind', first_air_date:'2026-05-06', _networkLabel:'Apple TV+', _seasonNum:5, _episodeNum:1, _isSeason:true, genre_ids:[10765] },
+  ]
+
+  // Filter static premieres to match current month/network
+  const staticFiltered = STATIC_PREMIERES.filter(s => {
+    const inRange = s.first_air_date >= first && s.first_air_date <= last
+    const netMatch = !selectedNetworkLabel || selectedNetworkLabel === 'All' || s._networkLabel === selectedNetworkLabel
+    return inRange && netMatch
+  })
+
   const seen = new Set()
-  return [...tmdbPerNetwork.flat(), ...lambdaShows]
+  return [...tmdbPerNetwork.flat(), ...lambdaShows, ...staticFiltered]
     .sort((a,b) => (a.first_air_date||'').localeCompare(b.first_air_date||''))
     .filter(s => {
       if (!s.id || seen.has(`${s.id}_${s.first_air_date||''}`)) return false
@@ -649,7 +713,7 @@ export function PremieresCalendarPage() {
     setSelectedDay(null)
     try {
       const networkIds = network==='All' ? null : NETWORK_MAP[network]
-      const shows = await fetchMonthPremieres(year, month, networkIds)
+      const shows = await fetchMonthPremieres(year, month, networkIds, network==='All' ? null : network)
       setPremieres(shows)
     } catch(e) {
       console.warn('[AirDate] Premieres fetch failed', e)

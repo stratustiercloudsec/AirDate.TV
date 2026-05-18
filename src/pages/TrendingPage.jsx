@@ -56,7 +56,7 @@ async function fetchRatingsMap(shows) {
   const results = await Promise.allSettled(
     shows.map(s =>
       tmdbContentRatings(s.id)
-        .then(r => r.ok ? r.json() : null)
+        .then(r => (r && typeof r.json === 'function') ? r.json() : r)
         .catch(() => null)
     )
   )
@@ -73,7 +73,7 @@ async function fetchNetworksMap(shows) {
   const results = await Promise.allSettled(
     shows.map(s =>
       tmdbShow(s.id)
-        .then(r => r.ok ? r.json() : null)
+        .then(r => (r && typeof r.json === 'function') ? r.json() : r)
         .catch(() => null)
     )
   )
@@ -197,10 +197,13 @@ function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthentica
 const GRID_CLASS = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5'
 
 async function tmdb(path) {
-  const sep = path.includes('?') ? '&' : '?'
-  const r = await tmdbFetch(path, { language: 'en-US' })
-  const d = await r.json()
-  return d.results || []
+  const [basePath, qs] = path.split('?')
+  const extraParams = {}
+  if (qs) new URLSearchParams(qs).forEach((v, k) => { extraParams[k] = v })
+  const raw = await tmdbFetch(basePath, { language: 'en-US', ...extraParams })
+  // tmdbFetch may return parsed JSON or Response — handle both
+  const d = (raw && typeof raw.json === 'function') ? await raw.json() : raw
+  return d?.results || []
 }
 
 export function TrendingPage() {
