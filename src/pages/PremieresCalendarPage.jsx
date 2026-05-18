@@ -817,7 +817,8 @@ export function PremieresCalendarPage() {
         </div>
 
         {/* Network filter */}
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2" style={{scrollbarWidth:'none'}}>
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2"
+          style={{scrollbarWidth:'none', WebkitOverflowScrolling:'touch', msOverflowStyle:'none'}}>
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex-shrink-0">Filter:</span>
           {NETWORKS.map(n=>(
             <button key={n} onClick={()=>setNetwork(n)}
