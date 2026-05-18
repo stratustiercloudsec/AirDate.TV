@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 
 const SOCIAL = [
   { icon: 'fa-brands fa-instagram', href: 'https://www.instagram.com/airdatetv/', label: 'Instagram' },
-  { icon: 'fa-brands fa-facebook',  href: 'https://facebook.com/airdatetv',       label: 'Facebook'  },
+  { icon: 'fa-brands fa-facebook',  href: 'https://www.facebook.com/people/AirDate-TV/61590161696097/',       label: 'Facebook'  },
   { icon: 'fa-brands fa-tiktok',    href: 'https://tiktok.com/@airdatetv',        label: 'TikTok'    },
-  { icon: 'fa-brands fa-youtube',   href: 'https://youtube.com/@airdatetv',       label: 'YouTube'   },
-  { icon: 'fa-brands fa-x-twitter', href: 'https://x.com/airdatetv',              label: 'X'         },
+  { icon: 'fa-brands fa-youtube',   href: 'https://youtube.com/@AirDateTV_Premieres',       label: 'YouTube'   },
+  { icon: 'fa-brands fa-x-twitter', href: 'https://x.com/AirdatetvF42317',        label: 'X'         },
 ]
 
 export function Footer() {
