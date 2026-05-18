@@ -20,10 +20,12 @@ const CATS = {
 function renderMarkdown(md) {
   if (!md) return ''
   return md.split(/\n\n+/).map(block => {
+    if (/^###\s/.test(block))
+      return `<h3 class="text-white font-black text-lg mt-6 mb-2">${block.replace(/^###\s+/,'')}</h3>`
     if (/^##\s/.test(block))
-      return `<h3 class="text-white font-black text-xl mt-8 mb-3">${block.replace(/^##\s+/,'')}</h3>`
+      return `<h2 class="text-white font-black text-xl mt-8 mb-3">${block.replace(/^##\s+/,'')}</h2>`
     if (/^#\s/.test(block))
-      return `<h2 class="text-white font-black text-2xl mt-8 mb-3">${block.replace(/^#\s+/,'')}</h2>`
+      return `<h1 class="text-white font-black text-2xl mt-8 mb-3">${block.replace(/^#\s+/,'')}</h1>`
     const html = block
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/\*\*(.+?)\*\*/g,"<strong class='text-white font-bold'>$1</strong>")
