@@ -39,22 +39,35 @@ function ArchiveCard({ story, onSave, onUnsave, isSaved }) {
     <div className="group bg-slate-900/50 border border-white/5 hover:border-cyan-500/20
       rounded-2xl overflow-hidden transition-all duration-200 hover:bg-slate-900/80 hover:-translate-y-0.5 flex flex-col">
 
-      {/* Image */}
-      {story.image_url && (
-        <div className="relative h-40 overflow-hidden flex-shrink-0 cursor-pointer"
-          onClick={() => navigate(`/scoop/${story.story_hash}`)}>
-          <img src={story.image_url} alt={story.headline}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"/>
-        </div>
-      )}
-
-      <div className="p-4 flex flex-col flex-1">
-        {/* Category badge */}
-        <span className="inline-flex items-center gap-1 self-start mb-2 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
-          style={{ background:`${conf.color}20`, color:conf.color, border:`1px solid ${conf.color}30` }}>
+      {/* Image — always shown, fallback gradient if no URL */}
+      <div className="relative h-40 overflow-hidden flex-shrink-0 cursor-pointer"
+        onClick={() => navigate(`/scoop/${story.story_hash}`)}>
+        {story.image_url ? (
+          <>
+            <img src={story.image_url} alt={story.headline}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }}/>
+            <div className="hidden w-full h-full items-center justify-center"
+              style={{ background:'linear-gradient(135deg,#0f172a,#1e293b)' }}>
+              <i className={`fa-solid fa-${conf.icon} text-3xl`} style={{ color:`${conf.color}60` }}/>
+            </div>
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center"
+            style={{ background:`linear-gradient(135deg,#0f172a,${conf.color}15)` }}>
+            <i className={`fa-solid fa-${conf.icon} text-3xl`} style={{ color:`${conf.color}40` }}/>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"/>
+        {/* Category label overlay on image */}
+        <span className="absolute top-2 left-2 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full backdrop-blur-sm"
+          style={{ background:`${conf.color}25`, color:conf.color, border:`1px solid ${conf.color}35` }}>
           <i className={`fa-solid fa-${conf.icon}`} style={{ fontSize:'7px' }}/>{conf.label}
         </span>
+      </div>
+
+      <div className="p-4 flex flex-col flex-1">
+
 
         {/* Headline */}
         <h3 onClick={() => navigate(`/scoop/${story.story_hash}`)}
@@ -103,6 +116,7 @@ export function ScoopArchivePage() {
   const [lastKey,      setLastKey]      = useState(null)
   const [hasMore,      setHasMore]      = useState(false)
   const [loadingMore,  setLoadingMore]  = useState(false)
+  const [searchQuery,  setSearchQuery]  = useState('')
 
   // ── Redirect non-Pro users ──────────────────────────────────────────────
   useEffect(() => {
@@ -197,7 +211,16 @@ export function ScoopArchivePage() {
   }
 
   const savedSet = new Set(savedStories.map(s => s.story_hash))
-  const displayStories = activeTab === 'saved' ? savedStories : stories
+  const filteredStories = (activeTab === 'saved' ? savedStories : stories)
+    .filter(s => {
+      if (!searchQuery.trim()) return true
+      const q = searchQuery.toLowerCase()
+      return (s.headline || '').toLowerCase().includes(q) ||
+             (s.show_title || '').toLowerCase().includes(q) ||
+             (s.category || '').toLowerCase().includes(q) ||
+             (s.source_domain || '').toLowerCase().includes(q)
+    })
+  const displayStories = filteredStories
 
   if (!isPro) return null // Redirecting
 
@@ -277,6 +300,26 @@ export function ScoopArchivePage() {
           </div>
         )}
 
+        {/* Search Bar */}
+        <div className="relative mb-6">
+          <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none"/>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search stories by title, show, or source…"
+            className="w-full pl-10 pr-10 py-3 bg-slate-800/60 border border-white/8
+              hover:border-white/15 focus:border-cyan-500/40 focus:outline-none
+              rounded-xl text-sm text-white placeholder-slate-500 transition-all"/>
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500
+                hover:text-white transition-colors p-1">
+              <i className="fa-solid fa-xmark text-xs"/>
+            </button>
+          )}
+        </div>
+
         {/* Stories Grid */}
         {loading || (activeTab === 'saved' && loadingSaved) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -330,9 +373,11 @@ export function ScoopArchivePage() {
 
             {/* Story count */}
             <p className="text-center text-slate-600 text-xs mt-6 font-bold uppercase tracking-widest">
-              {activeTab === 'saved'
-                ? `${savedStories.length} saved ${savedStories.length === 1 ? 'story' : 'stories'}`
-                : `${stories.length} stories loaded${hasMore ? ' — more available' : ''}`
+              {searchQuery.trim()
+                ? `${filteredStories.length} result${filteredStories.length !== 1 ? 's' : ''} for "${searchQuery}"`
+                : activeTab === 'saved'
+                  ? `${savedStories.length} saved ${savedStories.length === 1 ? 'story' : 'stories'}`
+                  : `${stories.length} stories loaded${hasMore ? ' — more available' : ''}`
               }
             </p>
           </>
