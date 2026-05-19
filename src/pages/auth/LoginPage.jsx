@@ -86,7 +86,7 @@ export function LoginPage() {
     <div
       className="min-h-screen flex flex-col items-center justify-center px-4 py-12 relative"
       style={{
-        backgroundImage: 'url(/assets/images/login-bg.png)',
+        backgroundImage: 'url(/assets/images/all-posters-no-logo-v1.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

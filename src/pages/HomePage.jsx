@@ -20,17 +20,18 @@ const NEXT_MONTH_NETWORK_IDS = [
 const CHIPS = [
   'Premiering Today',
   'Taylor Sheridan',
-  'Netflix May 2026',
+  'Netflix June 2026',
   'Marvel Cinematic TV Shows',
   'Comedy Premieres 2026',
   'Ted Lasso',
   'Power Universe',
+  'Shonda Rhimes'
 ]
 
 const NETWORKS = {
-  Streaming: ['Netflix','Hulu','Disney+','Paramount+','Max','Apple TV+','Prime Video','Peacock','STARZ','BET+','Tubi','YouTube'],
+  Streaming: ['Netflix','Hulu','Disney+','Paramount+','Showtime','Max','HBO MaX','Apple TV+','Prime Video','Peacock','STARZ','BET+','Tubi','YouTube','Turnstr+','MGM+'],
   Broadcast:  ['CBS','NBC','ABC','FOX','The CW'],
-  Cable:      ['FX','AMC','USA Network','Bravo','Syfy','Freeform','OWN','Comedy Central','BET','Showtime'],
+  Cable:      ['HBO','FX','AMC','USA Network','Bravo','Syfy','Freeform','OWN','Comedy Central','BET','Showtime','ESPN'],
 }
 
 function startOfWeek() {
@@ -550,7 +551,7 @@ export function HomePage() {
               {CHIPS.map(chip => (
                 <button key={chip} onClick={() => {
                   if (chip === 'Premiering Today') {
-                    setHeader('Premiering Tonight · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+                    setHeader('Premiering Today · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
                     setResults(premieringTonight)
                     setCount(premieringTonight.length + ' shows')
                     setTotalPages(1); setPage(1); setShowResults(true)

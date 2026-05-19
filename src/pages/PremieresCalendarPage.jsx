@@ -16,6 +16,7 @@ const NETWORK_MAP = {
   'Apple TV+':    [2552, 350, 3411, 2007],
   'Peacock':      [3353, 3076],
   'Paramount+':   [4330, 67, 4711],
+  'Showtime':      [67, 4330, 4711],
   'CBS':          [16],
   'NBC':          [6],
   'ABC':          [2],
