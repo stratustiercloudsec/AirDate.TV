@@ -16,7 +16,7 @@ const NETWORK_MAP = {
   'Apple TV+':    [2552, 350, 3411, 2007],
   'Peacock':      [3353, 3076],
   'Paramount+':   [4330, 67, 4711],
-  'Showtime':      [67, 4330, 4711],
+  'Showtime':      [67],
   'CBS':          [16],
   'NBC':          [6],
   'ABC':          [2],
@@ -53,6 +53,7 @@ const CURATED_IDS = {
   'Hulu':        [87108,97180,67915,154385],
   'Peacock':     [100088,73586,2788],
   'Paramount+':  [63174,60735,110492,73586],
+  'Showtime':    [72071,37680,65495,60622,68507,79852,84773],
 }
 
 
@@ -360,6 +361,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
   const STATIC_PREMIERES = [
     { id:203744, name:'Sugar', first_air_date:'2026-06-17', _networkLabel:'Apple TV+', _seasonNum:2, _episodeNum:1, _isSeason:true, genre_ids:[18] },
     { id:76479,  name:'For All Mankind', first_air_date:'2026-05-06', _networkLabel:'Apple TV+', _seasonNum:5, _episodeNum:1, _isSeason:true, genre_ids:[10765] },
+  { id:72071,  name:'The Chi', first_air_date:'2026-05-23', _networkLabel:'Showtime', _seasonNum:8, _episodeNum:1, _isSeason:true, genre_ids:[18] },
   ]
 
   // Filter static premieres to match current month/network

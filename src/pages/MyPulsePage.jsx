@@ -32,6 +32,23 @@ function ShowCard({ show, onRemove }) {
   const poster   = usePoster(show?.poster_path ?? show?.poster, show?.name, 185)
   if (!show) return null
   const rating = show.content_rating || ''
+
+  // ── Premiere date ──────────────────────────────────────────────────────────
+  const rawDate = show.next_episode_to_air?.air_date
+    ?? show.premiere_date
+    ?? show.premiereDate
+    ?? show.first_air_date
+    ?? ''
+  const displayDate = rawDate
+    ? new Date(rawDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null
+
+  // ── Network ───────────────────────────────────────────────────────────────
+  const network = show.network
+    ?? show.networks?.[0]?.name
+    ?? show.origin_country?.[0]
+    ?? null
+
   return (
     <div className="relative cursor-pointer group" onClick={() => navigate(`/details/${show.id}`)}>
       <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-2 bg-slate-800">
@@ -49,7 +66,26 @@ function ShowCard({ show, onRemove }) {
           </span>
         )}
       </div>
-      <h3 className="text-[10px] sm:text-xs font-bold text-white truncate">{show.name ?? ''}</h3>
+
+      {/* Title */}
+      <h3 className="text-[10px] sm:text-xs font-bold text-white truncate leading-tight mb-1">
+        {show.name ?? ''}
+      </h3>
+
+      {/* Network */}
+      {network && (
+        <p className="text-[9px] sm:text-[10px] text-slate-400 font-semibold truncate leading-tight mb-0.5">
+          {network}
+        </p>
+      )}
+
+      {/* Premiere date */}
+      {displayDate && (
+        <p className="text-[9px] sm:text-[10px] font-black text-cyan-400 truncate leading-tight uppercase tracking-wide">
+          <i className="fa-solid fa-calendar-day mr-1 text-[8px]"/>
+          {displayDate}
+        </p>
+      )}
     </div>
   )
 }
