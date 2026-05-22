@@ -2,12 +2,14 @@
 // API calls match main.js v112.25 exactly
 
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { useNavigate }  from 'react-router-dom'
 import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
-import { API_BASE } from '@/config/aws'
-import { usePoster } from '@/utils/poster'
+import { API_BASE }     from '@/config/aws'
+import { usePoster }    from '@/utils/poster'
 import { tmdbFetch, tmdbShow, tmdbContentRatings, tmdbSearchTV, tmdbTrending, tmdbPopular, tmdbDiscover } from '../utils/tmdb'
-import { Footer } from '@/components/layout/Footer'
+import { Footer }       from '@/components/layout/Footer'
+import { SCOOP_MANIFEST_URL } from '@/config/aws'
 
 const IMAGE_BASE = 'https://image.tmdb.org'
 
@@ -16,7 +18,6 @@ const NEXT_MONTH_NETWORK_IDS = [
   6,16,2,19,3436,71,49,88,174,67,528,
 ].join('|')
 
-// Replace CHIPS const
 const CHIPS = [
   'Premiering Today',
   'Taylor Sheridan',
@@ -34,6 +35,14 @@ const NETWORKS = {
   Cable:      ['HBO','FX','AMC','USA Network','Bravo','Syfy','Freeform','OWN','Comedy Central','BET','Showtime','ESPN'],
 }
 
+const CAT_COLORS = {
+  premieres:     '#22d3ee',
+  renewals:      '#4ade80',
+  cancellations: '#f87171',
+  casting:       '#c084fc',
+  production:    '#fb923c',
+}
+
 function startOfWeek() {
   const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay())
   return d.toISOString().split('T')[0]
@@ -43,7 +52,6 @@ function endOfWeek() {
   return d.toISOString().split('T')[0]
 }
 
-// ─── enrichWithNetwork — adds network + US content rating ────────────────────
 async function enrichWithNetwork(shows) {
   const details = await Promise.all(shows.map(s =>
     Promise.all([
@@ -91,7 +99,7 @@ function normalizeShow(s) {
     overview:       s.description || s.overview || '',
     vote_average:   s.user_score ? s.user_score / 10 : (s.vote_average || 0),
     backdrop_path:  s.backdrop_path || null,
-    season_number:  s.season_number || null,   // ← preserve for badge
+    season_number:  s.season_number || null,
     content_rating: s.content_rating || '',
   }
 }
@@ -128,10 +136,103 @@ function fuzzyScore(query, name) {
   return similarity > 0.6 ? Math.round(similarity*50) : 0
 }
 
+// ─── Scoop Sidebar ────────────────────────────────────────────────────────────
+function ScoopSidebar() {
+  const navigate = useNavigate()
+  const [stories, setStories] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${SCOOP_MANIFEST_URL}?t=${Date.now()}`)
+      .then(r => r.json())
+      .then(d => {
+        const items = (d.items || [])
+          .filter(i => i.story_hash && i.headline)
+          .sort((a, b) => new Date(b.published_at || 0) - new Date(a.published_at || 0))
+          .slice(0, 5)
+        setStories(items)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return (
+    <div className="space-y-3">
+      {Array.from({length: 5}).map((_, i) => (
+        <div key={i} className="animate-pulse flex gap-3 p-3 rounded-xl">
+          <div className="w-6 h-4 bg-slate-700 rounded"/>
+          <div className="w-12 h-12 bg-slate-700 rounded-lg flex-shrink-0"/>
+          <div className="flex-1">
+            <div className="h-3 bg-slate-700 rounded w-full mb-2"/>
+            <div className="h-2 bg-slate-700 rounded w-2/3"/>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+
+  if (!stories.length) return (
+    <div className="text-center py-8 text-slate-500 text-xs">
+      <i className="fa-solid fa-satellite-dish text-2xl mb-2 block"/>
+      No stories yet — check back soon.
+    </div>
+  )
+
+  return (
+    <div className="space-y-1">
+      {stories.map((item, i) => {
+        const color  = CAT_COLORS[item.category] || '#22d3ee'
+        const poster = item.image_url || item.poster_url || item.poster
+        return (
+          <article
+            key={item.story_hash || i}
+            onClick={() => navigate(`/scoop/${item.story_hash}`)}
+            className="group flex gap-3 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-all border border-transparent hover:border-white/5"
+          >
+            <span
+              className="text-xl font-black text-slate-700 w-6 shrink-0 leading-tight mt-0.5"
+              style={{fontVariantNumeric: 'tabular-nums'}}
+            >
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            {poster && (
+              <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                <img
+                  src={poster}
+                  alt=""
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <span
+                className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest rounded-full px-2 py-0.5 mb-1"
+                style={{background: `${color}20`, color, border: `1px solid ${color}30`}}
+              >
+                {item.category || 'news'}
+              </span>
+              <h4 className="text-white text-xs font-bold leading-snug line-clamp-2 group-hover:text-cyan-400 transition-colors">
+                {item.headline}
+              </h4>
+            </div>
+          </article>
+        )
+      })}
+      <button
+        onClick={() => navigate('/scoop')}
+        className="w-full mt-2 py-2.5 text-center text-[10px] font-black uppercase tracking-widest text-cyan-400 hover:text-cyan-300 border border-cyan-500/20 hover:border-cyan-500/40 rounded-xl transition-all"
+      >
+        View All Stories →
+      </button>
+    </div>
+  )
+}
+
+// ─── Search components ────────────────────────────────────────────────────────
 function SuggestionItem({ show, query, onClick }) {
   const isExact = (show.name||'').toLowerCase().startsWith(query.toLowerCase().trim())
-  const year   = show.first_air_date ? show.first_air_date.split('-')[0] : ''
-  const poster = show.poster_path ? `${IMAGE_BASE}/t/p/w92${show.poster_path}` : null
+  const year    = show.first_air_date ? show.first_air_date.split('-')[0] : ''
+  const poster  = show.poster_path ? `${IMAGE_BASE}/t/p/w92${show.poster_path}` : null
   return (
     <button
       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-700/60 transition-colors text-left group"
@@ -165,7 +266,6 @@ function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, sh
   const fetchSuggestions = useCallback(async (q) => {
     if (q.trim().length < 2) { setSuggestions([]); return }
     try {
-      // tmdbFetch already returns parsed JSON — no .json() needed
       const raw  = await tmdbSearchTV(encodeURIComponent(q), 1)
       const data = (raw && typeof raw.json === 'function') ? await raw.json() : raw
       const results = (data.results || []).slice(0, 8)
@@ -269,7 +369,6 @@ function ratingColor(rating) {
   return 'border-white/20 text-slate-400'
 }
 
-// ─── ShowCard — heart icon + rating badge ────────────────────────────────────
 function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) {
   const tracked   = isTracked(show.id)
   const posterImg = usePoster(show.poster_path || show.poster, show.name, 342)
@@ -277,14 +376,11 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) 
 
   return (
     <div className="group relative cursor-pointer" onClick={() => window.location.href = href}>
-
-      {/* Rank badge */}
       {rank != null && (
         <span className="absolute -top-2 -left-2 z-10 w-7 h-7 bg-yellow-400 text-slate-950 text-xs font-black rounded-full flex items-center justify-center shadow-lg">
           {rank}
         </span>
       )}
-
       <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-3 bg-slate-800">
         <img
           {...posterImg}
@@ -292,11 +388,7 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) 
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
-
-        {/* Hover gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"/>
-
-        {/* ── Heart button — always visible, top-right ── */}
         <button
           onClick={e => {
             e.stopPropagation()
@@ -315,32 +407,23 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) 
         >
           <i className={`fa-${tracked ? 'solid' : 'regular'} fa-heart text-xs`}/>
         </button>
-
-        {/* ── Content rating badge — bottom-right ── */}
         {show.content_rating && (
           <span className={`absolute bottom-2 right-2 z-10 px-1.5 py-0.5 bg-slate-950/85 border rounded text-[9px] font-black tracking-widest backdrop-blur-sm ${ratingColor(show.content_rating)}`}>
             {show.content_rating}
           </span>
         )}
       </div>
-
-      {/* Title */}
       <h3 className="text-xs sm:text-sm font-bold text-white leading-snug mb-1 line-clamp-2">
         {show.name}
       </h3>
       {show.season_number && (
-        <span className="inline-block px-1.5 py-0.5 bg-cyan-500/20 border border-cyan-500/30 
-          rounded text-cyan-400 text-[9px] font-black uppercase tracking-widest mb-1">
+        <span className="inline-block px-1.5 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded text-cyan-400 text-[9px] font-black uppercase tracking-widest mb-1">
           Season {show.season_number}
         </span>
       )}
-
-      {/* Network */}
       {show.network && (
         <p className="text-[10px] sm:text-xs font-medium text-slate-400 mb-0.5">{show.network}</p>
       )}
-
-      {/* Date */}
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{(() => {
         const d = show.first_air_date || show.premiereDate
         if (!d) return 'TBA'
@@ -369,35 +452,35 @@ function ShowGrid({ shows, loading, skeletonCount=5, rank=false, ...cardProps })
   return <div className={grid}>{dedupById(shows).map((s,i)=><ShowCard key={`${s.id}-${i}`} show={s} rank={rank?i+1:undefined} {...cardProps}/>)}</div>
 }
 
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export function HomePage() {
   const { token, isAuthenticated, isPremium } = useAuth()
   const { watchlist, toggleWatchlist, isTracked, atLimit } = useWatchlist()
 
-  const [query,         setQuery]       = useState('')
-  const [network,       setNetwork]     = useState('All')
-  const [searchResults, setResults]     = useState([])
-  const [resultsHeader, setHeader]      = useState('Search Results')
-  const [resultsCount,  setCount]       = useState('')
-  const [searching,     setSearching]   = useState(false)
-  const [showResults,   setShowResults] = useState(false)
+  const [query,             setQuery]         = useState('')
+  const [network,           setNetwork]       = useState('All')
+  const [searchResults,     setResults]       = useState([])
+  const [resultsHeader,     setHeader]        = useState('Search Results')
+  const [resultsCount,      setCount]         = useState('')
+  const [searching,         setSearching]     = useState(false)
+  const [showResults,       setShowResults]   = useState(false)
   const [premieringTonight, setPremieringTonight] = useState([])
-  const [loadTonight,   setLoadTonight] = useState(true)
-  const [page,          setPage]        = useState(1)
-  const [totalPages,    setTotalPages]  = useState(1)
-  const [trending,      setTrending]    = useState([])
-  const [top10,         setTop10]       = useState([])
-  const [thisWeek,      setThisWeek]    = useState([])
-  const [nextMonth,     setNextMonth]   = useState([])
-  const [featured,      setFeatured]    = useState([])
-  const [leaderboard,   setLeaderboard] = useState([])
-  const [loadTrend,     setLoadTrend]   = useState(true)
-  const [loadTop10,     setLoadTop10]   = useState(true)
-  const [loadWeek,      setLoadWeek]    = useState(true)
-  const [loadMonth,     setLoadMonth]   = useState(true)
-  const [modal,         setModal]       = useState(false)
-  const [modalTitle,    setModalTitle]  = useState('')
-  const [modalContent,  setModalContent] = useState('')
-  const [modalLoading,  setModalLoading] = useState(false)
+  const [loadTonight,       setLoadTonight]   = useState(true)
+  const [page,              setPage]          = useState(1)
+  const [totalPages,        setTotalPages]    = useState(1)
+  const [trending,          setTrending]      = useState([])
+  const [top10,             setTop10]         = useState([])
+  const [thisWeek,          setThisWeek]      = useState([])
+  const [nextMonth,         setNextMonth]     = useState([])
+  const [leaderboard,       setLeaderboard]   = useState([])
+  const [loadTrend,         setLoadTrend]     = useState(true)
+  const [loadTop10,         setLoadTop10]     = useState(true)
+  const [loadWeek,          setLoadWeek]      = useState(true)
+  const [loadMonth,         setLoadMonth]     = useState(true)
+  const [modal,             setModal]         = useState(false)
+  const [modalTitle,        setModalTitle]    = useState('')
+  const [modalContent,      setModalContent]  = useState('')
+  const [modalLoading,      setModalLoading]  = useState(false)
 
   useEffect(() => {
     const now = new Date()
@@ -405,20 +488,20 @@ export function HomePage() {
     const nmMonth = new Date(now.getFullYear(), now.getMonth()+1, 1).getMonth()+1
 
     setLoadTrend(true)
-    tmdbTrending('week').then(async d=>{
-        const shows = (d.results||[]).slice(0,10).map(mapTMDB)
-        setTrending(dedupById(await enrichWithNetwork(shows)))
-      }).catch(()=>{}).finally(()=>setLoadTrend(false))
+    tmdbTrending('week').then(async d => {
+      const shows = (d.results||[]).slice(0,10).map(mapTMDB)
+      setTrending(dedupById(await enrichWithNetwork(shows)))
+    }).catch(()=>{}).finally(()=>setLoadTrend(false))
 
     setLoadTop10(true)
-    tmdbPopular(1).then(async d=>{
-        const shows = (d.results||[]).slice(0,10).map(mapTMDB)
-        setTop10(dedupById(await enrichWithNetwork(shows)))
-      }).catch(()=>{}).finally(()=>setLoadTop10(false))
+    tmdbPopular(1).then(async d => {
+      const shows = (d.results||[]).slice(0,10).map(mapTMDB)
+      setTop10(dedupById(await enrichWithNetwork(shows)))
+    }).catch(()=>{}).finally(()=>setLoadTop10(false))
 
     setLoadWeek(true)
     tmdbDiscover({ sort_by:'popularity.desc', 'first_air_date.gte':startOfWeek(), 'first_air_date.lte':endOfWeek(), with_original_language:'en', page:1 })
-      .then(async d=>{
+      .then(async d => {
         const shows = (d.results||[]).slice(0,20).map(mapTMDB)
         setThisWeek(dedupById(await enrichWithNetwork(shows)))
       }).catch(()=>{}).finally(()=>setLoadWeek(false))
@@ -428,7 +511,6 @@ export function HomePage() {
     const gte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-01`
     const lte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`
     const _nmBase = { sort_by:'popularity.desc', with_original_language:'en', with_networks:encodeURIComponent(NEXT_MONTH_NETWORK_IDS) }
-    // Pass A: new series (first_air_date) + Pass B: returning seasons (air_date)
     Promise.all([
       tmdbDiscover({ ..._nmBase, 'first_air_date.gte':gte, 'first_air_date.lte':lte, page:1 }),
       tmdbDiscover({ ..._nmBase, 'air_date.gte':gte, 'air_date.lte':lte, page:1 }),
@@ -451,7 +533,6 @@ export function HomePage() {
       body: JSON.stringify({ page:1, per_page:100 }),
     }).then(r=>r.json()).then(gw=>{
       const d = parseGateway(gw)
-      if (d?.featured)    setFeatured(d.featured)
       if (d?.leaderboard) setLeaderboard(d.leaderboard)
     }).catch(()=>{})
   }, [])
@@ -483,7 +564,6 @@ export function HomePage() {
         setTotalPages(data.pagination?.pages ?? 1)
       }
       setPage(overridePage)
-      if (data?.featured?.length)    setFeatured(data.featured)
       if (data?.leaderboard?.length) setLeaderboard(data.leaderboard)
     } catch(e) { console.error('Search failed', e) }
     finally { setSearching(false) }
@@ -573,19 +653,18 @@ export function HomePage() {
                 </button>
               ))}
             </div>
-
           </div>
         </header>
 
-        {isAuthenticated && watchlist.length>0 && (
+        {isAuthenticated && watchlist.length > 0 && (
           <section className="mb-10">
             <div className="flex items-center gap-3 mb-5">
               <div className="p-2 bg-pink-500/10 rounded-lg"><i className="fa-solid fa-heart text-pink-500"></i></div>
               <h2 className="text-lg font-bold text-white tracking-tight">The Pulse: Your Watchlist</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {watchlist.map(show=>(
-                <div key={show.id} onClick={()=>window.location.href=detailUrl(show)} className="flex items-center gap-4 bg-slate-800/40 border border-white/5 rounded-2xl p-4 hover:border-cyan-500/20 transition-all cursor-pointer">
+              {watchlist.map(show => (
+                <div key={show.id} onClick={() => window.location.href=detailUrl(show)} className="flex items-center gap-4 bg-slate-800/40 border border-white/5 rounded-2xl p-4 hover:border-cyan-500/20 transition-all cursor-pointer">
                   <img {...usePoster(show.poster_path, show.name, 92)} alt={show.name} className="w-12 h-16 object-cover rounded-xl flex-shrink-0"/>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-bold text-white truncate">{show.name}</h3>
@@ -619,7 +698,7 @@ export function HomePage() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 mb-8">
                         {searchResults.map((s,i)=><ShowCard key={`${s.id}-${s.season_number||i}`} show={s} {...cardProps}/>)}
                       </div>
-                      {totalPages>1 && (
+                      {totalPages > 1 && (
                         <div className="flex items-center justify-center gap-2 mt-6 mb-10">
                           <button onClick={()=>handleSearch(query,page-1)} disabled={page===1}
                             className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">← Prev</button>
@@ -655,47 +734,44 @@ export function HomePage() {
             )}
           </div>
 
+          {/* ── Sidebar ── */}
           <aside className="space-y-8">
+
+            {/* Get The Scoop */}
             <div>
               <div className="flex items-start gap-3 mb-4">
-                <div className="p-2.5 bg-cyan-500/10 rounded-xl border border-cyan-500/20"><i className="fa-solid fa-calendar-check text-cyan-400 text-lg"></i></div>
+                <div className="p-2.5 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
+                  <i className="fa-solid fa-bolt text-cyan-400 text-lg"></i>
+                </div>
                 <div>
-                  <h2 className="text-sm font-black uppercase tracking-wide text-cyan-400 mb-0.5">Confirmed Premieres</h2>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Upcoming Series 2026</p>
+                  <h2 className="text-sm font-black uppercase tracking-wide text-cyan-400 mb-0.5">Get The Scoop</h2>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Latest TV Intelligence</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                {featured.length===0
-                  ? Array.from({length:4}).map((_,i)=><div key={i} className="animate-pulse bg-slate-700/50 rounded-2xl aspect-[2/3]"></div>)
-                  : dedupById(featured).slice(0,8).map((s,i)=>(
-                      <div key={`${s.id}-${i}`} className="relative overflow-hidden rounded-2xl aspect-[2/3] cursor-pointer group" onClick={()=>window.location.href=`/details/${s.id}`}>
-                        <img {...usePoster(s.poster_path||s.poster, s.title||s.name, 185)} alt={s.title||s.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"/>
-                        <div className="absolute bottom-0 left-0 right-0 p-2"><p className="text-white text-[10px] font-black leading-tight line-clamp-2">{s.title||s.name}</p></div>
-                      </div>
-                    ))
-                }
-              </div>
+              <ScoopSidebar />
             </div>
 
+            {/* Global Hype Ranking */}
             <div>
               <div className="flex items-start gap-3 mb-4">
-                <div className="p-2.5 bg-pink-500/10 rounded-xl border border-pink-500/20"><i className="fa-solid fa-fire text-pink-400 text-lg"></i></div>
+                <div className="p-2.5 bg-pink-500/10 rounded-xl border border-pink-500/20">
+                  <i className="fa-solid fa-fire text-pink-400 text-lg"></i>
+                </div>
                 <div>
                   <h2 className="text-sm font-black uppercase tracking-wide text-pink-400 mb-0.5">Global Hype Ranking</h2>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Top Tracked Series</p>
                 </div>
               </div>
               <div className="space-y-3">
-                {leaderboard.length===0
-                  ? Array.from({length:5}).map((_,i)=>(
+                {leaderboard.length === 0
+                  ? Array.from({length:5}).map((_,i) => (
                       <div key={i} className="animate-pulse flex items-center gap-3 p-3 bg-slate-800/40 rounded-2xl">
                         <div className="w-8 h-8 bg-slate-700 rounded-xl"></div>
                         <div className="flex-1"><div className="h-3 bg-slate-700 rounded w-3/4 mb-1"></div><div className="h-2 bg-slate-700 rounded w-1/2"></div></div>
                       </div>
                     ))
-                  : dedupById(leaderboard).slice(0,10).map((s,idx)=>(
-                      <div key={`${s.id??idx}-${idx}`} className="flex items-center gap-3 p-3 bg-slate-800/40 border border-white/5 rounded-2xl hover:border-pink-500/20 transition-all cursor-pointer" onClick={()=>window.location.href=`/details/${s.id}`}>
+                  : dedupById(leaderboard).slice(0,10).map((s,idx) => (
+                      <div key={`${s.id??idx}-${idx}`} className="flex items-center gap-3 p-3 bg-slate-800/40 border border-white/5 rounded-2xl hover:border-pink-500/20 transition-all cursor-pointer" onClick={() => window.location.href=`/details/${s.id}`}>
                         <span className="w-6 text-center text-[10px] font-black text-slate-400">{idx+1}</span>
                         <img {...usePoster(s.poster_path||s.poster, s.title||s.name, 92)} alt={s.title||s.name} className="w-8 h-10 object-cover rounded-lg flex-shrink-0"/>
                         <div className="flex-1 min-w-0">
@@ -707,6 +783,7 @@ export function HomePage() {
                 }
               </div>
             </div>
+
           </aside>
         </div>
 
