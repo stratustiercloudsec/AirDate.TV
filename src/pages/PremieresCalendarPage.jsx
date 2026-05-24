@@ -299,7 +299,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         const streaming = isStreaming(detail)
         const nextEp = detail.next_episode_to_air
         if (nextEp?.air_date) {
-          const epDate = streaming ? shiftDate(nextEp.air_date) : nextEp.air_date
+          const epDate = nextEp.air_date
           if (epDate >= first && epDate <= last) {
             episodeDate = epDate
             episodeNum  = nextEp.episode_number
@@ -310,7 +310,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         if (!episodeDate) {
           const lastEp = detail.last_episode_to_air
           if (lastEp?.air_date) {
-            const epDate = streaming ? shiftDate(lastEp.air_date) : lastEp.air_date
+            const epDate = lastEp.air_date
             if (epDate >= first && epDate <= last) {
               episodeDate = epDate
               episodeNum  = lastEp.episode_number
@@ -336,7 +336,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
 
         const usedNext = episodeDate === nextEp?.air_date
         if (usedNext && detail.last_episode_to_air?.air_date) {
-          const lastDate = streaming ? shiftDate(detail.last_episode_to_air.air_date) : detail.last_episode_to_air.air_date
+          const lastDate = detail.last_episode_to_air.air_date
           const lastNum  = detail.last_episode_to_air.episode_number
           const lastSsn  = detail.last_episode_to_air.season_number
           if (lastDate >= first && lastDate <= last && lastDate !== episodeDate) {
@@ -361,7 +361,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
   const STATIC_PREMIERES = [
     { id:203744, name:'Sugar', first_air_date:'2026-06-17', _networkLabel:'Apple TV+', _seasonNum:2, _episodeNum:1, _isSeason:true, genre_ids:[18] },
     { id:76479,  name:'For All Mankind', first_air_date:'2026-05-06', _networkLabel:'Apple TV+', _seasonNum:5, _episodeNum:1, _isSeason:true, genre_ids:[10765] },
-  { id:72071,  name:'The Chi', first_air_date:'2026-05-23', _networkLabel:'Showtime', _seasonNum:8, _episodeNum:1, _isSeason:true, genre_ids:[18] },
+  { id:72071,  name:'The Chi', first_air_date:'2026-05-22', _networkLabel:'Showtime', _seasonNum:8, _episodeNum:1, _isSeason:true, genre_ids:[18] },
   ]
 
   // Filter static premieres to match current month/network
@@ -432,7 +432,7 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
         const res  = await tmdbSeason(show.id, seasonNum)
         const data = await res.json()
         const eps  = (data.episodes || [])
-          .map(ep => ({ ...ep, air_date: shiftDate(ep.air_date) }))
+          .map(ep => ep)
           .filter(ep => ep.air_date && ep.air_date >= monthFirst && ep.air_date <= monthLast)
           .sort((a,b) => a.air_date.localeCompare(b.air_date))
         setEpisodes(eps)

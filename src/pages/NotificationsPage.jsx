@@ -30,7 +30,7 @@ export function NotificationsPage() {
   const [filter, setFilter]               = useState('all')
   const [loading, setLoading]             = useState(true)
 
-  const sub = user?.userId ?? user?.username ?? ''
+  const sub = user?.sub || user?.userId || user?.username || ''
 
   const fetchNotifs = useCallback(async () => {
     if (!token || !sub) return

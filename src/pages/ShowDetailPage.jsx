@@ -449,7 +449,7 @@ function EpisodeCard({ episode, role, recapHtml='' }) {
 }
 
 // ─── Episode Intelligence ─────────────────────────────────────────────────────
-function EpisodeIntelligence({ showId, showTitle, showData }) {
+function EpisodeIntelligence({ showId, showTitle, showData, requestedSeason }) {
   const [eps, setEps]       = useState(null)
   const [recap, setRecap]   = useState('')
 
@@ -457,7 +457,7 @@ function EpisodeIntelligence({ showId, showTitle, showData }) {
     if (!showId) return
     ;(async()=>{
       try {
-        let currentSeason = showData?.next_episode_to_air?.season_number || showData?.last_episode_to_air?.season_number || null
+        let currentSeason = requestedSeason || showData?.next_episode_to_air?.season_number || showData?.last_episode_to_air?.season_number || null
         if (!currentSeason) {
           try {
             const d=await tmdbShow(showId)
@@ -468,9 +468,7 @@ function EpisodeIntelligence({ showId, showTitle, showData }) {
         const fetched=await Promise.all(seasons.map(n=>
           tmdbSeason(showId, n)
             .then(d=>(d.episodes||[]).sort((a,b)=>a.episode_number-b.episode_number).map(ep=>{
-              if (!ep.air_date) return ep
-              const d2=new Date(ep.air_date+'T12:00:00');d2.setDate(d2.getDate()+1)
-              return {...ep,air_date:`${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`}
+              return ep  // air_dates used as-is from TMDB — no UTC shift
             })).catch(()=>[])
         ))
         const all=fetched.flat()
@@ -491,7 +489,7 @@ function EpisodeIntelligence({ showId, showTitle, showData }) {
         setEps({lastAired:last,nextAiring:next})
         if (last&&showTitle) {
           fetch(`${API_BASE}/generate-recap`,{method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({series_title:`${showTitle} Season ${last.season_number} Episode ${last.episode_number}: ${last.name}`})})
+            body:JSON.stringify({series_title:`${showTitle.replace(/\s+Season\s+\d+$/i,'').trim()} Season ${last.season_number} Episode ${last.episode_number}: ${last.name}`})})
             .then(r=>r.json()).then(raw=>{
               const d=gw(raw);const r=d.recap||null
               if (r&&r.length>(last.overview?.length||0)+40) setRecap(renderRecapMarkdown(formatScoop(r)))
@@ -499,7 +497,7 @@ function EpisodeIntelligence({ showId, showTitle, showData }) {
         }
       } catch(e) { console.warn('[AirDate] Episode intelligence failed:',e);setEps({lastAired:null,nextAiring:null}) }
     })()
-  },[showId])
+  },[showId, requestedSeason])
 
   if (!eps) return (
     <div className="animate-pulse grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -549,17 +547,17 @@ function EpisodeIntelligence({ showId, showTitle, showData }) {
 }
 
 // ─── The Recap (Tier 3 — never blocks) ─────────────────────────────────────────
-function ScoopSection({ showId, showTitle }) {
+function ScoopSection({ showId, showTitle, seasonNumber }) {
   const [html, setHtml] = useState(null)
   useEffect(()=>{
     if (!showTitle) return
     fetch(`${API_BASE}/generate-recap`,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({series_title:showTitle,tmdb_id:showId})})
+      body:JSON.stringify({series_title:showTitle,tmdb_id:showId,season_number:seasonNumber||null})})
       .then(r=>r.json()).then(raw=>{
         const d=gw(raw);const text=d.recap||d.intel||null
         setHtml(text?renderRecapMarkdown(formatScoop(text)):'')
       }).catch(()=>setHtml(''))
-  },[showId,showTitle])
+  },[showId,showTitle,seasonNumber])
   return (
     <section>
       <div className="flex items-center gap-3 mb-6">
@@ -719,12 +717,24 @@ export function ShowDetailPage() {
       setMeta('twitter:site',        '@airdatetv', true)
       // Cleanup on unmount handled by React router navigation
 
-      // ── Correct premiere date directly from TMDB (Lambda may have shifted streaming dates +1 day) ──
+      // ── Correct premiere date: use season air_date if season selected, else series date ──
       tmdbShow(id)
-        .then(r=>r.json())
-        .then(tmdbShow => {
-          if (tmdbShow?.first_air_date) {
-            setShow(prev => prev ? { ...prev, first_air_date: tmdbShow.first_air_date } : prev)
+        .then(async data => {
+          if (!data) return
+          if (requestedSeason && requestedSeason > 0) {
+            // Fetch season-specific air date from TMDB
+            const { tmdbSeason: _tmdbSeason } = await import('../utils/tmdb')
+            try {
+              const seasonData = await _tmdbSeason(id, requestedSeason)
+              if (seasonData?.air_date) {
+                setShow(prev => prev ? { ...prev, first_air_date: seasonData.air_date } : prev)
+                return
+              }
+            } catch {}
+          }
+          // Fallback to series premiere date
+          if (data?.first_air_date) {
+            setShow(prev => prev ? { ...prev, first_air_date: data.first_air_date } : prev)
           }
         }).catch(()=>{})
 
@@ -888,10 +898,10 @@ export function ShowDetailPage() {
             </div>
 
             {/* TIER 2: Episode Intelligence */}
-            <EpisodeIntelligence showId={id} showTitle={show.name} showData={show}/>
+            <EpisodeIntelligence showId={id} showTitle={show.name} showData={show} requestedSeason={requestedSeason}/>
 
             {/* TIER 3: The Recap — Bedrock RAG, never blocks */}
-            <ScoopSection showId={id} showTitle={show.name}/>
+            <ScoopSection showId={id} showTitle={show.name} seasonNumber={requestedSeason}/>
 
             {/* Where to Watch */}
             <section>
