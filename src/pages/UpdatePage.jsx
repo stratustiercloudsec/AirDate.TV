@@ -87,7 +87,7 @@ export function UpdatePage() {
       const res  = await fetch(`${AWS_CONFIG.apiGateway.checkoutUrl}/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({ priceId, sub: user?.profile?.sub || user?.sub || user?.username || '' }),
       })
       const data = await res.json()
 

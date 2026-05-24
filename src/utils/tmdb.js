@@ -1,4 +1,4 @@
-const API_BASE = 'https://21ave5trw7.execute-api.us-east-1.amazonaws.com';
+const API_BASE = 'https://qg0x31ranc.execute-api.us-east-1.amazonaws.com/prod';
 
 export async function tmdbFetch(path, params = {}) {
   const qs = new URLSearchParams({ path, ...params }).toString();

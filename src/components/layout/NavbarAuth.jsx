@@ -88,7 +88,7 @@ export function NavbarAuth() {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-black text-amber-400 hover:text-amber-300 hover:bg-amber-500/5 transition-colors"
               >
                 <i className="fa-solid fa-star w-4 text-center"/>
-                Upgrade to Premium
+                Upgrade to Pro
               </button>
             </div>
           )}

@@ -69,9 +69,9 @@ export function Navbar() {
           <img
             src="/assets/images/adtv-logo.png"
             alt="AirDate"
-            className="h-16 w-auto object-contain mb-1"
+            className="h-14 w-auto object-contain"
           />
-          <p className="text-slate-200 text-xs font-normal leading-tight">
+          <p className="text-slate-400 text-[10px] font-medium leading-tight hidden sm:block">
             Track TV Premieres Before They Trend.
           </p>
         </Link>
@@ -136,7 +136,7 @@ export function Navbar() {
                     ) : (
                       previewNotifs.map(n => {
                         const isUnread = !n.read
-                        const show     = n.shows?.[0]
+                        const show     = (n.shows ?? n.premiering)?.[0]
                         const dateStr  = n.created_at
                           ? new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                           : ''
@@ -176,7 +176,7 @@ export function Navbar() {
                                     {isUnread && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0"/>}
                                   </div>
                                 </div>
-                                {(n.shows ?? []).slice(0, 2).map(s => (
+                                {(n.shows ?? n.premiering ?? []).slice(0, 2).map(s => (
                                   <div key={s.title} className="flex items-center justify-between gap-1">
                                     <span className="text-white text-xs font-bold truncate">{s.title}</span>
                                     <span className={`text-[9px] font-black uppercase tracking-widest flex-shrink-0
@@ -185,9 +185,9 @@ export function Navbar() {
                                     </span>
                                   </div>
                                 ))}
-                                {(n.shows?.length ?? 0) > 2 && (
+                                {((n.shows ?? n.premiering)?.length ?? 0) > 2 && (
                                   <p className="text-slate-500 text-[9px] mt-0.5">
-                                    +{n.shows.length - 2} more
+                                    +{(n.shows ?? n.premiering).length - 2} more
                                   </p>
                                 )}
                               </div>
@@ -298,7 +298,7 @@ export function Navbar() {
                 {(user?.tier !== 'pro' && user?.tier !== 'premium') && (
                   <div className="border-t border-white/5 py-1">
                     <Link to="/upgrade" className="flex items-center gap-3 px-4 py-2.5 text-xs font-black text-amber-400 hover:text-amber-300 hover:bg-amber-500/5 transition-colors">
-                      <i className="fa-solid fa-star w-4"/> Upgrade to Premium
+                      <i className="fa-solid fa-star w-4"/> Upgrade to Pro
                     </Link>
                   </div>
                 )}

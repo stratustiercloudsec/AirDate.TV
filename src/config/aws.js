@@ -25,15 +25,15 @@ export const AWS_CONFIG = {
     redirectSignOut:  isDev ? `${origin}/`                   : 'https://airdate.tv/',
   },
   apiGateway: {
-    baseUrl: 'https://21ave5trw7.execute-api.us-east-1.amazonaws.com',
+    baseUrl: 'https://qg0x31ranc.execute-api.us-east-1.amazonaws.com/prod',
     checkoutUrl: 'https://hazl8ggqu3.execute-api.us-east-1.amazonaws.com/prod',
   },
   stripe: {
     publishableKey: isDev
       ? 'pk_test_51IMMaBBjDtVyDmuWzlTaUqYPa1oDqTmwdDXwAuMzQgpryK44RgvmxhDQBFwmE9MQIrwKRxo0yQVdf7stj662Qa4d00cRzkFdtZ'
       : 'pk_live_51IMMaBBjDtVyDmuWpRo4DtQwWCayvCBUMxwdboKmjbkQl0TAc3iK4ufEj9qzS1chTRhSVH4A0cs0hbICLEfFXNAI00UQPLJbVu',
-    priceIdMonthly: isDev ? 'price_1TLThmPnMd1p8PBVSNGRgLNl' : 'price_1TLTjOBjDtVyDmuWCzaTYd7E',
-    priceIdAnnual:  isDev ? 'price_1TLTxfPnMd1p8PBVTPXH22fZ' : 'price_1TLTz2BjDtVyDmuWJskKceUT',
+    priceIdMonthly: isDev ? 'price_1TaeH1BjDtVyDmuWCBMgC0jN' : 'price_1TLTjOBjDtVyDmuWCzaTYd7E',
+    priceIdAnnual:  isDev ? 'price_1TaeGOBjDtVyDmuWcKTDB4pr' : 'price_1TLTz2BjDtVyDmuWJskKceUT',
   },
 }
 

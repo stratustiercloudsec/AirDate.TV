@@ -131,7 +131,7 @@ function ShareModal({ url, title, show, posterUrl, onClose }) {
   const showId    = url.split('/details/')[1]?.split('?')[0]
   // OG proxy URL — for social crawlers (FB/LinkedIn/Twitter)
   const ogUrl     = showId
-    ? `https://21ave5trw7.execute-api.us-east-1.amazonaws.com/og/${showId}`
+    ? `https://qg0x31ranc.execute-api.us-east-1.amazonaws.com/og/${showId}`
     : url
   const encoded   = encodeURIComponent(ogUrl)   // social shares use OG proxy
   const encDirect = encodeURIComponent(url)      // copy + email use real URL

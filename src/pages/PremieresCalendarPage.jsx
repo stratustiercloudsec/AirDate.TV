@@ -203,7 +203,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         ? (Object.entries(NETWORK_MAP).find(([,ids])=>ids.includes(networkId))?.[0] || '')
         : ''
 
-      const _proxyBase = 'https://21ave5trw7.execute-api.us-east-1.amazonaws.com/tmdb-proxy'
+      const _proxyBase = 'https://qg0x31ranc.execute-api.us-east-1.amazonaws.com/prod/tmdb-proxy'
       const baseA = `${_proxyBase}?path=/discover/tv&language=en-US&first_air_date.gte=${qStart}&first_air_date.lte=${last}&sort_by=popularity.desc` + langFilter.replace('&with_original_language','&with_original_language') + netParam
       const newShowsRaw = await fetchAllPages(baseA, 3)
       const newShows = newShowsRaw

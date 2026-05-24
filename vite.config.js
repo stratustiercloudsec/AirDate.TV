@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
           secure: true,
         },
         '/api': {
-          target: 'https://21ave5trw7.execute-api.us-east-1.amazonaws.com',
+          target: 'https://qg0x31ranc.execute-api.us-east-1.amazonaws.com',
           changeOrigin: true,
           rewrite: (p) => p.replace(/^\/api/, stage),
           secure: true,

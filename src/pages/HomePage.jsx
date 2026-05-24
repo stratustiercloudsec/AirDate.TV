@@ -511,13 +511,13 @@ export function HomePage() {
     const gte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-01`
     const lte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`
     const _nmBase = { sort_by:'popularity.desc', with_original_language:'en', with_networks:encodeURIComponent(NEXT_MONTH_NETWORK_IDS) }
-    Promise.all([
-      tmdbDiscover({ ..._nmBase, 'first_air_date.gte':gte, 'first_air_date.lte':lte, page:1 }),
-      tmdbDiscover({ ..._nmBase, 'air_date.gte':gte, 'air_date.lte':lte, page:1 }),
-    ]).then(async ([passA, passB]) => {
-      const combined = [...(passA.results||[]), ...(passB.results||[])].map(mapTMDB)
-      setNextMonth(dedupById(await enrichWithNetwork(combined)).slice(0,20))
-    }).catch(()=>{}).finally(()=>setLoadMonth(false))
+    tmdbDiscover({ ..._nmBase, 'first_air_date.gte':gte, 'first_air_date.lte':lte, page:1 })
+      .then(async (passA) => {
+        const combined = (passA.results||[])
+          .filter(s => s.first_air_date && s.first_air_date >= gte && s.first_air_date <= lte)
+          .map(mapTMDB)
+        setNextMonth(dedupById(await enrichWithNetwork(combined)).slice(0,20))
+      }).catch(()=>{}).finally(()=>setLoadMonth(false))
 
     setLoadTonight(true)
     const todayStr = new Date().toLocaleDateString('en-CA')

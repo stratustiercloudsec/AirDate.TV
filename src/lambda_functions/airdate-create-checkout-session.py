@@ -124,7 +124,7 @@ def lambda_handler(event, context):
             customer_email=email if email else None,
             client_reference_id=sub,
             line_items=[{"price": price_id, "quantity": 1}],
-            success_url=f"{base_url}/upgrade-success.html",
+            success_url=f"{base_url}/upgrade-success",
             cancel_url=f"{base_url}/upgrade.html",
             metadata={
                 "cognito_sub": sub,
