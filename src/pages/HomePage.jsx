@@ -7,16 +7,29 @@ import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
 import { API_BASE }     from '@/config/aws'
 import { usePoster }    from '@/utils/poster'
-import { tmdbFetch, tmdbShow, tmdbContentRatings, tmdbSearchTV, tmdbTrending, tmdbPopular, tmdbDiscover } from '../utils/tmdb'
+import { tmdbFetch, tmdbShow, tmdbContentRatings, tmdbSearchTV, tmdbTrending, tmdbPopular, tmdbDiscover, tmdbOnTheAir } from '../utils/tmdb'
 import { Footer }       from '@/components/layout/Footer'
 import { SCOOP_MANIFEST_URL } from '@/config/aws'
 
 const IMAGE_BASE = 'https://image.tmdb.org'
 
+
 const NEXT_MONTH_NETWORK_IDS = [
-  213,1024,453,2739,2552,3353,4330,2503,4406,3186,
+  213,   // Netflix
+  2552,  // Apple TV+
+  4330,  // Paramount+
+  3353,  // Peacock
+  3186,  // Max / HBO Max
+  4406,  // STARZ
+  2503,  // Tubi
+  1024,  // Prime Video
+  453,   // Hulu
+  2739,  // Disney+
   6,16,2,19,3436,71,49,88,174,67,528,
 ].join('|')
+
+// Affiliate partner network IDs — each gets its own fetch to guarantee coverage
+const AFFILIATE_NETWORK_IDS = [213, 2552, 4330, 3353, 3186, 4406, 2503, 1024, 453, 2739]
 
 const CHIPS = [
   'Premiering Today',
@@ -500,7 +513,7 @@ export function HomePage() {
     }).catch(()=>{}).finally(()=>setLoadTop10(false))
 
     setLoadWeek(true)
-    tmdbDiscover({ sort_by:'popularity.desc', 'first_air_date.gte':startOfWeek(), 'first_air_date.lte':endOfWeek(), with_original_language:'en', page:1 })
+    tmdbDiscover({ sort_by:'popularity.desc', 'first_air_date.gte':startOfWeek(), 'first_air_date.lte':endOfWeek(), page:1 })
       .then(async d => {
         const shows = (d.results||[]).slice(0,20).map(mapTMDB)
         setThisWeek(dedupById(await enrichWithNetwork(shows)))
@@ -510,14 +523,43 @@ export function HomePage() {
     const lastDay = new Date(nmYear, nmMonth, 0).getDate()
     const gte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-01`
     const lte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`
-    const _nmBase = { sort_by:'popularity.desc', with_original_language:'en', with_networks:encodeURIComponent(NEXT_MONTH_NETWORK_IDS) }
-    tmdbDiscover({ ..._nmBase, 'first_air_date.gte':gte, 'first_air_date.lte':lte, page:1 })
-      .then(async (passA) => {
-        const combined = (passA.results||[])
-          .filter(s => s.first_air_date && s.first_air_date >= gte && s.first_air_date <= lte)
-          .map(mapTMDB)
-        setNextMonth(dedupById(await enrichWithNetwork(combined)).slice(0,20))
-      }).catch(()=>{}).finally(()=>setLoadMonth(false))
+    ;(async () => {
+      try {
+        const dateFilter = {
+          'air_date.gte': gte,
+          'air_date.lte': lte,
+          sort_by: 'popularity.desc',
+        }
+        // Broad combined fetch — pages 1 & 2 (40 results)
+        const [broadP1, broadP2] = await Promise.all([
+          tmdbDiscover({ ...dateFilter, with_networks: encodeURIComponent(NEXT_MONTH_NETWORK_IDS), page: 1 }).catch(() => ({ results: [] })),
+          tmdbDiscover({ ...dateFilter, with_networks: encodeURIComponent(NEXT_MONTH_NETWORK_IDS), page: 2 }).catch(() => ({ results: [] })),
+        ])
+        // Per-affiliate fetch — guarantees each partner network is represented
+        const perNetworkResults = await Promise.all(
+          AFFILIATE_NETWORK_IDS.map(nid =>
+            tmdbDiscover({ ...dateFilter, with_networks: String(nid), page: 1 })
+              .catch(() => ({ results: [] }))
+          )
+        )
+        // on_the_air catches returning shows that discover misses
+        const onTheAirResults = await tmdbOnTheAir(1).catch(() => ({ results: [] }))
+        const onTheAirP2      = await tmdbOnTheAir(2).catch(() => ({ results: [] }))
+
+        const allRaw = [
+          ...(broadP1.results || []),
+          ...(broadP2.results || []),
+          ...perNetworkResults.flatMap(d => d.results || []),
+          ...(onTheAirResults.results || []),
+          ...(onTheAirP2.results || []),
+        ].filter(s => s.first_air_date && s.first_air_date >= gte && s.first_air_date <= lte)
+
+        const mapped   = dedupById(allRaw.map(mapTMDB))
+        const enriched = await enrichWithNetwork(mapped)
+        setNextMonth(dedupById(enriched).slice(0, 40))
+      } catch (e) { console.error('nextMonth fetch failed', e) }
+      finally { setLoadMonth(false) }
+    })()
 
     setLoadTonight(true)
     const todayStr = new Date().toLocaleDateString('en-CA')
@@ -727,8 +769,8 @@ export function HomePage() {
                   <ShowGrid shows={thisWeek} loading={loadWeek} skeletonCount={3} {...cardProps}/>
                 </section>
                 <section>
-                  <SectionHeader icon="fa-solid fa-calendar-plus" iconColor="text-purple-400" title={`Premiering ${nextMonthLabel}`}/>
-                  <ShowGrid shows={nextMonth} loading={loadMonth} skeletonCount={3} {...cardProps}/>
+                  <SectionHeader icon="fa-solid fa-calendar-plus" iconColor="text-purple-400" title={`Premiering ${nextMonthLabel}`} subtitle="All Major Networks"/>
+                  <ShowGrid shows={nextMonth} loading={loadMonth} skeletonCount={10} {...cardProps}/>
                 </section>
               </div>
             )}

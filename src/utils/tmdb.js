@@ -15,6 +15,7 @@ export const tmdbSearchTV       = (q, page = 1) => tmdbFetch('/search/tv', { que
 export const tmdbTrending       = (w = 'week')  => tmdbFetch(`/trending/tv/${w}`, { language: 'en-US' });
 export const tmdbPopular        = (page = 1)    => tmdbFetch('/tv/popular', { language: 'en-US', page });
 export const tmdbDiscover       = (params = {}) => tmdbFetch('/discover/tv', { language: 'en-US', ...params });
-export const tmdbCredits        = (id) => fetch(`${API_BASE}/show/${id}/credits`).then(r => r.json());
-export const tmdbProviders      = (id) => fetch(`${API_BASE}/show/${id}/providers`).then(r => r.json());
-export const tmdbRecommendations= (id) => fetch(`${API_BASE}/show/${id}/recommendations`).then(r => r.json());
+export const tmdbCredits        = (id) => tmdbFetch(`/tv/${id}/credits`);
+export const tmdbProviders      = (id) => tmdbFetch(`/tv/${id}/watch/providers`);
+export const tmdbRecommendations= (id) => tmdbFetch(`/tv/${id}/recommendations`, { language: 'en-US', page: 1 });
+export const tmdbOnTheAir       = (page = 1) => tmdbFetch('/tv/on_the_air', { page });

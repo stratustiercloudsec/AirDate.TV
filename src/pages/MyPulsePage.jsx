@@ -18,6 +18,9 @@ const ALERT_LABELS  = {
 const GENRES          = ['Drama','Comedy','Thriller','Sci-Fi','Crime','Horror','Fantasy','Documentary','Reality','Animation']
 const NETWORK_OPTIONS = ['Netflix','HBO / Max','Prime Video','Apple TV+','Hulu','Disney+','Peacock','Paramount+','AMC','FX','Showtime','BritBox','Starz']
 
+const TMDB_KEY  = 'd80b629f69e7c5393047c32a865ed697'
+const TMDB_BASE = 'https://api.themoviedb.org/3'
+
 function ratingColor(rating) {
   if (!rating) return 'border-white/20 text-slate-400'
   if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
@@ -27,26 +30,29 @@ function ratingColor(rating) {
   return 'border-white/20 text-slate-400'
 }
 
-function ShowCard({ show, onRemove }) {
+function ShowCard({ show, liveData, onRemove }) {
   const navigate = useNavigate()
   const poster   = usePoster(show?.poster_path ?? show?.poster, show?.name, 185)
   if (!show) return null
-  const rating = show.content_rating || ''
+  const rating = show.content_rating || liveData?.content_ratings?.results?.[0]?.rating || ''
 
-  // ── Premiere date ──────────────────────────────────────────────────────────
-  const rawDate = show.next_episode_to_air?.air_date
+  // Prefer live TMDB data for dates — falls back to stored data
+  const rawDate = liveData?.next_episode_to_air?.air_date
+    ?? liveData?.first_air_date
+    ?? show.next_episode_to_air?.air_date
     ?? show.premiere_date
     ?? show.premiereDate
     ?? show.first_air_date
     ?? ''
-  const displayDate = rawDate
+
+  const isValidDate = rawDate && rawDate !== 'TBA' && rawDate !== 'TBD' && rawDate !== 'Intel Pending'
+  const displayDate = isValidDate
     ? new Date(rawDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null
 
-  // ── Network ───────────────────────────────────────────────────────────────
   const network = show.network
+    ?? liveData?.networks?.[0]?.name
     ?? show.networks?.[0]?.name
-    ?? show.origin_country?.[0]
     ?? null
 
   return (
@@ -66,24 +72,22 @@ function ShowCard({ show, onRemove }) {
           </span>
         )}
       </div>
-
-      {/* Title */}
       <h3 className="text-[10px] sm:text-xs font-bold text-white truncate leading-tight mb-1">
         {show.name ?? ''}
       </h3>
-
-      {/* Network */}
       {network && (
         <p className="text-[9px] sm:text-[10px] text-slate-400 font-semibold truncate leading-tight mb-0.5">
           {network}
         </p>
       )}
-
-      {/* Premiere date */}
-      {displayDate && (
+      {displayDate ? (
         <p className="text-[9px] sm:text-[10px] font-black text-cyan-400 truncate leading-tight uppercase tracking-wide">
           <i className="fa-solid fa-calendar-day mr-1 text-[8px]"/>
           {displayDate}
+        </p>
+      ) : (
+        <p className="text-[9px] sm:text-[10px] font-bold text-slate-600 truncate leading-tight uppercase tracking-wide">
+          Premiere TBA
         </p>
       )}
     </div>
@@ -95,24 +99,15 @@ export function MyPulsePage() {
   const { watchlist, toggleWatchlist } = useWatchlist()
   const navigate = useNavigate()
 
-  // ── State ─────────────────────────────────────────────────────────────────
   const [userData,        setUserData]      = useState(null)
-  const [preferences,     setPreferences]   = useState({
-    networks:      [],
-    genres:        [],
-    notifications: false,
-    alertDays:     1,
-  })
-  const [networkInput,    setNetworkInput]   = useState('')
+  const [liveShowData,    setLiveShowData]  = useState({})   // tmdb_id → fresh TMDB data
+  const [preferences,     setPreferences]   = useState({ networks: [], genres: [], notifications: false, alertDays: 1 })
+  const [networkInput,    setNetworkInput]  = useState('')
   const [toast,           setToast]         = useState(null)
   const [prefSaving,      setPrefSaving]    = useState(false)
   const [actionLoading,   setActionLoading] = useState(false)
-
-  // Subscription modals
   const [cancelModal,     setCancelModal]   = useState(false)
   const [reactivateModal, setReactivate]    = useState(false)
-
-  // Delete account modal
   const [deleteModal,     setDeleteModal]   = useState(false)
   const [deleteConfirm,   setDeleteConfirm] = useState('')
   const [deleteLoading,   setDeleteLoading] = useState(false)
@@ -125,11 +120,10 @@ export function MyPulsePage() {
     setTimeout(() => setToast(null), 5000)
   }
 
+  // Load user preferences from DynamoDB
   useEffect(() => {
     if (!token || !sub) return
-    fetch(`${API_BASE}/user/${sub}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch(`${API_BASE}/user/${sub}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d) return
@@ -138,6 +132,22 @@ export function MyPulsePage() {
       })
       .catch(() => {})
   }, [token, sub])
+
+  // Fetch fresh TMDB data for each watchlist show to get real premiere dates
+  useEffect(() => {
+    if (!watchlist.length) return
+    const batch = watchlist.filter(Boolean).slice(0, 20)
+    batch.forEach(show => {
+      const id = show.id
+      if (!id) return
+      fetch(`${TMDB_BASE}/tv/${id}?api_key=${TMDB_KEY}&language=en-US`)
+        .then(r => r.json())
+        .then(data => {
+          setLiveShowData(prev => ({ ...prev, [id]: data }))
+        })
+        .catch(() => {})
+    })
+  }, [watchlist.length])
 
   const tier          = userData?.tier ?? (isPremium ? 'pro' : 'free')
   const isProTier     = tier === 'pro' || tier === 'premium'
@@ -168,37 +178,28 @@ export function MyPulsePage() {
       genres: prev.genres.includes(g) ? prev.genres.filter(x => x !== g) : [...prev.genres, g],
     }))
   }
-  function toggleNotifs() {
-    setPreferences(prev => ({ ...prev, notifications: !prev.notifications }))
-  }
-  function handleSetAlertDays(d) {
-    setPreferences(prev => ({ ...prev, alertDays: d }))
-  }
+  function toggleNotifs() { setPreferences(prev => ({ ...prev, notifications: !prev.notifications })) }
+  function handleSetAlertDays(d) { setPreferences(prev => ({ ...prev, alertDays: d })) }
 
   async function savePreferences() {
     if (!token || !sub) return
     setPrefSaving(true)
     try {
       const res = await fetch(`${API_BASE}/user/${sub}/preferences`, {
-        method:  'PUT',
+        method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ preferences }),
+        body: JSON.stringify({ preferences }),
       })
       if (!res.ok) throw new Error('Save failed')
       showToast('Preferences saved!', 'cyan')
-    } catch {
-      showToast('Could not save preferences.', 'red')
-    } finally {
-      setPrefSaving(false)
-    }
+    } catch { showToast('Could not save preferences.', 'red') }
+    finally { setPrefSaving(false) }
   }
 
   async function confirmCancel() {
     setActionLoading(true)
     try {
-      const res  = await fetch(`${API_BASE}/user/${sub}/cancel`, {
-        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      })
+      const res  = await fetch(`${API_BASE}/user/${sub}/cancel`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setUserData(prev => ({ ...prev, cancel_at_period_end: true }))
@@ -211,9 +212,7 @@ export function MyPulsePage() {
   async function confirmReactivate() {
     setActionLoading(true)
     try {
-      const res  = await fetch(`${API_BASE}/user/${sub}/reactivate`, {
-        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      })
+      const res  = await fetch(`${API_BASE}/user/${sub}/reactivate`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setUserData(prev => ({ ...prev, cancel_at_period_end: false }))
@@ -227,10 +226,7 @@ export function MyPulsePage() {
     if (deleteConfirm !== 'DELETE') return
     setDeleteLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/user/${sub}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await fetch(`${API_BASE}/user/${sub}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
       if (!res.ok) throw new Error('Delete failed')
       await signOut()
       navigate('/')
@@ -244,7 +240,7 @@ export function MyPulsePage() {
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen">
 
-      {/* ── Upgrade banner ── */}
+      {/* Upgrade banner */}
       {isAuthenticated && !isProTier && (
         <div className="fixed top-16 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-xl border-b border-cyan-500/20 px-4 sm:px-6 py-2">
           <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-3">
@@ -256,9 +252,7 @@ export function MyPulsePage() {
                 Track unlimited shows, get early alerts, and unlock The Scoop.
               </p>
               <p className="sm:hidden text-slate-200 text-xs font-bold">
-                <span className="text-white">Free Plan</span>
-                <span className="mx-1.5 text-slate-400">·</span>
-                Upgrade for full access.
+                <span className="text-white">Free Plan</span><span className="mx-1.5 text-slate-400">·</span>Upgrade for full access.
               </p>
             </div>
             <Link to="/upgrade"
@@ -278,24 +272,20 @@ export function MyPulsePage() {
           <div className="lg:hidden bg-slate-900/60 border border-white/10 rounded-2xl p-5 flex items-center gap-4">
             {user?.picture
               ? <img src={user.picture} alt={user.name} className="w-14 h-14 rounded-full flex-shrink-0 object-cover border border-white/10"/>
-              : (
-                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex-shrink-0 flex items-center justify-center">
+              : <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex-shrink-0 flex items-center justify-center">
                   <span className="text-xl font-black text-white">{(user?.name || email || '?')[0].toUpperCase()}</span>
                 </div>
-              )
             }
             <div className="flex-1 min-w-0">
               <h2 className="text-sm font-black text-white truncate">{user?.name || email || 'Loading…'}</h2>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{email}</p>
-              <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest
-                ${isProTier ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400 border border-white/8'}`}>
+              <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${isProTier ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400 border border-white/8'}`}>
                 {isProTier ? '★ Pro' : 'Free Plan'}
               </span>
             </div>
             <button onClick={handleLogout}
               className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-red-400 text-[10px] font-bold uppercase tracking-widest transition-all">
               <i className="fa-solid fa-right-from-bracket"/>
-              <span className="hidden xs:inline">Sign Out</span>
             </button>
           </div>
 
@@ -304,36 +294,30 @@ export function MyPulsePage() {
             <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-8 text-center sticky top-24">
               {user?.picture
                 ? <img src={user.picture} alt={user.name} className="w-20 h-20 rounded-full mx-auto mb-5 object-cover shadow-2xl border border-white/10"/>
-                : (
-                  <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full mx-auto mb-5 flex items-center justify-center shadow-2xl">
+                : <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full mx-auto mb-5 flex items-center justify-center shadow-2xl">
                     <span className="text-3xl font-black text-white">{(user?.name || email || '?')[0].toUpperCase()}</span>
                   </div>
-                )
               }
               <h2 className="text-base font-black text-white truncate mb-1">{user?.name || email || 'Loading…'}</h2>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{email}</p>
-              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6
-                ${isProTier ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400 border border-white/8'}`}>
+              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 ${isProTier ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400 border border-white/8'}`}>
                 {isProTier ? '★ Pro' : 'Free Plan'}
               </span>
               <div className="space-y-2">
-                <Link to="/"
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800/60 hover:bg-slate-800 border border-white/10 rounded-xl text-slate-200 hover:text-white font-bold transition-all text-xs uppercase tracking-widest">
+                <Link to="/" className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800/60 hover:bg-slate-800 border border-white/10 rounded-xl text-slate-200 hover:text-white font-bold transition-all text-xs uppercase tracking-widest">
                   <i className="fa-solid fa-magnifying-glass"/> Search Shows
                 </Link>
-                <Link to="/account"
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800/60 hover:bg-slate-800 border border-white/10 rounded-xl text-slate-200 hover:text-white font-bold transition-all text-xs uppercase tracking-widest">
+                <Link to="/account" className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800/60 hover:bg-slate-800 border border-white/10 rounded-xl text-slate-200 hover:text-white font-bold transition-all text-xs uppercase tracking-widest">
                   <i className="fa-solid fa-circle-user"/> Edit Profile
                 </Link>
-                <button onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-red-400 font-bold transition-all text-xs uppercase tracking-widest">
+                <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-red-400 font-bold transition-all text-xs uppercase tracking-widest">
                   <i className="fa-solid fa-right-from-bracket"/> Sign Out
                 </button>
               </div>
             </div>
           </aside>
 
-          {/* ── Main content ── */}
+          {/* Main content */}
           <section className="lg:col-span-3 space-y-8 sm:space-y-10">
 
             {/* Hero */}
@@ -350,11 +334,9 @@ export function MyPulsePage() {
               <i className="fa-solid fa-bolt absolute -right-4 -bottom-4 text-white/5 text-[10rem] rotate-12"/>
             </div>
 
-
-            {/* ── Scoop Archive shortcut — Pro only ── */}
+            {/* Scoop Archive — Pro only */}
             {isProTier && (
-              <div
-                onClick={() => navigate('/scoop/archive')}
+              <div onClick={() => navigate('/scoop/archive')}
                 className="cursor-pointer group bg-slate-900/60 border border-amber-500/20 hover:border-amber-500/40 rounded-3xl p-5 sm:p-6 transition-all hover:bg-slate-900/80">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
@@ -366,7 +348,7 @@ export function MyPulsePage() {
                         <p className="text-white font-black text-sm uppercase tracking-widest">Story Archive</p>
                         <span className="bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">Pro</span>
                       </div>
-                      <p className="text-slate-400 text-xs">30 days of AirDate TV Originals — every story, always accessible. Save your favorites.</p>
+                      <p className="text-slate-400 text-xs">30 days of AirDate TV Originals — every story, always accessible.</p>
                     </div>
                   </div>
                   <i className="fa-solid fa-arrow-right text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-1 transition-all flex-shrink-0"/>
@@ -374,7 +356,7 @@ export function MyPulsePage() {
               </div>
             )}
 
-            {/* ── Subscription Card ── */}
+            {/* Subscription Card */}
             {userData && (
               <div>
                 {isProTier && !cancelPending && (
@@ -443,7 +425,7 @@ export function MyPulsePage() {
               </div>
             )}
 
-            {/* ── Tracked Shows ── */}
+            {/* Tracked Shows */}
             <div>
               <div className="flex items-center justify-between mb-5 sm:mb-6">
                 <div className="flex items-center gap-3">
@@ -462,15 +444,20 @@ export function MyPulsePage() {
                   No shows tracked yet
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 group">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                   {watchlist.filter(Boolean).map(show => (
-                    <ShowCard key={show.id} show={show} onRemove={toggleWatchlist}/>
+                    <ShowCard
+                      key={show.id}
+                      show={show}
+                      liveData={liveShowData[show.id] ?? null}
+                      onRemove={toggleWatchlist}
+                    />
                   ))}
                 </div>
               )}
             </div>
 
-            {/* ── Preferences ── */}
+            {/* Preferences */}
             <div id="preferences">
               <div className="flex items-center gap-3 mb-5 sm:mb-6">
                 <div className="w-9 h-9 bg-violet-500/20 rounded-xl flex items-center justify-center">
@@ -483,7 +470,8 @@ export function MyPulsePage() {
                 {/* Networks */}
                 <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-5 sm:p-6">
                   <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Preferred Networks</h3>
-                  <p className="text-slate-400 text-xs mb-4">We'll prioritize these in your recommendations.</p>
+                  <p className="text-slate-400 text-xs mb-1">We'll prioritize these in your recommendations.</p>
+                  <p className="text-slate-500 text-[10px] mb-4 leading-relaxed">Shows from these networks will appear first in your premiere calendar and discovery results. Add the services you actually subscribe to for the most relevant feed.</p>
                   {networks.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {networks.map(n => (
@@ -514,7 +502,8 @@ export function MyPulsePage() {
                 {/* Genres */}
                 <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-5 sm:p-6">
                   <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Preferred Genres</h3>
-                  <p className="text-slate-400 text-xs mb-4">Tailor your discovery feed to what you love.</p>
+                  <p className="text-slate-400 text-xs mb-1">Tailor your discovery feed to what you love.</p>
+                  <p className="text-slate-500 text-[10px] mb-4 leading-relaxed">Selected genres filter your personalized premiere feed and improve show suggestions. Genres you don't pick won't disappear — they'll just rank lower.</p>
                   {genrePrefs.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {genrePrefs.map(g => (
@@ -537,20 +526,21 @@ export function MyPulsePage() {
                   </div>
                 </div>
 
-                {/* Notifications */}
+                {/* Premiere Alerts */}
                 <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-5 sm:p-6">
-                  <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center justify-between mb-2">
                     <div>
                       <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Premiere Alerts</h3>
-                      <p className="text-slate-400 text-xs">Get notified when tracked shows are about to premiere.</p>
+                      <p className="text-slate-400 text-xs mb-1">Get notified when tracked shows are about to premiere.</p>
+                      <p className="text-slate-500 text-[10px] leading-relaxed max-w-sm">When enabled, AirDate sends an email alert for every show on your watchlist. Pro members can also choose how far in advance to be notified.</p>
                     </div>
                     <button onClick={toggleNotifs}
-                      className={`relative flex-shrink-0 w-12 h-6 rounded-full border transition-all ${notifsOn ? 'bg-cyan-500 border-cyan-400' : 'border-white/10 bg-slate-700'}`}>
+                      className={`relative flex-shrink-0 w-12 h-6 rounded-full border transition-all ml-4 ${notifsOn ? 'bg-cyan-500 border-cyan-400' : 'border-white/10 bg-slate-700'}`}>
                       <span className={`absolute top-0.5 w-5 h-5 rounded-full transition-all duration-200 ${notifsOn ? 'left-6 bg-white' : 'left-0.5 bg-slate-400'}`}/>
                     </button>
                   </div>
                   {notifsOn && (
-                    <div className="border-t border-white/5 pt-5">
+                    <div className="border-t border-white/5 pt-5 mt-4">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-white text-xs font-black uppercase tracking-widest">Alert Timing</span>
                         <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[9px] font-black uppercase tracking-widest rounded-full">Pro</span>
@@ -559,10 +549,7 @@ export function MyPulsePage() {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {ALERT_DAYS.map(d => (
                           <button key={d} onClick={() => handleSetAlertDays(d)}
-                            className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all
-                              ${alertDays === d
-                                ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                                : 'bg-transparent border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-200'}`}>
+                            className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${alertDays === d ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-transparent border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-200'}`}>
                             <div className="text-sm font-black mb-0.5">{ALERT_LABELS[d].emoji}</div>
                             {ALERT_LABELS[d].label}
                           </button>
@@ -576,10 +563,7 @@ export function MyPulsePage() {
                 <div className="flex justify-end">
                   <button onClick={savePreferences} disabled={prefSaving}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 text-xs font-black uppercase tracking-widest hover:bg-cyan-500/30 transition-all disabled:opacity-50">
-                    {prefSaving
-                      ? <><i className="fa-solid fa-spinner fa-spin"/> Saving…</>
-                      : <><i className="fa-solid fa-floppy-disk"/> Save Preferences</>
-                    }
+                    {prefSaving ? <><i className="fa-solid fa-spinner fa-spin"/> Saving…</> : <><i className="fa-solid fa-floppy-disk"/> Save Preferences</>}
                   </button>
                 </div>
               </div>
@@ -590,10 +574,9 @@ export function MyPulsePage() {
       </div>
       <Footer/>
 
-      {/* ── Cancel Modal ── */}
+      {/* Cancel Modal */}
       {cancelModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={e => e.target === e.currentTarget && setCancelModal(false)}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={e => e.target === e.currentTarget && setCancelModal(false)}>
           <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
             <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full mx-auto mb-5 flex items-center justify-center">
               <i className="fa-solid fa-triangle-exclamation text-red-400 text-2xl"/>
@@ -608,12 +591,8 @@ export function MyPulsePage() {
               <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> Early premiere alerts will stop</li>
             </ul>
             <div className="flex flex-col sm:flex-row gap-3">
-              <button onClick={() => setCancelModal(false)}
-                className="flex-1 h-12 bg-slate-800 border border-white/10 rounded-xl text-slate-200 text-xs font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all">
-                Keep Pro
-              </button>
-              <button onClick={confirmCancel} disabled={actionLoading}
-                className="flex-1 h-12 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-xs font-bold uppercase tracking-widest hover:bg-red-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+              <button onClick={() => setCancelModal(false)} className="flex-1 h-12 bg-slate-800 border border-white/10 rounded-xl text-slate-200 text-xs font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all">Keep Pro</button>
+              <button onClick={confirmCancel} disabled={actionLoading} className="flex-1 h-12 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-xs font-bold uppercase tracking-widest hover:bg-red-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-60">
                 {actionLoading ? <i className="fa-solid fa-spinner fa-spin"/> : <><i className="fa-solid fa-xmark"/> Yes, Cancel Plan</>}
               </button>
             </div>
@@ -621,25 +600,18 @@ export function MyPulsePage() {
         </div>
       )}
 
-      {/* ── Reactivate Modal ── */}
+      {/* Reactivate Modal */}
       {reactivateModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={e => e.target === e.currentTarget && setReactivate(false)}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={e => e.target === e.currentTarget && setReactivate(false)}>
           <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl text-center">
             <div className="w-16 h-16 bg-cyan-500/10 border border-cyan-500/30 rounded-full mx-auto mb-5 flex items-center justify-center">
               <i className="fa-solid fa-bolt text-cyan-400 text-2xl"/>
             </div>
             <h3 className="text-white font-black text-xl mb-2">Keep your Pro plan?</h3>
-            <p className="text-slate-400 text-sm mb-8 leading-relaxed">
-              Your subscription will stay active and you'll continue to be billed $4.99/month.
-            </p>
+            <p className="text-slate-400 text-sm mb-8 leading-relaxed">Your subscription will stay active and you'll continue to be billed $4.99/month.</p>
             <div className="flex flex-col sm:flex-row gap-3">
-              <button onClick={() => setReactivate(false)}
-                className="flex-1 h-12 bg-slate-800 border border-white/10 rounded-xl text-slate-200 text-xs font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all">
-                Go Back
-              </button>
-              <button onClick={confirmReactivate} disabled={actionLoading}
-                className="flex-1 h-12 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+              <button onClick={() => setReactivate(false)} className="flex-1 h-12 bg-slate-800 border border-white/10 rounded-xl text-slate-200 text-xs font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all">Go Back</button>
+              <button onClick={confirmReactivate} disabled={actionLoading} className="flex-1 h-12 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-60">
                 {actionLoading ? <i className="fa-solid fa-spinner fa-spin"/> : <><i className="fa-solid fa-check"/> Yes, Keep Pro</>}
               </button>
             </div>
@@ -647,19 +619,15 @@ export function MyPulsePage() {
         </div>
       )}
 
-      {/* ── Delete Account Modal ── */}
+      {/* Delete Modal */}
       {deleteModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={e => e.target === e.currentTarget && setDeleteModal(false)}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={e => e.target === e.currentTarget && setDeleteModal(false)}>
           <div className="bg-slate-900 border border-red-500/20 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
             <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full mx-auto mb-5 flex items-center justify-center">
               <i className="fa-solid fa-trash text-red-400 text-2xl"/>
             </div>
             <h3 className="text-white font-black text-xl text-center mb-2">Delete Your Account?</h3>
-            <p className="text-slate-400 text-sm text-center mb-6 leading-relaxed">
-              This will permanently delete your account, watchlist, preferences, and all personal data.{' '}
-              <span className="text-red-400 font-bold">This cannot be undone.</span>
-            </p>
+            <p className="text-slate-400 text-sm text-center mb-6 leading-relaxed">This will permanently delete your account, watchlist, and all personal data. <span className="text-red-400 font-bold">This cannot be undone.</span></p>
             <ul className="space-y-2 mb-6 bg-slate-800/40 border border-white/5 rounded-2xl p-4">
               <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> Your watchlist will be permanently deleted</li>
               <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> Your preferences and history will be removed</li>
@@ -667,22 +635,12 @@ export function MyPulsePage() {
               <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> You will be signed out immediately</li>
             </ul>
             <div className="mb-6">
-              <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">
-                Type <span className="text-red-400">DELETE</span> to confirm
-              </label>
-              <input
-                type="text"
-                value={deleteConfirm}
-                onChange={e => setDeleteConfirm(e.target.value)}
-                placeholder="DELETE"
-                className="w-full bg-slate-800 border border-white/10 focus:border-red-500/50 rounded-xl px-4 py-3 text-white text-sm font-bold placeholder-slate-600 focus:outline-none transition-colors"
-              />
+              <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Type <span className="text-red-400">DELETE</span> to confirm</label>
+              <input type="text" value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="DELETE"
+                className="w-full bg-slate-800 border border-white/10 focus:border-red-500/50 rounded-xl px-4 py-3 text-white text-sm font-bold placeholder-slate-600 focus:outline-none transition-colors"/>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <button onClick={() => setDeleteModal(false)}
-                className="flex-1 h-12 bg-slate-800 border border-white/10 rounded-xl text-slate-200 text-xs font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all">
-                Cancel
-              </button>
+              <button onClick={() => setDeleteModal(false)} className="flex-1 h-12 bg-slate-800 border border-white/10 rounded-xl text-slate-200 text-xs font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all">Cancel</button>
               <button onClick={confirmDelete} disabled={deleteConfirm !== 'DELETE' || deleteLoading}
                 className="flex-1 h-12 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-xs font-bold uppercase tracking-widest hover:bg-red-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
                 {deleteLoading ? <i className="fa-solid fa-spinner fa-spin"/> : <><i className="fa-solid fa-trash"/> Delete Forever</>}
@@ -692,12 +650,10 @@ export function MyPulsePage() {
         </div>
       )}
 
-      {/* ── Toast ── */}
+      {/* Toast */}
       {toast && (
         <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl border backdrop-blur-sm shadow-2xl text-sm font-bold transition-all max-w-[90vw] text-center
-          ${toast.color === 'amber' ? 'bg-amber-500/20 border-amber-500/30 text-amber-300'
-          : toast.color === 'red'   ? 'bg-red-500/20 border-red-500/30 text-red-300'
-          : 'bg-cyan-500/20 border-cyan-500/30 text-cyan-300'}`}>
+          ${toast.color === 'amber' ? 'bg-amber-500/20 border-amber-500/30 text-amber-300' : toast.color === 'red' ? 'bg-red-500/20 border-red-500/30 text-red-300' : 'bg-cyan-500/20 border-cyan-500/30 text-cyan-300'}`}>
           {toast.msg}
         </div>
       )}

@@ -1,5 +1,6 @@
 // src/pages/AboutPage.jsx
 import { Link } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 import { Footer } from '@/components/layout/Footer'
 
 const FEATURES = [
@@ -54,6 +55,8 @@ const NETWORKS = [
 ]
 
 export function AboutPage() {
+  const { isAuthenticated } = useAuth()
+
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen">
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 pt-24 pb-16">
@@ -267,25 +270,51 @@ export function AboutPage() {
 
         {/* ── CTA ── */}
         <div className="text-center py-12 border border-white/5 rounded-3xl bg-slate-900/20">
-          <p className="text-cyan-400 text-xs font-black uppercase tracking-[0.2em] mb-4">
-            Get started free
-          </p>
-          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-3">
-            Ready to never miss a premiere?
-          </h2>
-          <p className="text-slate-200 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
-            Create your free account in under a minute. No credit card required.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/auth/signup"
-              className="w-full sm:w-auto px-8 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm uppercase tracking-widest rounded-xl transition-all">
-              Create Free Account
-            </Link>
-            <Link to="/"
-              className="w-full sm:w-auto px-8 py-3.5 bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-200 font-black text-sm uppercase tracking-widest rounded-xl transition-all">
-              Explore AirDate
-            </Link>
-          </div>
+          {isAuthenticated ? (
+            <>
+              <p className="text-cyan-400 text-xs font-black uppercase tracking-[0.2em] mb-4">
+                Your Dashboard
+              </p>
+              <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-3">
+                You're already in.
+              </h2>
+              <p className="text-slate-200 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
+                Head to My Pulse to manage your watchlist, set alert preferences, and never miss another premiere.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to="/pulse"
+                  className="w-full sm:w-auto px-8 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm uppercase tracking-widest rounded-xl transition-all">
+                  Go to My Pulse
+                </Link>
+                <Link to="/"
+                  className="w-full sm:w-auto px-8 py-3.5 bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-200 font-black text-sm uppercase tracking-widest rounded-xl transition-all">
+                  Explore AirDate
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-cyan-400 text-xs font-black uppercase tracking-[0.2em] mb-4">
+                Get started free
+              </p>
+              <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-3">
+                Ready to never miss a premiere?
+              </h2>
+              <p className="text-slate-200 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
+                Create your free account in under a minute. No credit card required.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to="/auth/signup"
+                  className="w-full sm:w-auto px-8 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm uppercase tracking-widest rounded-xl transition-all">
+                  Create Free Account
+                </Link>
+                <Link to="/"
+                  className="w-full sm:w-auto px-8 py-3.5 bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-200 font-black text-sm uppercase tracking-widest rounded-xl transition-all">
+                  Explore AirDate
+                </Link>
+              </div>
+            </>
+          )}
         </div>
 
       </div>

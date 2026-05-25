@@ -12,7 +12,7 @@ export function Navbar() {
   const [pushLoading, setPushLoading] = useState(false)
 
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [bellOpen,   setBellOpen]   = useState(false)  // ← click-controlled, not hover
+  const [bellOpen,   setBellOpen]   = useState(false)
 
   const bellRef = useRef(null)
   const location = useLocation()
@@ -43,13 +43,23 @@ export function Navbar() {
   const isAuthRoute = location.pathname.startsWith('/auth')
   if (isAuthRoute) return null
 
-  // Notification items shaped for the dropdown
-  // DynamoDB shape: { created_at, shows[], read, type }
-  const previewNotifs = notifications.slice(0, 5)
+  // ── Flatten notifications into individual per-show rows ─────────────────
+  // DynamoDB batches multiple shows into a single notification document.
+  // We unwrap them so each show gets its own tappable row with its own
+  // deep-link to /details/:id instead of a dead-end group link.
+  const previewRows = notifications
+    .flatMap(n =>
+      (n.shows ?? n.premiering ?? []).map(show => ({
+        notifCreatedAt: n.created_at,
+        read:           n.read,
+        type:           n.type,
+        _show:          show,
+      }))
+    )
+    .slice(0, 5)
 
   function handleBellClick() {
     setBellOpen(v => !v)
-    // Do NOT auto-mark-all-read on open — user should explicitly dismiss
   }
 
   function handleMarkAllRead(e) {
@@ -78,7 +88,7 @@ export function Navbar() {
 
         {/* Desktop nav links */}
         <div className="hidden md:flex items-center gap-1">
-          <NavLink to="/"         icon="fa-house"          label="Home"/>
+          <NavLink to="/"          icon="fa-house"          label="Home"/>
           <NavLink to="/premieres" icon="fa-calendar"       label="Premieres"/>
           <NavLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
           <NavLink to="/scoop"     icon="fa-fire"           label="The Scoop"/>
@@ -113,6 +123,7 @@ export function Navbar() {
               {/* Bell dropdown */}
               {bellOpen && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[200]">
+
                   {/* Header */}
                   <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
                     <span className="text-white text-xs font-black uppercase tracking-widest">Notifications</span>
@@ -126,33 +137,46 @@ export function Navbar() {
                     )}
                   </div>
 
-                  {/* Notification list */}
+                  {/* Notification rows — one per show */}
                   <div className="max-h-80 overflow-y-auto divide-y divide-white/5">
-                    {previewNotifs.length === 0 ? (
+                    {previewRows.length === 0 ? (
                       <div className="px-4 py-8 text-center">
                         <div className="text-2xl mb-2">🔔</div>
                         <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">No notifications yet</p>
                       </div>
                     ) : (
-                      previewNotifs.map(n => {
-                        const isUnread = !n.read
-                        const show     = (n.shows ?? n.premiering)?.[0]
-                        const dateStr  = n.created_at
-                          ? new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      previewRows.map((row, idx) => {
+                        const { notifCreatedAt, read, _show: show } = row
+                        const isUnread = !read
+
+                        const dateStr = notifCreatedAt
+                          ? new Date(notifCreatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                           : ''
-                        const label = show?.days_until === 0 ? 'TODAY' : show?.days_until === 1 ? 'TOMORROW' : dateStr
+
+                        const dayLabel = (() => {
+                          if (show?.days_until === 0) return 'Today'
+                          if (show?.days_until === 1) return 'Tomorrow'
+                          return dateStr
+                        })()
+
+                        const showId = show?.tmdb_id ?? show?.show_id ?? show?.id
 
                         return (
                           <div
-                            key={n.created_at}
+                            key={`${notifCreatedAt}-${show?.title ?? ''}-${idx}`}
                             onClick={() => {
-                              if (isUnread) markRead(n.created_at)
+                              if (isUnread) markRead(notifCreatedAt)
                               setBellOpen(false)
-                              navigate('/notifications')
+                              if (showId) {
+                                navigate(`/details/${showId}`)
+                              } else {
+                                navigate('/notifications')
+                              }
                             }}
                             className={`px-4 py-3 cursor-pointer transition-colors hover:bg-white/5 ${isUnread ? 'bg-cyan-500/5' : ''}`}
                           >
                             <div className="flex items-start gap-3">
+
                               {/* Poster thumbnail */}
                               {show?.poster ? (
                                 <img
@@ -167,28 +191,31 @@ export function Navbar() {
                               )}
 
                               <div className="flex-1 min-w-0">
+                                {/* Row meta */}
                                 <div className="flex items-center justify-between gap-2 mb-1">
                                   <span className="text-cyan-400 text-[9px] font-black uppercase tracking-widest">
                                     Premiere Alert
                                   </span>
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-slate-500 text-[9px]">{dateStr}</span>
-                                    {isUnread && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0"/>}
+                                    {isUnread && (
+                                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0"/>
+                                    )}
                                   </div>
                                 </div>
-                                {(n.shows ?? n.premiering ?? []).slice(0, 2).map(s => (
-                                  <div key={s.title} className="flex items-center justify-between gap-1">
-                                    <span className="text-white text-xs font-bold truncate">{s.title}</span>
-                                    <span className={`text-[9px] font-black uppercase tracking-widest flex-shrink-0
-                                      ${s.days_until === 0 ? 'text-red-400' : 'text-amber-400'}`}>
-                                      {s.days_until === 0 ? 'Today' : s.days_until === 1 ? 'Tomorrow' : label}
-                                    </span>
-                                  </div>
-                                ))}
-                                {((n.shows ?? n.premiering)?.length ?? 0) > 2 && (
-                                  <p className="text-slate-500 text-[9px] mt-0.5">
-                                    +{(n.shows ?? n.premiering).length - 2} more
-                                  </p>
+
+                                {/* Show title + day label */}
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="text-white text-xs font-bold truncate">{show?.title}</span>
+                                  <span className={`text-[9px] font-black uppercase tracking-widest flex-shrink-0
+                                    ${show?.days_until === 0 ? 'text-red-400' : 'text-amber-400'}`}>
+                                    {dayLabel}
+                                  </span>
+                                </div>
+
+                                {/* Network, if available */}
+                                {show?.network && (
+                                  <p className="text-slate-500 text-[9px] mt-0.5 truncate">{show.network}</p>
                                 )}
                               </div>
                             </div>
