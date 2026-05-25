@@ -1,5 +1,5 @@
 // src/pages/AccountPage.jsx
-// v2.40 — Profile, Password, Session, Continue as Guest, Danger Zone
+// v3.0 — Profile, Subscription, Password, Session, Downgrade, Guest, Danger Zone
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
@@ -41,19 +41,19 @@ export function AccountPage() {
   const { user, token, signOut, updateProfile, changePassword } = useAuth()
   const navigate = useNavigate()
 
-  const [name,        setName]        = useState(user?.name || '')
-  const [nameLoading, setNameLoading] = useState(false)
-  const [nameSaved,   setNameSaved]   = useState(false)
-  const [nameError,   setNameError]   = useState('')
-  const [oldPw,       setOldPw]       = useState('')
-  const [newPw,       setNewPw]       = useState('')
-  const [confirmPw,   setConfirmPw]   = useState('')
-  const [showOld,     setShowOld]     = useState(false)
-  const [showNew,     setShowNew]     = useState(false)
-  const [pwLoading,   setPwLoading]   = useState(false)
-  const [pwSaved,     setPwSaved]     = useState(false)
-  const [pwError,     setPwError]     = useState('')
-  const [pwFocused,   setPwFocused]   = useState(false)
+  const [name,          setName]          = useState(user?.name || '')
+  const [nameLoading,   setNameLoading]   = useState(false)
+  const [nameSaved,     setNameSaved]     = useState(false)
+  const [nameError,     setNameError]     = useState('')
+  const [oldPw,         setOldPw]         = useState('')
+  const [newPw,         setNewPw]         = useState('')
+  const [confirmPw,     setConfirmPw]     = useState('')
+  const [showOld,       setShowOld]       = useState(false)
+  const [showNew,       setShowNew]       = useState(false)
+  const [pwLoading,     setPwLoading]     = useState(false)
+  const [pwSaved,       setPwSaved]       = useState(false)
+  const [pwError,       setPwError]       = useState('')
+  const [pwFocused,     setPwFocused]     = useState(false)
   const [deleteModal,   setDeleteModal]   = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -61,9 +61,35 @@ export function AccountPage() {
   const [guestModal,    setGuestModal]    = useState(false)
   const [guestLoading,  setGuestLoading]  = useState(false)
   const [guestError,    setGuestError]    = useState('')
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError,   setPortalError]   = useState('')
 
   const passedRules  = PW_RULES.filter(r => r.test(newPw)).length
   const isGoogleUser = user?.provider === 'Google'
+  const isPro        = user?.tier === 'pro' || user?.tier === 'premium'
+
+  async function openBillingPortal() {
+    setPortalLoading(true); setPortalError('')
+    try {
+      let authToken = token
+      if (!authToken) {
+        try {
+          const s = JSON.parse(localStorage.getItem('airdate_session') || '{}')
+          authToken = s.AccessToken || s.accessToken || s.IdToken || s.idToken
+        } catch {}
+      }
+      if (!authToken) { setPortalError('Session expired. Please sign in again.'); setPortalLoading(false); return }
+      const res = await fetch('https://qg0x31ranc.execute-api.us-east-1.amazonaws.com/prod/billing-portal', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ return_url: window.location.href }),
+      })
+      const data = await res.json()
+      if (data.url) { window.location.href = data.url }
+      else setPortalError(data.error || 'Could not open billing portal.')
+    } catch { setPortalError('Failed to connect to billing. Try again.') }
+    finally { setPortalLoading(false) }
+  }
 
   async function handleSaveName(e) {
     e.preventDefault()
@@ -71,8 +97,7 @@ export function AccountPage() {
     setNameError(''); setNameLoading(true)
     try {
       await updateProfile({ name: name.trim() })
-      setNameSaved(true)
-      setTimeout(() => setNameSaved(false), 3000)
+      setNameSaved(true); setTimeout(() => setNameSaved(false), 3000)
     } catch (err) { setNameError(err?.message || 'Failed to update name.') }
     finally { setNameLoading(false) }
   }
@@ -84,8 +109,7 @@ export function AccountPage() {
     setPwError(''); setPwLoading(true)
     try {
       await changePassword(oldPw, newPw)
-      setPwSaved(true)
-      setOldPw(''); setNewPw(''); setConfirmPw('')
+      setPwSaved(true); setOldPw(''); setNewPw(''); setConfirmPw('')
       setTimeout(() => setPwSaved(false), 3000)
     } catch (err) {
       const code = err?.code || err?.__type || ''
@@ -102,16 +126,13 @@ export function AccountPage() {
     setDeleteLoading(true)
     try {
       const res = await fetch(`${API_BASE}/user/${user?.sub}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Delete failed')
-      await signOut()
-      navigate('/')
+      await signOut(); navigate('/')
     } catch {
       setDeleteError('Could not delete account. Contact operations@airdate.tv.')
-      setDeleteLoading(false)
-      setDeleteModal(false)
+      setDeleteLoading(false); setDeleteModal(false)
     }
   }
 
@@ -124,30 +145,29 @@ export function AccountPage() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       })
       if (!res.ok) throw new Error('Delete failed')
-      setGuestModal(false)
-      await signOut()
-      navigate('/')
+      setGuestModal(false); await signOut(); navigate('/')
     } catch {
       setGuestError('Could not remove account data. Contact operations@airdate.tv.')
-      setGuestLoading(false)
-      setGuestModal(false)
+      setGuestLoading(false); setGuestModal(false)
     }
   }
 
   return (
     <div className="bg-slate-950 min-h-screen text-slate-100">
-      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-20 space-y-5 sm:space-y-6">
+      <div className="w-full max-w-[1400px] mx-auto px-6 pt-24 sm:pt-28 pb-20 space-y-5 sm:space-y-6">
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">My Account</h1>
             <p className="text-slate-400 text-sm mt-1 truncate">{user?.email}</p>
           </div>
           <span className={`self-start sm:self-auto flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest border
-            ${(user?.tier === 'pro' || user?.tier === 'premium') ? 'bg-amber-500/10 border-amber-500/25 text-amber-400' : 'bg-slate-800 border-white/10 text-slate-400'}`}>
-            {(user?.tier === 'pro' || user?.tier === 'premium') ? '★ Pro' : 'Free Plan'}
+            ${isPro ? 'bg-amber-500/10 border-amber-500/25 text-amber-400' : 'bg-slate-800 border-white/10 text-slate-400'}`}>
+            {isPro ? '★ Pro' : 'Free Plan'}
           </span>
         </div>
 
+        {/* Profile */}
         <Section title="Profile" subtitle="Update how your name appears across AirDate.">
           <form onSubmit={handleSaveName} className="space-y-4">
             <div className="flex items-center gap-4 mb-5">
@@ -172,23 +192,36 @@ export function AccountPage() {
           </form>
         </Section>
 
+        {/* Subscription */}
         <Section title="Subscription" subtitle="Your current plan and usage.">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-white font-bold text-sm">{(user?.tier === 'pro' || user?.tier === 'premium') ? 'AirDate Pro' : 'AirDate Free'}</p>
+              <p className="text-white font-bold text-sm">{isPro ? 'AirDate Pro' : 'AirDate Free'}</p>
               <p className="text-slate-400 text-xs mt-0.5">
-                {(user?.tier === 'pro' || user?.tier === 'premium') ? 'Unlimited show tracking, early alerts, and more' : 'Track up to 5 shows · Upgrade for unlimited access'}
+                {isPro ? 'Unlimited show tracking, early alerts, and more' : 'Track up to 5 shows · Upgrade for unlimited access'}
               </p>
             </div>
-            {(user?.tier !== 'pro' && user?.tier !== 'premium') && (
+            {!isPro && (
               <button onClick={() => navigate('/upgrade')}
                 className="w-full sm:w-auto flex-shrink-0 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-xl transition-all">
                 Upgrade →
               </button>
             )}
+            {isPro && (
+              <div className="flex flex-col gap-2">
+                <button onClick={openBillingPortal} disabled={portalLoading}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/10 hover:border-cyan-500/30 text-slate-200 hover:text-cyan-400 font-black text-xs uppercase tracking-widest rounded-xl transition-all disabled:opacity-50">
+                  {portalLoading
+                    ? <><div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin"/>Loading...</>
+                    : <><i className="fa-solid fa-credit-card"/>Manage Billing</>}
+                </button>
+                {portalError && <p className="text-red-400 text-[10px] font-bold text-center">{portalError}</p>}
+              </div>
+            )}
           </div>
         </Section>
 
+        {/* Password */}
         {!isGoogleUser && (
           <Section title="Password" subtitle="Update your password. You'll stay signed in on this device.">
             <form onSubmit={handleChangePassword} className="space-y-4" noValidate>
@@ -249,20 +282,28 @@ export function AccountPage() {
           </Section>
         )}
 
-        <Section title="Session">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <p className="text-white font-bold text-sm">Sign out</p>
-              <p className="text-slate-400 text-xs mt-0.5">Sign out from all devices</p>
-            </div>
-            <button onClick={handleSignOut}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 font-black text-xs uppercase tracking-widest rounded-xl transition-all">
-              <i className="fa-solid fa-right-from-bracket"/> Sign Out
-            </button>
-          </div>
-        </Section>
 
-        {(!user?.tier || user?.tier === 'free') && (
+        {/* Downgrade — Pro only */}
+        {isPro && (
+          <Section title="Downgrade to Free" subtitle="Cancel your Pro subscription and return to the free plan. Your account and watchlist are kept.">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="text-white font-bold text-sm">Return to Free Plan</p>
+                <p className="text-slate-400 text-xs mt-0.5">You'll lose unlimited tracking and early alerts. Your data stays safe. Takes effect at end of billing period.</p>
+              </div>
+              <button onClick={openBillingPortal} disabled={portalLoading}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all flex-shrink-0 disabled:opacity-50">
+                {portalLoading
+                  ? <><div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin"/>Loading...</>
+                  : <><i className="fa-solid fa-arrow-down-to-line"/>Manage / Cancel Plan</>}
+              </button>
+            </div>
+            {portalError && <p className="text-red-400 text-[10px] font-bold mt-2">{portalError}</p>}
+          </Section>
+        )}
+
+        {/* Continue as Guest — Free only */}
+        {!isPro && (
           <Section title="Continue as Guest" subtitle="Remove your account data and browse anonymously. Your watchlist will be lost.">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
@@ -277,6 +318,21 @@ export function AccountPage() {
           </Section>
         )}
 
+        {/* Session */}
+        <Section title="Session">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-white font-bold text-sm">Sign out</p>
+              <p className="text-slate-400 text-xs mt-0.5">Sign out from all devices</p>
+            </div>
+            <button onClick={handleSignOut}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 font-black text-xs uppercase tracking-widest rounded-xl transition-all">
+              <i className="fa-solid fa-right-from-bracket"/> Sign Out
+            </button>
+          </div>
+        </Section>
+
+        {/* Danger Zone */}
         <Section title="Danger Zone" subtitle="Permanently delete your account and all associated data.">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -289,8 +345,8 @@ export function AccountPage() {
             </button>
           </div>
         </Section>
-      </div>
 
+      </div>
       <Footer/>
 
       {guestModal && (
