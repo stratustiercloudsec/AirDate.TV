@@ -1,6 +1,6 @@
 // src/pages/NotificationsPage.jsx
 import { useEffect, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { API_BASE } from '@/config/aws'
 import { Footer } from '@/components/layout/Footer'
@@ -30,6 +30,7 @@ export function NotificationsPage() {
   const [filter, setFilter]               = useState('all')
   const [loading, setLoading]             = useState(true)
 
+  const navigate = useNavigate()
   const sub = user?.sub || user?.userId || user?.username || ''
 
   const fetchNotifs = useCallback(async () => {
@@ -142,7 +143,11 @@ export function NotificationsPage() {
                   <div key={n.created_at}
                     className={`bg-slate-900 rounded-2xl p-5 border cursor-pointer transition-all hover:border-white/10
                       ${isUnread ? 'border-cyan-500/20' : 'border-white/5'}`}
-                    onClick={() => isUnread && markOneRead(n.created_at)}>
+                    onClick={() => {
+                      if (isUnread) markOneRead(n.created_at)
+                      const showId = n.shows?.[0]?.id
+                      if (showId) navigate(`/details/${showId}`)
+                    }}>
                     <div className="flex items-start gap-4">
                       {poster
                         ? <img src={poster} className="w-10 h-14 rounded-lg object-cover flex-shrink-0" alt="" />

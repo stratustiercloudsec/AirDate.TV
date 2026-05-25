@@ -717,23 +717,26 @@ export function ShowDetailPage() {
       setMeta('twitter:site',        '@airdatetv', true)
       // Cleanup on unmount handled by React router navigation
 
-      // ── Correct premiere date: use season air_date if season selected, else series date ──
+      // ── Correct premiere date: always use season-specific air_date ──
+      // Uses: requestedSeason (URL) → show.season_number (Lambda) → series date
       tmdbShow(id)
         .then(async data => {
           if (!data) return
-          if (requestedSeason && requestedSeason > 0) {
-            // Fetch season-specific air date from TMDB
+          // Determine effective season — URL param takes priority, then Lambda result
+          const effectiveSeason = requestedSeason ||
+            (show?.season_number && show.season_number > 0 ? show.season_number : null)
+          if (effectiveSeason && effectiveSeason > 0) {
             const { tmdbSeason: _tmdbSeason } = await import('../utils/tmdb')
             try {
-              const seasonData = await _tmdbSeason(id, requestedSeason)
+              const seasonData = await _tmdbSeason(id, effectiveSeason)
               if (seasonData?.air_date) {
                 setShow(prev => prev ? { ...prev, first_air_date: seasonData.air_date } : prev)
                 return
               }
             } catch {}
           }
-          // Fallback to series premiere date
-          if (data?.first_air_date) {
+          // Only fall back to series S1 date if no season info available
+          if (data?.first_air_date && !effectiveSeason) {
             setShow(prev => prev ? { ...prev, first_air_date: data.first_air_date } : prev)
           }
         }).catch(()=>{})
