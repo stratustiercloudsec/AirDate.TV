@@ -583,6 +583,9 @@ export function HomePage() {
     const q = overrideQuery ?? query
     if (!q.trim()) return
     setSearching(true); setShowResults(true)
+    // Sync header immediately so it reflects the active query, not the previous result
+    setHeader(`Results for "${q}"`)
+    setCount('')
     try {
       const payload = { query:q, page:overridePage, per_page:20, cache_bust: true }
       if (network && network !== 'All') payload.network = network
@@ -737,10 +740,33 @@ export function HomePage() {
                 {searching
                   ? <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">{Array.from({length:6}).map((_,i)=><SkeletonCard key={i}/>)}</div>
                   : <>
+                      {searchResults.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                          <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-5">
+                            <i className="fa-solid fa-magnifying-glass text-slate-500 text-2xl"/>
+                          </div>
+                          <h3 className="text-white font-black text-lg uppercase tracking-widest mb-2">
+                            No Results Found
+                          </h3>
+                          <p className="text-slate-400 text-sm max-w-sm leading-relaxed mb-6">
+                            We couldn't find any shows matching that search. Try a different title, network, or date range.
+                          </p>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {['Netflix June 2026','Taylor Sheridan','Apple TV+ 2026','HBO Premieres'].map(s => (
+                              <button key={s}
+                                onClick={() => { setQuery(s); handleSearch(s) }}
+                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-white/10 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-400 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all">
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 mb-8">
                         {searchResults.map((s,i)=><ShowCard key={`${s.id}-${s.season_number||i}`} show={s} {...cardProps}/>)}
                       </div>
-                      {totalPages > 1 && (
+                      )}
+                      {searchResults.length > 0 && totalPages > 1 && (
                         <div className="flex items-center justify-center gap-2 mt-6 mb-10">
                           <button onClick={()=>handleSearch(query,page-1)} disabled={page===1}
                             className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">← Prev</button>
