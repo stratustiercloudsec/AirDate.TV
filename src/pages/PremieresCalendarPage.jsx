@@ -5,7 +5,7 @@ import { useWatchlist } from '@/context/WatchlistContext'
 import { usePoster }    from '@/utils/poster'
 import { Footer }       from '@/components/layout/Footer'
 import { API_BASE }     from '@/config/aws'
-import { tmdbFetch, tmdbShow, tmdbDiscover } from '../utils/tmdb'
+import { tmdbFetch, tmdbShow, tmdbDiscover, tmdbSeason } from '../utils/tmdb'
 
 const NETWORK_MAP = {
   'Netflix':      [213],
@@ -125,6 +125,9 @@ async function fetchAllPages(base, maxPages=8) {
   return items
 }
 
+// Direct TMDB fetch — bypasses API Gateway tmdb-proxy (404 on qg0x31ranc)
+
+
 async function batchFetchDetails(ids) {
   const results = {}
   const chunks = []
@@ -203,9 +206,23 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         ? (Object.entries(NETWORK_MAP).find(([,ids])=>ids.includes(networkId))?.[0] || '')
         : ''
 
-      const _proxyBase = 'https://qg0x31ranc.execute-api.us-east-1.amazonaws.com/prod/tmdb-proxy'
-      const baseA = `${_proxyBase}?path=/discover/tv&language=en-US&first_air_date.gte=${qStart}&first_air_date.lte=${last}&sort_by=popularity.desc` + langFilter.replace('&with_original_language','&with_original_language') + netParam
-      const newShowsRaw = await fetchAllPages(baseA, 3)
+      // Direct TMDB discover — bypasses API Gateway tmdb-proxy (404 on qg0x31ranc)
+      const discoverParamsA = {
+        language: 'en-US',
+        'first_air_date.gte': qStart,
+        'first_air_date.lte': last,
+        sort_by: 'popularity.desc',
+        ...(networkId ? { with_networks: String(networkId) } : {}),
+        ...(langFilter ? { with_original_language: 'en' } : {}),
+      }
+      const p1A = await tmdbFetch('/discover/tv', { ...discoverParamsA, page: 1 }).catch(() => ({ results: [], total_pages: 0 }))
+      const totalPagesA = Math.min(p1A.total_pages || 1, 3)
+      const restA = totalPagesA > 1 ? await Promise.all(
+        Array.from({ length: totalPagesA - 1 }, (_, i) =>
+          tmdbFetch('/discover/tv', { ...discoverParamsA, page: i + 2 }).catch(() => ({ results: [] }))
+        )
+      ) : []
+      const newShowsRaw = [...(p1A.results || []), ...restA.flatMap(d => d.results || [])]
       const newShows = newShowsRaw
         .map(s => ({
           ...s,
@@ -217,8 +234,22 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         }))
         .filter(s => s.first_air_date >= first && s.first_air_date <= last)
 
-      const baseB = `${_proxyBase}?path=/discover/tv&language=en-US&air_date.gte=${qStart}&air_date.lte=${last}&sort_by=popularity.desc` + langFilter.replace('&with_original_language','&with_original_language') + netParam
-      const airingShows = await fetchAllPages(baseB, 2)
+      const discoverParamsB = {
+        language: 'en-US',
+        'air_date.gte': qStart,
+        'air_date.lte': last,
+        sort_by: 'popularity.desc',
+        ...(networkId ? { with_networks: String(networkId) } : {}),
+        ...(langFilter ? { with_original_language: 'en' } : {}),
+      }
+      const p1B = await tmdbFetch('/discover/tv', { ...discoverParamsB, page: 1 }).catch(() => ({ results: [], total_pages: 0 }))
+      const totalPagesB = Math.min(p1B.total_pages || 1, 2)
+      const restB = totalPagesB > 1 ? await Promise.all(
+        Array.from({ length: totalPagesB - 1 }, (_, i) =>
+          tmdbFetch('/discover/tv', { ...discoverParamsB, page: i + 2 }).catch(() => ({ results: [] }))
+        )
+      ) : []
+      const airingShows = [...(p1B.results || []), ...restB.flatMap(d => d.results || [])]
 
       const newIds     = new Set(newShows.map(s=>s.id))
       const candidates = airingShows.filter(s=>!newIds.has(s.id))
@@ -429,8 +460,7 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
       setError(false)
       try {
         const seasonNum = show._seasonNum || 1
-        const res  = await tmdbSeason(show.id, seasonNum)
-        const data = await res.json()
+        const data = await tmdbSeason(show.id, seasonNum)
         const eps  = (data.episodes || [])
           .map(ep => ep)
           .filter(ep => ep.air_date && ep.air_date >= monthFirst && ep.air_date <= monthLast)
