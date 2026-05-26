@@ -12,6 +12,7 @@ import { useWatchlist } from '@/context/WatchlistContext'
 import { API_BASE, IMAGE_BASE } from '@/config/aws'
 import { usePoster, createDefaultPoster } from '@/utils/poster'
 import { RatingBadge } from '@/utils/contentRating.jsx'
+import PredictionBadge from '../components/PredictionBadge'
 import { getProviderUrl } from '@/utils/providers'
 import { tmdbShow, tmdbCredits, tmdbProviders, tmdbRecommendations, tmdbVideos, tmdbSeason, tmdbDiscover } from '../utils/tmdb'
 
@@ -884,12 +885,26 @@ export function ShowDetailPage() {
                     {show.overview&&<div className="mb-6"><h2 className="text-lg font-black text-white uppercase tracking-wide mb-3">Overview</h2><p className="text-slate-200 leading-relaxed">{show.overview}</p></div>}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                       <div><p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Creator</p><p className="text-white font-bold truncate">{creator}</p></div>
-                      <div><p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Premiere</p><p className="text-cyan-400 font-black">{(()=>{
-  const d=show.first_air_date
-  if(!d) return 'TBA'
-  try{const dt=new Date(d+'T12:00:00');return isNaN(dt.getTime())?'TBA':dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-  catch{return 'TBA'}
-})()}</p></div>
+                      <div>
+                        <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Premiere</p>
+                        {(()=>{
+                          const d=show.first_air_date
+                          let label='TBA'
+                          try{if(d){const dt=new Date(d+'T12:00:00');label=isNaN(dt.getTime())?'TBA':dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}}catch{}
+                          return (
+                            <>
+                              <p className="text-cyan-400 font-black">{label}</p>
+                              {label==='TBA' && (
+                                <PredictionBadge
+                                  showId={show.id || id}
+                                  premiereDate={null}
+                                  compact={false}
+                                />
+                              )}
+                            </>
+                          )
+                        })()}
+                      </div>
                       <div><p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Network</p><p className="text-white font-bold">{network||'—'}</p></div>
                       <div><p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Rating</p><p className="text-pink-400 font-black">{rating?`★ ${rating}`:'—'}</p></div>
                     </div>

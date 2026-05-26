@@ -2,6 +2,7 @@
 // Watchlist + Preferences (My Pulse)
 import { useEffect, useState } from 'react'
 import { Link, useNavigate }   from 'react-router-dom'
+import PredictionBadge from '../components/PredictionBadge'
 import { useAuth }             from '@/context/AuthContext'
 import { useWatchlist }        from '@/context/WatchlistContext'
 import { API_BASE }            from '@/config/aws'
@@ -86,9 +87,16 @@ function ShowCard({ show, liveData, onRemove }) {
           {displayDate}
         </p>
       ) : (
-        <p className="text-[9px] sm:text-[10px] font-bold text-slate-600 truncate leading-tight uppercase tracking-wide">
-          Premiere TBA
-        </p>
+        <>
+          <p className="text-[9px] sm:text-[10px] font-bold text-slate-600 truncate leading-tight uppercase tracking-wide">
+            Premiere TBA
+          </p>
+          <PredictionBadge
+            showId={show.id || show.tmdb_id}
+            premiereDate={null}
+            compact={true}
+          />
+        </>
       )}
     </div>
   )

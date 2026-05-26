@@ -11,6 +11,7 @@ import { tmdbFetch, tmdbShow, tmdbContentRatings, tmdbSearchTV, tmdbTrending, tm
 import { Footer }       from '@/components/layout/Footer'
 import { SCOOP_MANIFEST_URL } from '@/config/aws'
 import RecommendedForYou from '../components/RecommendedForYou'
+import PredictionBadge from '../components/PredictionBadge'
 
 const IMAGE_BASE = 'https://image.tmdb.org'
 
@@ -438,14 +439,24 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) 
       {show.network && (
         <p className="text-[10px] sm:text-xs font-medium text-slate-400 mb-0.5">{show.network}</p>
       )}
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{(() => {
+      {(() => {
         const d = show.first_air_date || show.premiereDate
-        if (!d) return 'TBA'
+        let label = 'TBA'
         try {
-          const dt = new Date(d.includes('T') ? d : d + 'T12:00:00')
-          return isNaN(dt.getTime()) ? 'TBA' : dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
-        } catch { return 'TBA' }
-      })()}</p>
+          if (d) {
+            const dt = new Date(d.includes('T') ? d : d + 'T12:00:00')
+            label = isNaN(dt.getTime()) ? 'TBA' : dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+          }
+        } catch {}
+        return (
+          <>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+            {label === 'TBA' && (
+              <PredictionBadge showId={show.id} premiereDate={null} compact={true}/>
+            )}
+          </>
+        )
+      })()}
     </div>
   )
 }
