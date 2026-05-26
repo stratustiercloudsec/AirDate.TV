@@ -10,6 +10,7 @@ import { usePoster }    from '@/utils/poster'
 import { tmdbFetch, tmdbShow, tmdbContentRatings, tmdbSearchTV, tmdbTrending, tmdbPopular, tmdbDiscover, tmdbOnTheAir } from '../utils/tmdb'
 import { Footer }       from '@/components/layout/Footer'
 import { SCOOP_MANIFEST_URL } from '@/config/aws'
+import RecommendedForYou from '../components/RecommendedForYou'
 
 const IMAGE_BASE = 'https://image.tmdb.org'
 
@@ -752,7 +753,7 @@ export function HomePage() {
                             We couldn't find any shows matching that search. Try a different title, network, or date range.
                           </p>
                           <div className="flex flex-wrap justify-center gap-2">
-                            {['Netflix June 2026','Taylor Sheridan','Apple TV+ 2026','HBO Premieres'].map(s => (
+                {['Netflix June 2026','Taylor Sheridan','Apple TV+ 2026','HBO Premieres'].map(s => (
                               <button key={s}
                                 onClick={() => { setQuery(s); handleSearch(s) }}
                                 className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-white/10 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-400 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all">
@@ -782,6 +783,12 @@ export function HomePage() {
 
             {!showResults && (
               <div className="flex flex-col gap-14">
+
+                {/* ── v3.7 Personalized Recommendations ("Because you tracked...") ── */}
+                {isAuthenticated && (
+                  <RecommendedForYou className="" />
+                )}
+
                 <section>
                   <SectionHeader icon="fa-solid fa-fire" iconColor="text-orange-400" title="Trending Shows" subtitle="Most Tracked on AirDate"/>
                   <ShowGrid shows={trending} loading={loadTrend} skeletonCount={5} {...cardProps}/>
