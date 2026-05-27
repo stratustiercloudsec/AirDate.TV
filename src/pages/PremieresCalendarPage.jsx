@@ -23,7 +23,7 @@ const NETWORK_MAP = {
   'FOX':          [19],
   'FX':           [88],
   'AMC':          [174],
-  'STARZ':        [318, 304, 1709],
+  'STARZ':        [4406, 318, 304, 1709],
   'Tubi':         [2503],
 }
 
@@ -390,9 +390,11 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
 
   // Static curated premieres — known returning seasons TMDB discover misses
   const STATIC_PREMIERES = [
-    { id:203744, name:'Sugar', first_air_date:'2026-06-17', _networkLabel:'Apple TV+', _seasonNum:2, _episodeNum:1, _isSeason:true, genre_ids:[18] },
-    { id:76479,  name:'For All Mankind', first_air_date:'2026-05-06', _networkLabel:'Apple TV+', _seasonNum:5, _episodeNum:1, _isSeason:true, genre_ids:[10765] },
-  { id:72071,  name:'The Chi', first_air_date:'2026-05-22', _networkLabel:'Showtime', _seasonNum:8, _episodeNum:1, _isSeason:true, genre_ids:[18] },
+    { id:203744, name:'Sugar',                         first_air_date:'2026-06-17', _networkLabel:'Apple TV+', _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
+    { id:76479,  name:'For All Mankind',               first_air_date:'2026-05-06', _networkLabel:'Apple TV+', _seasonNum:5, _episodeNum:1, _isSeason:true,  genre_ids:[10765] },
+    { id:72071,  name:'The Chi',                       first_air_date:'2026-05-22', _networkLabel:'Showtime',  _seasonNum:8, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
+    { id:124394, name:'Power Book III: Raising Kanan', first_air_date:'2026-06-12', _networkLabel:'STARZ',     _seasonNum:5, _episodeNum:1, _isSeason:true,  genre_ids:[18,80] },
+    { id:8840,   name:'Fightland',                     first_air_date:'2026-07-31', _networkLabel:'STARZ',     _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18] },
   ]
 
   // Filter static premieres to match current month/network

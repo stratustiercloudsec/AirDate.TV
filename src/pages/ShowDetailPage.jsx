@@ -15,6 +15,7 @@ import { RatingBadge } from '@/utils/contentRating.jsx'
 import PredictionBadge from '../components/PredictionBadge'
 import { getProviderUrl } from '@/utils/providers'
 import { tmdbShow, tmdbCredits, tmdbProviders, tmdbRecommendations, tmdbVideos, tmdbSeason, tmdbDiscover } from '../utils/tmdb'
+import { CommentSection } from '@/components/comments/CommentSection'
 
 function gw(raw) {
   if (!raw) return {}
@@ -956,6 +957,9 @@ export function ShowDetailPage() {
                 </div>
               </section>
             )}
+
+          {/* Community Comments */}
+          <CommentSection showId={id} />
 
           </div>
 

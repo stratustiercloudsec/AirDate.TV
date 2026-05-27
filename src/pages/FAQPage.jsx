@@ -59,6 +59,20 @@ const FAQ_SECTIONS = [
     ],
   },
   {
+    category: 'Community & Comments',
+    icon: 'fa-comments',
+    color: 'text-purple-400',
+    faqs: [
+      { q: 'Can I leave comments on show pages?', a: 'Yes! Any registered AirDate user — including free accounts — can leave comments on show detail pages. Comments are visible to everyone, including visitors who are not signed in.' },
+      { q: 'Do I need a Pro account to comment?', a: 'No. Commenting is available to all registered users on the free plan. You just need a free AirDate account to post.' },
+      { q: 'What are the community comment rules?', a: 'To keep AirDate a great place for TV fans, all comments must follow these rules:\n\n• Maximum 100 words per comment\n• No profanity, hate speech, or abusive language\n• No spam or off-topic promotional content\n• Keep discussion relevant to the show\n\nAll comments are screened by AI-powered content moderation before posting. Violations are blocked automatically.' },
+      { q: 'How long do comments stay visible?', a: 'Comments automatically expire and are removed after 45 days. This keeps show pages fresh and relevant to current seasons.' },
+      { q: 'Can I delete my own comment?', a: 'Comment self-deletion is coming in a future update. In the meantime, contact operations@airdate.tv with the show name and your comment text and we will remove it within 24 hours.' },
+      { q: 'What happens if my comment is blocked?', a: "If our moderation system detects a policy violation, your comment will not be posted and you'll see a message explaining why. Review the community guidelines, rephrase, and try again. Repeated violations may result in your commenting privileges being restricted." },
+      { q: 'Who can see my name on comments?', a: 'Your display name — the name on your AirDate account, or your email prefix if no name is set — is shown publicly next to your comment. It is visible to all visitors including signed-out users.' },
+    ],
+  },
+  {
     category: 'Privacy & Data',
     icon: 'fa-shield-halved',
     color: 'text-slate-400',
