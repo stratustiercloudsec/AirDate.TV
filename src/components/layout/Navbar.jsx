@@ -48,15 +48,35 @@ export function Navbar() {
   // We unwrap them so each show gets its own tappable row with its own
   // deep-link to /details/:id instead of a dead-end group link.
   const previewRows = notifications
-    .flatMap(n =>
-      (n.shows ?? n.premiering ?? []).map(show => ({
+  .flatMap(n => {
+    const showList = n.shows ?? n.premiering ?? null
+
+    // Batch notification — unwrap each show into its own tappable row
+    if (showList?.length) {
+      return showList.map(show => ({
         notifCreatedAt: n.created_at,
         read:           n.read,
         type:           n.type,
         _show:          show,
       }))
-    )
-    .slice(0, 5)
+    }
+
+    // Single-show notification — treat the notification root as the show
+    // (prevents notifications from silently disappearing when shows[] is absent)
+    return [{
+      notifCreatedAt: n.created_at,
+      read:           n.read,
+      type:           n.type,
+      _show: {
+        title:     n.title     ?? n.show_title ?? n.name ?? '',
+        tmdb_id:   n.tmdb_id   ?? n.show_id    ?? null,
+        poster:    n.poster    ?? n.poster_path ?? null,
+        network:   n.network   ?? '',
+        days_until: n.days_until ?? null,
+      },
+    }]
+  })
+  .slice(0, 5)
 
   function handleBellClick() {
     setBellOpen(v => !v)
