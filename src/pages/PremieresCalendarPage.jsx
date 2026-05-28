@@ -481,20 +481,20 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
     <div className="mt-3 pt-3 border-t border-white/8">
       <div className="flex items-center gap-2.5 py-2">
         <div className="w-4 h-4 border-2 border-cyan-500/40 border-t-cyan-400 rounded-full animate-spin flex-shrink-0"/>
-        <span className="text-xs text-slate-400 font-bold">Loading episode schedule…</span>
+        <span className="text-xs text-slate-200 font-bold">Loading episode schedule…</span>
       </div>
     </div>
   )
 
   if (error) return (
     <div className="mt-3 pt-3 border-t border-white/8">
-      <p className="text-xs text-slate-400 font-bold">Could not load episode schedule.</p>
+      <p className="text-xs text-slate-200 font-bold">Could not load episode schedule.</p>
     </div>
   )
 
   if (!episodes || !episodes.length) return (
     <div className="mt-3 pt-3 border-t border-white/8">
-      <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">No episodes found for this month.</p>
+      <p className="text-xs text-slate-200 font-bold uppercase tracking-wide">No episodes found for this month.</p>
     </div>
   )
 
@@ -506,7 +506,7 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
         <p className="text-xs font-black uppercase tracking-widest text-slate-300">
           {episodes.length} Episode{episodes.length!==1?'s':''} This Month
         </p>
-        <p className="text-[10px] text-slate-500 font-bold">S{show._seasonNum||1}</p>
+        <p className="text-[10px] text-slate-200 font-bold">S{show._seasonNum||1}</p>
       </div>
 
       {episodes.map(ep => {
@@ -528,14 +528,14 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
               ${isToday
                 ? 'bg-red-500/25 text-red-300 border border-red-500/40'
                 : isPast
-                  ? 'bg-slate-800 text-slate-400 border border-white/8'
+                  ? 'bg-slate-800 text-slate-200 border border-white/8'
                   : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/25'
               }`}>
               E{String(ep.episode_number).padStart(2,'0')}
             </span>
 
             <span className={`flex-1 text-sm font-semibold truncate
-              ${isToday ? 'text-white' : isPast ? 'text-slate-400' : 'text-slate-100'}`}>
+              ${isToday ? 'text-white' : isPast ? 'text-slate-200' : 'text-slate-100'}`}>
               {ep.name || `Episode ${ep.episode_number}`}
             </span>
 
@@ -549,7 +549,7 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
               </span>
             ) : (
               <span className={`flex-shrink-0 text-xs font-bold
-                ${isPast ? 'text-slate-500' : 'text-slate-300'}`}>
+                ${isPast ? 'text-slate-200' : 'text-slate-300'}`}>
                 {formatShortDate(ep.air_date)}
               </span>
             )}
@@ -601,7 +601,7 @@ function ShowListCard({ show, onTrack, isTracked, atLimit, isAuthenticated, mont
           {/* Network */}
           <div className="flex items-center gap-1.5 mb-0.5">
             <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background:getNetworkColor(netName)}}/>
-            <p className="text-[10px] font-bold text-slate-400 truncate">{netName||'Unknown'}</p>
+            <p className="text-[10px] font-bold text-slate-200 truncate">{netName||'Unknown'}</p>
           </div>
 
           {/* Episode label */}
@@ -614,7 +614,7 @@ function ShowListCard({ show, onTrack, isTracked, atLimit, isAuthenticated, mont
 
           {/* Genre */}
           {genre && (
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-200 mb-2">
               {genre}
             </p>
           )}
@@ -627,7 +627,7 @@ function ShowListCard({ show, onTrack, isTracked, atLimit, isAuthenticated, mont
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all
                   ${expanded
                     ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                    : 'bg-slate-700/60 border-white/10 text-slate-400 hover:border-cyan-500/20 hover:text-cyan-400'}`}>
+                    : 'bg-slate-700/60 border-white/10 text-slate-200 hover:border-cyan-500/20 hover:text-cyan-400'}`}>
                 <i className={`fa-solid ${expanded ? 'fa-chevron-up' : 'fa-list'} text-[8px]`}/>
                 {expanded ? 'Hide' : 'Episodes'}
               </button>
@@ -639,7 +639,7 @@ function ShowListCard({ show, onTrack, isTracked, atLimit, isAuthenticated, mont
                 className={`w-6 h-6 rounded-lg text-[10px] font-black transition-all flex items-center justify-center flex-shrink-0
                   ${tracked
                     ? 'bg-cyan-500 text-slate-950'
-                    : 'bg-slate-700 text-slate-400 hover:bg-cyan-500/20 hover:text-cyan-400'}`}>
+                    : 'bg-slate-700 text-slate-200 hover:bg-cyan-500/20 hover:text-cyan-400'}`}>
                 {tracked?'✓':'+'}
               </button>
             )}
@@ -699,7 +699,7 @@ function DayPanelCard({ show, onTrack, isTracked, atLimit, isAuthenticated, mont
               onClick={e=>{e.stopPropagation();onTrack(show)}}
               disabled={!tracked&&atLimit}
               className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all
-                ${tracked?'bg-cyan-500 text-slate-950':'bg-slate-700 text-slate-400 hover:bg-cyan-500/20 hover:text-cyan-400'}`}>
+                ${tracked?'bg-cyan-500 text-slate-950':'bg-slate-700 text-slate-200 hover:bg-cyan-500/20 hover:text-cyan-400'}`}>
               {tracked?'✓':'+'}
             </button>
           )}
@@ -709,7 +709,7 @@ function DayPanelCard({ show, onTrack, isTracked, atLimit, isAuthenticated, mont
               className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all
                 ${expanded
                   ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                  : 'bg-slate-700/60 border-white/10 text-slate-400 hover:border-cyan-500/20 hover:text-cyan-400'}`}>
+                  : 'bg-slate-700/60 border-white/10 text-slate-200 hover:border-cyan-500/20 hover:text-cyan-400'}`}>
               <i className={`fa-solid ${expanded ? 'fa-chevron-up' : 'fa-list'} text-[8px]`}/>
               {expanded ? 'Hide' : 'Eps'}
             </button>
@@ -795,7 +795,7 @@ export function PremieresCalendarPage() {
       </button>
       <div className="text-center">
         <h2 className="text-2xl font-black text-white tracking-tight">{monthLabel}</h2>
-        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+        <p className="text-xs text-slate-200 font-bold uppercase tracking-widest mt-0.5">
           {loading?'Loading…':`${premieres.length} Premiere${premieres.length!==1?'s':''}`}
         </p>
       </div>
@@ -817,11 +817,11 @@ export function PremieresCalendarPage() {
               <i className="fa-solid fa-calendar-star"></i> Premiere Dates
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-2">Premiere Calendar</h1>
-            <p className="text-slate-400 text-sm max-w-xl">New series, season premieres, and continuing episodes across all major networks.</p>
+            <p className="text-slate-200 text-sm max-w-xl">New series, season premieres, and continuing episodes across all major networks.</p>
           </div>
           <div className="flex items-center gap-3 flex-shrink-0">
             {loading && (
-              <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-slate-200 text-xs font-bold uppercase tracking-widest">
                 <div className="w-3 h-3 border-2 border-slate-600 border-t-cyan-400 rounded-full animate-spin"></div>
                 Loading…
               </div>
@@ -830,7 +830,7 @@ export function PremieresCalendarPage() {
               {[['list','fa-th-large','List'],['calendar','fa-calendar-days','Calendar']].map(([v,icon,label])=>(
                 <button key={v} onClick={()=>setView(v)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all
-                    ${view===v?'bg-white/8 text-white':'text-slate-400 hover:text-slate-200'}`}>
+                    ${view===v?'bg-white/8 text-white':'text-slate-200 hover:text-slate-200'}`}>
                   <i className={`fa-solid ${icon} mr-1`}></i>{label}
                 </button>
               ))}
@@ -840,7 +840,7 @@ export function PremieresCalendarPage() {
 
         {/* Legend */}
         <div className="flex items-center gap-5 mb-6 text-[10px] font-bold uppercase tracking-widest">
-          <span className="text-slate-500">Key:</span>
+          <span className="text-slate-200">Key:</span>
           <span className="flex items-center gap-1.5 text-cyan-400">
             <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block"/>
             Season / Series Premiere
@@ -854,11 +854,11 @@ export function PremieresCalendarPage() {
         {/* Network filter */}
         <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2"
           style={{scrollbarWidth:'none', WebkitOverflowScrolling:'touch', msOverflowStyle:'none'}}>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex-shrink-0">Filter:</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-200 flex-shrink-0">Filter:</span>
           {NETWORKS.map(n=>(
             <button key={n} onClick={()=>setNetwork(n)}
               className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest border transition-all
-                ${network===n?'bg-cyan-500/10 border-cyan-500/35 text-cyan-400':'text-slate-400 border-white/10 hover:text-white'}`}>
+                ${network===n?'bg-cyan-500/10 border-cyan-500/35 text-cyan-400':'text-slate-200 border-white/10 hover:text-white'}`}>
               {n}
             </button>
           ))}
@@ -873,7 +873,7 @@ export function PremieresCalendarPage() {
             ) : sortedDates.length===0 ? (
               <div className="text-center py-20">
                 <i className="fa-solid fa-calendar-xmark text-slate-700 text-5xl mb-4"/>
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">
+                <p className="text-slate-200 font-bold uppercase tracking-widest text-sm">
                   No premieres found for {monthLabel}
                 </p>
               </div>
@@ -888,7 +888,7 @@ export function PremieresCalendarPage() {
                       <div className="flex items-center gap-4 mb-4">
                         <div className={`flex-shrink-0 w-14 h-14 rounded-2xl flex flex-col items-center justify-center border
                           ${isToday?'bg-cyan-500 border-cyan-400':'bg-slate-800/60 border-white/10'}`}>
-                          <span className={`text-[9px] font-black uppercase tracking-widest ${isToday?'text-slate-950':'text-slate-400'}`}>
+                          <span className={`text-[9px] font-black uppercase tracking-widest ${isToday?'text-slate-950':'text-slate-200'}`}>
                             {DOW_SHORT[d.getDay()]}
                           </span>
                           <span className={`text-xl font-black leading-tight ${isToday?'text-slate-950':'text-white'}`}>
@@ -899,7 +899,7 @@ export function PremieresCalendarPage() {
                           <h3 className="text-base font-black text-white">
                             {d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
                           </h3>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-200 mt-0.5">
                             {shows.length} premiere{shows.length!==1?'s':''}
                           </p>
                         </div>
@@ -928,7 +928,7 @@ export function PremieresCalendarPage() {
               <div className="xl:col-span-2">
                 <div className="grid grid-cols-7 mb-2">
                   {DOW.map(d=>(
-                    <div key={d} className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 py-2">{d}</div>
+                    <div key={d} className="text-center text-[10px] font-black uppercase tracking-widest text-slate-200 py-2">{d}</div>
                   ))}
                 </div>
                 {loading ? <CalendarSkeleton/> : (
@@ -949,7 +949,7 @@ export function PremieresCalendarPage() {
                               :shows.length>0?'border-white/10 bg-slate-900/40 hover:border-white/20'
                               :'border-white/5 bg-slate-900/20 hover:border-white/10'}`}>
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black mb-1
-                            ${isToday?'bg-cyan-400 text-slate-950':'text-slate-400'}`}>
+                            ${isToday?'bg-cyan-400 text-slate-950':'text-slate-200'}`}>
                             {day}
                           </div>
                           <div className="space-y-0.5">
@@ -964,7 +964,7 @@ export function PremieresCalendarPage() {
                               )
                             })}
                             {shows.length>3&&(
-                              <span className="text-[8px] text-slate-500">+{shows.length-3} more</span>
+                              <span className="text-[8px] text-slate-200">+{shows.length-3} more</span>
                             )}
                           </div>
                         </div>
@@ -980,7 +980,7 @@ export function PremieresCalendarPage() {
                   {!selectedDay ? (
                     <div className="text-center py-12">
                       <i className="fa-solid fa-calendar-day text-slate-700 text-4xl mb-3"></i>
-                      <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Select a date</p>
+                      <p className="text-slate-200 text-sm font-bold uppercase tracking-widest">Select a date</p>
                       <p className="text-slate-600 text-xs mt-1">to see what's premiering</p>
                     </div>
                   ) : (
@@ -990,7 +990,7 @@ export function PremieresCalendarPage() {
                           <h3 className="text-lg font-black text-white">
                             {new Date(year,month-1,selectedDay).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
                           </h3>
-                          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                          <p className="text-xs text-slate-200 font-bold uppercase tracking-widest">
                             {selectedShows.length} premiere{selectedShows.length!==1?'s':''}
                           </p>
                         </div>
@@ -1001,7 +1001,7 @@ export function PremieresCalendarPage() {
                         )}
                       </div>
                       {selectedShows.length===0 ? (
-                        <p className="text-slate-500 text-sm text-center py-8">No premieres on this date.</p>
+                        <p className="text-slate-200 text-sm text-center py-8">No premieres on this date.</p>
                       ) : (
                         <div className="space-y-3">
                           {selectedShows.map(show=>(

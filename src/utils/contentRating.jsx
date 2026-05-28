@@ -1,10 +1,10 @@
 export function ratingColor(rating) {
-  if (!rating) return 'border-white/20 text-slate-400'
+  if (!rating) return 'border-white/20 text-slate-200'
   if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
   if (rating === 'TV-14')  return 'border-orange-500/50 text-orange-400'
   if (rating === 'TV-PG')  return 'border-yellow-500/50 text-yellow-400'
   if (['TV-G','TV-Y','TV-Y7'].includes(rating)) return 'border-green-500/50 text-green-400'
-  return 'border-white/20 text-slate-400'
+  return 'border-white/20 text-slate-200'
 }
 
 export function RatingBadge({ rating }) {

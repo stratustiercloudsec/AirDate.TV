@@ -66,7 +66,7 @@ export function ForgotPasswordPage() {
           {step === 'request' ? (
             <>
               <h1 className="text-2xl font-black text-white tracking-tight mb-1">Reset password</h1>
-              <p className="text-slate-400 text-sm mb-7">
+              <p className="text-slate-200 text-sm mb-7">
                 Enter your email and we'll send a verification code.
               </p>
 
@@ -74,7 +74,7 @@ export function ForgotPasswordPage() {
 
               <form onSubmit={handleRequest} className="space-y-4" noValidate>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-1.5">
                     Email address
                   </label>
                   <input
@@ -95,14 +95,14 @@ export function ForgotPasswordPage() {
           ) : (
             <>
               <h1 className="text-2xl font-black text-white tracking-tight mb-1">Set new password</h1>
-              <p className="text-slate-400 text-sm mb-1">Code sent to</p>
+              <p className="text-slate-200 text-sm mb-1">Code sent to</p>
               <p className="text-amber-400 font-bold text-sm mb-7 truncate">{email}</p>
 
               {error && <ErrorBanner msg={error}/>}
 
               <form onSubmit={handleReset} className="space-y-4" noValidate>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-1.5">
                     Verification code
                   </label>
                   <input
@@ -113,7 +113,7 @@ export function ForgotPasswordPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-1.5">
                     New password
                   </label>
                   <div className="relative">
@@ -125,7 +125,7 @@ export function ForgotPasswordPage() {
                       className="w-full px-4 py-3 pr-11 bg-slate-800/60 border border-white/10 focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/10 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none transition-all"
                     />
                     <button type="button" onClick={() => setShowPw(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-slate-500 hover:text-slate-300 transition-colors">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-slate-200 hover:text-slate-300 transition-colors">
                       <i className={`fa-solid ${showPw ? 'fa-eye-slash' : 'fa-eye'} text-sm`}/>
                     </button>
                   </div>
@@ -148,7 +148,7 @@ export function ForgotPasswordPage() {
                 <button
                   type="button"
                   onClick={() => { setStep('request'); setCode(''); setNewPw(''); setError('') }}
-                  className="w-full text-slate-500 hover:text-slate-300 text-sm font-bold transition-colors"
+                  className="w-full text-slate-200 hover:text-slate-300 text-sm font-bold transition-colors"
                 >
                   ← Request a new code
                 </button>
@@ -158,7 +158,7 @@ export function ForgotPasswordPage() {
 
           <div className="flex items-center gap-3 my-5"><div className="flex-1 h-px bg-white/8"/></div>
           <p className="text-center">
-            <Link to="/auth/login" className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
+            <Link to="/auth/login" className="text-slate-200 hover:text-slate-300 text-sm transition-colors">
               ← Back to sign in
             </Link>
           </p>

@@ -11,7 +11,7 @@ export function ProtectedRoute({ children, requirePremium = false }) {
       <div className="bg-slate-950 min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 border-2 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin"/>
-          <p className="text-slate-500 text-xs font-black uppercase tracking-widest">Loading…</p>
+          <p className="text-slate-200 text-xs font-black uppercase tracking-widest">Loading…</p>
         </div>
       </div>
     )

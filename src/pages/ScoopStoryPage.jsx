@@ -53,7 +53,7 @@ function ProPaywall({ headline }) {
         <h3 className="text-white font-black text-xl mb-3">
           Full Story Access is a Pro Feature
         </h3>
-        <p className="text-slate-400 text-sm leading-relaxed max-w-md mx-auto mb-6">
+        <p className="text-slate-200 text-sm leading-relaxed max-w-md mx-auto mb-6">
           This AirDate TV Original is part of our continuously updated editorial intelligence feed.
           Pro subscribers get the full story, the 30-day archive, and personal story bookmarks.
         </p>
@@ -204,13 +204,13 @@ export function ScoopStoryPage() {
         {/* Back + Archive nav */}
         <div className="flex items-center justify-between mb-8">
           <button onClick={() => navigate('/scoop')}
-            className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors group">
+            className="flex items-center gap-2 text-slate-200 hover:text-white text-sm transition-colors group">
             <i className="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"/>
             Back to The Scoop
           </button>
           {isPro && (
             <button onClick={() => navigate('/scoop/archive')}
-              className="flex items-center gap-2 text-slate-500 hover:text-cyan-400 text-xs font-bold uppercase tracking-widest transition-colors">
+              className="flex items-center gap-2 text-slate-200 hover:text-cyan-400 text-xs font-bold uppercase tracking-widest transition-colors">
               <i className="fa-solid fa-box-archive text-[10px]"/>
               Archive
             </button>
@@ -224,7 +224,7 @@ export function ScoopStoryPage() {
               className="w-full h-full object-cover"/>
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"/>
             {story.image_source === 'pexels' && (
-              <span className="absolute bottom-3 right-3 text-[10px] text-slate-500 bg-slate-950/60 px-2 py-1 rounded-md">
+              <span className="absolute bottom-3 right-3 text-[10px] text-slate-200 bg-slate-950/60 px-2 py-1 rounded-md">
                 Photo by Pexels
               </span>
             )}
@@ -244,7 +244,7 @@ export function ScoopStoryPage() {
 
         {/* Meta + Bookmark */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
-          <div className="flex flex-wrap items-center gap-3 text-slate-500 text-sm">
+          <div className="flex flex-wrap items-center gap-3 text-slate-200 text-sm">
             <span className="flex items-center gap-1.5">
               <i className="fa-solid fa-sparkles text-cyan-400 text-xs"/>
               AirDate Original
@@ -287,7 +287,7 @@ export function ScoopStoryPage() {
                 ← More from The Scoop
               </button>
               <button onClick={() => navigate('/scoop/archive')}
-                className="flex items-center gap-2 text-slate-400 hover:text-cyan-400 text-sm font-bold transition-colors">
+                className="flex items-center gap-2 text-slate-200 hover:text-cyan-400 text-sm font-bold transition-colors">
                 <i className="fa-solid fa-box-archive text-xs"/>
                 Browse 30-Day Archive
               </button>

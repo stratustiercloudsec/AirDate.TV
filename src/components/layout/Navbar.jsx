@@ -101,7 +101,7 @@ export function Navbar() {
             alt="AirDate"
             className="h-14 w-auto object-contain"
           />
-          <p className="text-slate-400 text-[10px] font-medium leading-tight hidden sm:block">
+          <p className="text-slate-200 text-[10px] font-medium leading-tight hidden sm:block">
             Track TV Premieres Before They Trend.
           </p>
         </Link>
@@ -162,7 +162,7 @@ export function Navbar() {
                     {previewRows.length === 0 ? (
                       <div className="px-4 py-8 text-center">
                         <div className="text-2xl mb-2">🔔</div>
-                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">No notifications yet</p>
+                        <p className="text-slate-200 text-xs font-bold uppercase tracking-widest">No notifications yet</p>
                       </div>
                     ) : (
                       previewRows.map((row, idx) => {
@@ -217,7 +217,7 @@ export function Navbar() {
                                     Premiere Alert
                                   </span>
                                   <div className="flex items-center gap-1.5">
-                                    <span className="text-slate-500 text-[9px]">{dateStr}</span>
+                                    <span className="text-slate-200 text-[9px]">{dateStr}</span>
                                     {isUnread && (
                                       <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0"/>
                                     )}
@@ -235,7 +235,7 @@ export function Navbar() {
 
                                 {/* Network, if available */}
                                 {show?.network && (
-                                  <p className="text-slate-500 text-[9px] mt-0.5 truncate">{show.network}</p>
+                                  <p className="text-slate-200 text-[9px] mt-0.5 truncate">{show.network}</p>
                                 )}
                               </div>
                             </div>
@@ -278,7 +278,7 @@ export function Navbar() {
                           setPushLoading(false)
                         }}
                         disabled={pushLoading}
-                        className="text-slate-500 hover:text-red-400 text-[9px] font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
+                        className="text-slate-200 hover:text-red-400 text-[9px] font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
                       >
                         Turn off
                       </button>
@@ -288,7 +288,7 @@ export function Navbar() {
                   {/* Blocked state */}
                   {isSupported && permissionState === 'denied' && (
                     <div className="border-t border-white/5 px-4 py-2.5">
-                      <p className="text-[9px] text-slate-500 uppercase tracking-widest">
+                      <p className="text-[9px] text-slate-200 uppercase tracking-widest">
                         <i className="fa-solid fa-ban mr-1 text-red-400/60"/>
                         Push blocked — enable in browser settings
                       </p>
@@ -305,7 +305,7 @@ export function Navbar() {
                       View all notifications →
                     </Link>
                     {unreadCount > 0 && (
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                      <span className="text-[9px] font-black text-slate-200 uppercase tracking-widest">
                         {unreadCount} unread
                       </span>
                     )}

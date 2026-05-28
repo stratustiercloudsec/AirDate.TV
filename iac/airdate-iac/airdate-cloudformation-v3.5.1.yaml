@@ -1,0 +1,606 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  AirDate.TV v3.5.1 Infrastructure as Code
+  Stratustier Innovation Labs | Account 775443380425
+  Covers: DynamoDB, Lambda, API Gateway, CloudFront, Cognito,
+          EventBridge, S3, GuardDuty, Security Hub, CloudTrail, WAF
+  Disaster Recovery: RTO 4hr / RPO 1hr
+  v3.5.1 changes: airdate-comments table + IAM role added
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [production, staging]
+
+  AgentModel:
+    Type: String
+    Default: us.anthropic.claude-3-5-haiku-20241022-v1:0
+
+  FromEmail:
+    Type: String
+    Default: noreply@airdate.tv
+
+  CloudTrailBucket:
+    Type: String
+    Default: airdate-cloudtrail-logs
+
+Resources:
+
+  # ── DYNAMODB TABLES ──────────────────────────────────────
+
+  AirdateUsersTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-users
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateNotificationsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-notifications
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+        - AttributeName: created_at
+          KeyType: RANGE
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateCacheTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-cache
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: cache_key
+          AttributeType: S
+        - AttributeName: content_type
+          AttributeType: S
+      KeySchema:
+        - AttributeName: cache_key
+          KeyType: HASH
+        - AttributeName: content_type
+          KeyType: RANGE
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  TmdbShowCacheTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: tmdb-show-cache
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateRenewalPredictionsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-renewal-predictions
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: show_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: show_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateScoopStoriesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-scoop-stories
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: story_hash
+          AttributeType: S
+      KeySchema:
+        - AttributeName: story_hash
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateContentRatingsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-content-ratings
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: show_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: show_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateSessionsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-sessions
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateRenewalScoresTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-renewal-scores
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: show_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: show_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  # ── v3.5.1 NEW: airdate-comments table ───────────────────
+  AirdateCommentsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-comments
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: show_id
+          AttributeType: S
+        - AttributeName: comment_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: show_id
+          KeyType: HASH
+        - AttributeName: comment_id
+          KeyType: RANGE
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Comments
+
+  # ── IAM ROLES ────────────────────────────────────────────
+
+  AirdateScoopLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: airdate-scoop-lambda-role-cfn
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: airdate-scoop-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket]
+                Resource:
+                  - arn:aws:s3:::airdate.tv
+                  - arn:aws:s3:::airdate.tv/*
+                  - arn:aws:s3:::stage.s3.airdate.tv
+                  - arn:aws:s3:::stage.s3.airdate.tv/*
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem,
+                         dynamodb:DeleteItem, dynamodb:Query, dynamodb:Scan]
+                Resource:
+                  - !GetAtt AirdateScoopStoriesTable.Arn
+                  - !GetAtt TmdbShowCacheTable.Arn
+              - Effect: Allow
+                Action: [cloudfront:CreateInvalidation]
+                Resource: '*'
+              - Effect: Allow
+                Action: [bedrock:InvokeModel, bedrock:Converse]
+                Resource: '*'
+              - Effect: Allow
+                Action: [ssm:GetParameter, ssm:GetParameters]
+                Resource: arn:aws:ssm:us-east-1:775443380425:parameter/airdate/*
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateNotificationsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: airdate-notifications-role-cfn
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: airdate-notifications-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [ses:SendEmail, ses:SendRawEmail]
+                Resource: '*'
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem,
+                         dynamodb:Query, dynamodb:Scan]
+                Resource:
+                  - !GetAtt AirdateNotificationsTable.Arn
+                  - !GetAtt AirdateUsersTable.Arn
+              - Effect: Allow
+                Action: [lambda:InvokeFunction]
+                Resource: !Sub arn:aws:lambda:us-east-1:${AWS::AccountId}:function:airdate-push-notifications
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateRagRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: airdate-rag-orchestration-role-cfn
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: airdate-rag-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [bedrock:InvokeModel, bedrock:Converse]
+                Resource: '*'
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem,
+                         dynamodb:Query, dynamodb:Scan]
+                Resource:
+                  - !GetAtt TmdbShowCacheTable.Arn
+                  - !GetAtt AirdateCacheTable.Arn
+                  - !GetAtt AirdateContentRatingsTable.Arn
+                  - !GetAtt AirdateRenewalPredictionsTable.Arn
+              - Effect: Allow
+                Action: [ssm:GetParameter, ssm:GetParameters]
+                Resource: arn:aws:ssm:us-east-1:775443380425:parameter/airdate/*
+              - Effect: Allow
+                Action: [cloudwatch:PutMetricData]
+                Resource: '*'
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  # ── v3.5.1 NEW: airdate-comments Lambda IAM role ─────────
+  AirdateCommentsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: airdate-comments-role-cfn
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: airdate-comments-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:DeleteItem, dynamodb:Query]
+                Resource: !GetAtt AirdateCommentsTable.Arn
+              - Effect: Allow
+                Action: [dynamodb:PutItem]
+                Resource: !GetAtt AirdateNotificationsTable.Arn
+              - Effect: Allow
+                Action: [bedrock:ApplyGuardrail]
+                Resource: '*'
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Comments
+
+  # ── EVENTBRIDGE RULES ────────────────────────────────────
+
+  AirdateDailyNotificationsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: airdate-daily-notifications-cfn
+      Description: Daily premiere alerts 9AM ET
+      ScheduleExpression: cron(0 14 * * ? *)
+      State: DISABLED
+      Targets:
+        - Id: notification-scheduler
+          Arn: !Sub arn:aws:lambda:us-east-1:${AWS::AccountId}:function:airdate-notification-scheduler
+
+  AirdateSidebarWarmupRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: airdate-sidebar-warmup-cfn
+      Description: RAG warmup every 90 minutes
+      ScheduleExpression: rate(90 minutes)
+      State: DISABLED
+      Targets:
+        - Id: rag-warmup
+          Arn: !Sub arn:aws:lambda:us-east-1:${AWS::AccountId}:function:airdate-rag-orchestration
+          Input: '{"warmup": true}'
+
+  # ── SECURITY — GuardDuty ─────────────────────────────────
+
+  GuardDutyDetector:
+    Type: AWS::GuardDuty::Detector
+    Properties:
+      Enable: true
+      FindingPublishingFrequency: SIX_HOURS
+      Features:
+        - Name: S3_DATA_EVENTS
+          Status: ENABLED
+        - Name: LAMBDA_NETWORK_LOGS
+          Status: ENABLED
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  # ── SECURITY — CloudTrail ────────────────────────────────
+
+  CloudTrailBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CloudTrailBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AWSCloudTrailAclCheck
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource: !Sub arn:aws:s3:::${CloudTrailBucket}
+          - Sid: AWSCloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub arn:aws:s3:::${CloudTrailBucket}/AWSLogs/${AWS::AccountId}/*
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+
+  AirdateCloudTrail:
+    Type: AWS::CloudTrail::Trail
+    DependsOn: CloudTrailBucketPolicy
+    Properties:
+      TrailName: airdate-cloudtrail-cfn
+      S3BucketName: !Ref CloudTrailBucket
+      IsLogging: true
+      IsMultiRegionTrail: false
+      IncludeGlobalServiceEvents: true
+      EnableLogFileValidation: true
+      EventSelectors:
+        - ReadWriteType: All
+          IncludeManagementEvents: true
+          DataResources:
+            - Type: AWS::S3::Object
+              Values:
+                - arn:aws:s3:::airdate.tv/
+                - arn:aws:s3:::stage.s3.airdate.tv/
+                - arn:aws:s3:::airdate-ml-data/
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  # ── SECURITY — WAF ───────────────────────────────────────
+
+  AirdateWAFWebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: airdate-waf-cfn
+      Scope: CLOUDFRONT
+      DefaultAction:
+        Allow: {}
+      Rules:
+        - Name: CommonRuleSet
+          Priority: 1
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesCommonRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: CommonRuleSet
+        - Name: KnownBadInputs
+          Priority: 2
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesKnownBadInputsRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: KnownBadInputs
+        - Name: SQLiRuleSet
+          Priority: 3
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesSQLiRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: SQLiRuleSet
+        - Name: RateLimitGlobal
+          Priority: 4
+          Action:
+            Block: {}
+          Statement:
+            RateBasedStatement:
+              Limit: 1000
+              AggregateKeyType: IP
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: RateLimitGlobal
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: AirdateWAF
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+# ── OUTPUTS ──────────────────────────────────────────────
+
+Outputs:
+
+  UsersTableArn:
+    Value: !GetAtt AirdateUsersTable.Arn
+    Export:
+      Name: airdate-users-table-arn
+
+  NotificationsTableArn:
+    Value: !GetAtt AirdateNotificationsTable.Arn
+    Export:
+      Name: airdate-notifications-table-arn
+
+  ScoopStoriesTableArn:
+    Value: !GetAtt AirdateScoopStoriesTable.Arn
+    Export:
+      Name: airdate-scoop-stories-table-arn
+
+  # v3.5.1
+  CommentsTableArn:
+    Value: !GetAtt AirdateCommentsTable.Arn
+    Export:
+      Name: airdate-comments-table-arn
+
+  GuardDutyDetectorId:
+    Value: !Ref GuardDutyDetector
+
+  ProdCognitoPoolId:
+    Value: us-east-1_J62LRXqEx
+    Description: Existing prod Cognito pool - managed outside IaC
+
+  DevCognitoPoolId:
+    Value: us-east-1_LIdVq7KLY
+
+  StaffCognitoPoolId:
+    Value: us-east-1_6lLVVlzzk
+
+  ProdCloudFrontId:
+    Value: E790ECNWOI9EN
+
+  StagingCloudFrontId:
+    Value: E2FVOUR7O26Q7P
+
+  # v3.5.1 — API Gateway updated from 21ave5trw7 (deleted) to qg0x31ranc
+  MainApiGatewayId:
+    Value: qg0x31ranc
+    Description: Recreated 2026-05-23 — old ID 21ave5trw7 is permanently lost
+
+  PaymentsApiGatewayId:
+    Value: hazl8ggqu3

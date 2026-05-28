@@ -82,7 +82,7 @@ export function SignUpPage() {
             src="/assets/images/adtv-logo.png" alt="AirDate"
             className="h-14 w-auto object-contain mb-1 group-hover:opacity-80 transition-opacity"
           />
-          <p className="text-slate-400 text-xs tracking-widest uppercase font-bold">
+          <p className="text-slate-200 text-xs tracking-widest uppercase font-bold">
             Track TV Premieres Before They Trend
           </p>
         </a>
@@ -91,7 +91,7 @@ export function SignUpPage() {
           <div className="bg-slate-900/90 border border-white/10 rounded-3xl p-8 shadow-2xl">
 
             <h1 className="text-2xl font-black text-white tracking-tight mb-1">Create your account</h1>
-            <p className="text-slate-400 text-sm mb-7">Free forever · No credit card needed</p>
+            <p className="text-slate-200 text-sm mb-7">Free forever · No credit card needed</p>
 
             {/* Google */}
             <button
@@ -110,7 +110,7 @@ export function SignUpPage() {
 
             <div className="flex items-center gap-3 mb-5">
               <div className="flex-1 h-px bg-white/8"/>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">or with email</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-200">or with email</span>
               <div className="flex-1 h-px bg-white/8"/>
             </div>
 
@@ -125,7 +125,7 @@ export function SignUpPage() {
 
               {/* Name */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-1.5">
                   Display name
                 </label>
                 <input
@@ -137,7 +137,7 @@ export function SignUpPage() {
 
               {/* Email */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-1.5">
                   Email address
                 </label>
                 <input
@@ -149,7 +149,7 @@ export function SignUpPage() {
 
               {/* Password */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-1.5">
                   Password
                 </label>
                 <div className="relative">
@@ -162,7 +162,7 @@ export function SignUpPage() {
                   />
                   <button
                     type="button" onClick={() => setShowPw(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-slate-500 hover:text-slate-300 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-slate-200 hover:text-slate-300 transition-colors"
                   >
                     <i className={`fa-solid ${showPw ? 'fa-eye-slash' : 'fa-eye'} text-sm`}/>
                   </button>
@@ -214,7 +214,7 @@ export function SignUpPage() {
               </button>
             </form>
 
-            <p className="text-center text-sm text-slate-500 mt-6">
+            <p className="text-center text-sm text-slate-200 mt-6">
               Already have an account?{' '}
               <Link to="/auth/login" className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors">
                 Sign in →
@@ -222,7 +222,7 @@ export function SignUpPage() {
             </p>
           </div>
 
-          <p className="text-center text-slate-500 text-xs mt-5">
+          <p className="text-center text-slate-200 text-xs mt-5">
             By signing up you agree to our{' '}
             <a href="/terms" className="hover:text-slate-300 transition-colors">Terms</a>
             {' & '}

@@ -73,10 +73,10 @@ export function PrivacyPage() {
     <div className="bg-slate-950 text-slate-100 min-h-screen">
       <div className="w-full max-w-[1600px] mx-auto px-6 pt-24 pb-16">
         <div className="max-w-6xl">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-200 mb-8">
             <Link to="/" className="hover:text-slate-200 transition-colors">Home</Link>
             <i className="fa-solid fa-chevron-right text-[8px]"></i>
-            <span className="text-slate-400">Privacy Policy</span>
+            <span className="text-slate-200">Privacy Policy</span>
           </div>
           <div className="mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest mb-5">

@@ -96,7 +96,7 @@ function CastGrid({ cast }) {
               onError={e=>{e.currentTarget.src=createDefaultPoster(c.name)}}
               className="w-16 h-16 rounded-2xl object-cover bg-slate-800"/>
             <p className="text-white text-[10px] font-bold text-center leading-tight line-clamp-2">{c.name}</p>
-            {c.character&&<p className="text-slate-400 text-[9px] text-center line-clamp-1">{c.character}</p>}
+            {c.character&&<p className="text-slate-200 text-[9px] text-center line-clamp-1">{c.character}</p>}
           </div>
         ))}
       </div>
@@ -200,8 +200,8 @@ function ShareModal({ url, title, show, posterUrl, onClose }) {
           <div className="flex-1 min-w-0">
             <p className="text-white text-xs font-black leading-tight line-clamp-2 mb-1">{title}</p>
             {network && <p className="text-cyan-400 text-[10px] font-bold mb-0.5">{network}</p>}
-            {premiere && <p className="text-slate-400 text-[10px]">{premiere}</p>}
-            <p className="text-slate-500 text-[9px] truncate mt-1">airdate.tv</p>
+            {premiere && <p className="text-slate-200 text-[10px]">{premiere}</p>}
+            <p className="text-slate-200 text-[9px] truncate mt-1">airdate.tv</p>
           </div>
           <button onClick={copyLink}
             className={`self-start flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
@@ -211,7 +211,7 @@ function ShareModal({ url, title, show, posterUrl, onClose }) {
           </button>
         </div>
 
-        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-3">Share using</p>
+        <p className="text-slate-200 text-[10px] font-black uppercase tracking-widest mb-3">Share using</p>
         <div className="grid grid-cols-3 gap-2">
           {options.map(o=>(
             <a key={o.label} href={o.href} target="_blank" rel="noreferrer noopener" onClick={onClose}
@@ -251,7 +251,7 @@ function ShareButton({ url, title, show, posterUrl }) {
 function ProvidersGrid({ providers, watchLink, showTitle }) {
   if (!providers?.length) return (
     <div className="bg-slate-800/30 rounded-2xl p-6 border border-white/5 text-center">
-      <p className="text-slate-400 text-sm">Streaming info not available</p>
+      <p className="text-slate-200 text-sm">Streaming info not available</p>
       {watchLink&&<a href={watchLink} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-cyan-400 text-xs font-bold hover:underline">Check JustWatch →</a>}
     </div>
   )
@@ -264,14 +264,14 @@ function ProvidersGrid({ providers, watchLink, showTitle }) {
             <a key={p.provider_id} href={href} target="_blank" rel="noreferrer noopener" className="flex flex-col items-center gap-2 group">
               <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-white/10 group-hover:border-cyan-500/40 group-hover:shadow-lg group-hover:shadow-cyan-500/10 transition-all">
                 {p.logo_path?<img src={`${IMAGE_BASE}/t/p/w92${p.logo_path}`} alt={p.provider_name} className="w-full h-full object-cover"/>
-                  :<div className="w-full h-full flex items-center justify-center"><i className="fa-solid fa-tv text-slate-400"></i></div>}
+                  :<div className="w-full h-full flex items-center justify-center"><i className="fa-solid fa-tv text-slate-200"></i></div>}
               </div>
-              <p className="text-slate-400 text-[10px] font-bold text-center w-16 truncate group-hover:text-cyan-400 transition-colors">{p.provider_name}</p>
+              <p className="text-slate-200 text-[10px] font-bold text-center w-16 truncate group-hover:text-cyan-400 transition-colors">{p.provider_name}</p>
             </a>
           )
         })}
       </div>
-      {watchLink&&<p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest"><i className="fa-solid fa-circle-info mr-1"></i>Availability may vary · <a href={watchLink} target="_blank" rel="noreferrer" className="text-cyan-500 hover:underline">Full options on JustWatch</a></p>}
+      {watchLink&&<p className="text-slate-200 text-[10px] font-bold uppercase tracking-widest"><i className="fa-solid fa-circle-info mr-1"></i>Availability may vary · <a href={watchLink} target="_blank" rel="noreferrer" className="text-cyan-500 hover:underline">Full options on JustWatch</a></p>}
     </div>
   )
 }
@@ -312,7 +312,7 @@ function CalendarModal({ show, onClose }) {
           <h3 className="text-xl font-black text-white">Save to Calendar</h3>
           <button onClick={onClose} className="text-white/50 hover:text-white text-2xl">×</button>
         </div>
-        <p className="text-slate-400 text-sm mb-6">{title} — {pd?formatDate(pd):'TBA'}</p>
+        <p className="text-slate-200 text-sm mb-6">{title} — {pd?formatDate(pd):'TBA'}</p>
         <div className="space-y-3">
           {[
             {icon:'fa-brands fa-google',   label:'Google Calendar', color:'text-red-400',   fn:google},
@@ -385,7 +385,7 @@ function RenewalBadge({ showId }) {
   return (
     <div className="mt-4 pt-4 border-t border-white/5">
       <div className="flex items-center gap-2">
-        <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">
+        <span className="text-slate-200 text-xs font-bold uppercase tracking-widest">
           Renewal Probability
         </span>
         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-black ${color}`}>
@@ -393,7 +393,7 @@ function RenewalBadge({ showId }) {
         </span>
       </div>
       {updated && (
-        <p className="text-slate-500 text-[10px] mt-1">
+        <p className="text-slate-200 text-[10px] mt-1">
           Model updated{' '}
           {new Date(updated).toLocaleDateString('en-US', {
             month: 'short', day: 'numeric', year: 'numeric',
@@ -441,9 +441,9 @@ function EpisodeCard({ episode, role, recapHtml='' }) {
         <p className={`text-[10px] font-black uppercase tracking-widest ${headerColor} mb-1.5`}>{headerLabel}</p>
         <div className="flex items-start justify-between gap-3 mb-2">
           <h3 className="text-white font-black text-base leading-snug">{episode.name||`Episode ${episode.episode_number}`}</h3>
-          <span className="text-slate-400 text-xs font-medium shrink-0 mt-0.5">{airedOn}</span>
+          <span className="text-slate-200 text-xs font-medium shrink-0 mt-0.5">{airedOn}</span>
         </div>
-        {episode.vote_average>0&&<div className="flex items-center gap-1 mb-3"><i className="fa-solid fa-star text-yellow-400 text-[11px]"></i><span className="text-yellow-400 text-xs font-bold">{episode.vote_average.toFixed(1)}</span><span className="text-slate-400 text-xs">/10</span></div>}
+        {episode.vote_average>0&&<div className="flex items-center gap-1 mb-3"><i className="fa-solid fa-star text-yellow-400 text-[11px]"></i><span className="text-yellow-400 text-xs font-bold">{episode.vote_average.toFixed(1)}</span><span className="text-slate-200 text-xs">/10</span></div>}
         <div className="text-slate-200 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html:bodyText}}/>
       </div>
     </div>
@@ -570,10 +570,10 @@ function ScoopSection({ showId, showTitle, seasonNumber }) {
         {html===null?(
           <div className="flex items-center gap-3">
             <div className="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>
-            <span className="text-slate-400 text-sm">Generating intel…</span>
+            <span className="text-slate-200 text-sm">Generating intel…</span>
           </div>
         ):html===''?(
-          <p className="text-slate-400 text-sm">Intel unavailable for this title.</p>
+          <p className="text-slate-200 text-sm">Intel unavailable for this title.</p>
         ):(
           <div dangerouslySetInnerHTML={{__html:html}}/>
         )}
@@ -813,7 +813,7 @@ export function ShowDetailPage() {
       <div className="text-center max-w-md">
         <i className="fa-solid fa-triangle-exclamation text-red-500 text-5xl mb-6"></i>
         <h3 className="text-2xl font-black text-white mb-4">Show Not Found</h3>
-        <p className="text-slate-400 mb-8">We couldn't load the details for this show.</p>
+        <p className="text-slate-200 mb-8">We couldn't load the details for this show.</p>
         <Link to="/" className="inline-block bg-cyan-500 text-slate-950 font-black px-8 py-3 rounded-xl uppercase text-sm hover:bg-cyan-400 transition-all">Back to Search</Link>
       </div>
     </div>
@@ -843,9 +843,9 @@ export function ShowDetailPage() {
                     <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">{show.name}</h1>
                     <div className="flex flex-wrap items-center gap-3 mb-6 text-sm">
                       {show.first_air_date&&<span className="text-slate-200 font-bold">{show.first_air_date.split('-')[0]}</span>}
-                      {show.genres?.length>0&&<><span className="text-slate-500">•</span><span className="text-slate-200 font-bold">{show.genres.map(g=>g.name).join(', ')}</span></>}
-                      {show.status&&<><span className="text-slate-500">•</span><span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 font-black uppercase text-xs tracking-wider">{show.status}</span></>}
-                      {show.number_of_seasons&&<><span className="text-slate-500">•</span><span className="text-slate-400 text-xs">{show.number_of_seasons} Season{show.number_of_seasons>1?'s':''}</span></>}
+                      {show.genres?.length>0&&<><span className="text-slate-200">•</span><span className="text-slate-200 font-bold">{show.genres.map(g=>g.name).join(', ')}</span></>}
+                      {show.status&&<><span className="text-slate-200">•</span><span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 font-black uppercase text-xs tracking-wider">{show.status}</span></>}
+                      {show.number_of_seasons&&<><span className="text-slate-200">•</span><span className="text-slate-200 text-xs">{show.number_of_seasons} Season{show.number_of_seasons>1?'s':''}</span></>}
                     </div>
                     {/* Season selector — links each season to ?season=N */}
                     {show.number_of_seasons > 1 && (
@@ -885,9 +885,9 @@ export function ShowDetailPage() {
                     </div>
                     {show.overview&&<div className="mb-6"><h2 className="text-lg font-black text-white uppercase tracking-wide mb-3">Overview</h2><p className="text-slate-200 leading-relaxed">{show.overview}</p></div>}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                      <div><p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Creator</p><p className="text-white font-bold truncate">{creator}</p></div>
+                      <div><p className="text-slate-200 text-xs font-black uppercase tracking-widest mb-1">Creator</p><p className="text-white font-bold truncate">{creator}</p></div>
                       <div>
-                        <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Premiere</p>
+                        <p className="text-slate-200 text-xs font-black uppercase tracking-widest mb-1">Premiere</p>
                         {(()=>{
                           const d=show.first_air_date
                           let label='TBA'
@@ -906,8 +906,8 @@ export function ShowDetailPage() {
                           )
                         })()}
                       </div>
-                      <div><p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Network</p><p className="text-white font-bold">{network||'—'}</p></div>
-                      <div><p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Rating</p><p className="text-pink-400 font-black">{rating?`★ ${rating}`:'—'}</p></div>
+                      <div><p className="text-slate-200 text-xs font-black uppercase tracking-widest mb-1">Network</p><p className="text-white font-bold">{network||'—'}</p></div>
+                      <div><p className="text-slate-200 text-xs font-black uppercase tracking-widest mb-1">Rating</p><p className="text-pink-400 font-black">{rating?`★ ${rating}`:'—'}</p></div>
                     </div>
                     {/* SageMaker ML Renewal Probability */}
                     <RenewalBadge showId={id}/>
@@ -956,7 +956,7 @@ export function ShowDetailPage() {
                         <img {...usePoster(r.poster_path||r.poster,r.name,185)} alt={r.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
                       </div>
                       <h3 className="text-sm font-bold text-white line-clamp-2">{r.name}</h3>
-                      {r.network&&<p className="text-xs text-slate-400 mt-0.5">{r.network}</p>}
+                      {r.network&&<p className="text-xs text-slate-200 mt-0.5">{r.network}</p>}
                     </div>
                   ))}
                 </div>
@@ -970,7 +970,7 @@ export function ShowDetailPage() {
               <section>
                 <div className="flex items-start gap-3 mb-5">
                   <div className="p-2.5 bg-cyan-500/10 rounded-xl border border-cyan-500/20"><i className="fa-solid fa-calendar-check text-cyan-400 text-lg"></i></div>
-                  <div><h2 className="text-sm font-black uppercase tracking-wide text-cyan-400 mb-0.5">Confirmed Premieres</h2><p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Upcoming Series 2026</p></div>
+                  <div><h2 className="text-sm font-black uppercase tracking-wide text-cyan-400 mb-0.5">Confirmed Premieres</h2><p className="text-[10px] font-bold uppercase tracking-widest text-slate-200">Upcoming Series 2026</p></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {featured.slice(0,6).map(s=>(
@@ -987,12 +987,12 @@ export function ShowDetailPage() {
               <section>
                 <div className="flex items-start gap-3 mb-5">
                   <div className="p-2.5 bg-pink-500/10 rounded-xl border border-pink-500/20"><i className="fa-solid fa-fire text-pink-400 text-lg"></i></div>
-                  <div><h2 className="text-sm font-black uppercase tracking-wide text-pink-400 mb-0.5">Global Hype Ranking</h2><p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Top Tracked Series</p></div>
+                  <div><h2 className="text-sm font-black uppercase tracking-wide text-pink-400 mb-0.5">Global Hype Ranking</h2><p className="text-[10px] font-bold uppercase tracking-widest text-slate-200">Top Tracked Series</p></div>
                 </div>
                 <div className="space-y-3">
                   {leaderboard.slice(0,8).map((s,i)=>(
                     <div key={s.id??i} className="flex items-center gap-3 p-3 bg-slate-800/40 border border-white/5 rounded-2xl hover:border-pink-500/20 transition-all cursor-pointer" onClick={()=>navigate(`/details/${s.id}`)}>
-                      <span className="w-6 text-center text-[10px] font-black text-slate-400">{i+1}</span>
+                      <span className="w-6 text-center text-[10px] font-black text-slate-200">{i+1}</span>
                       <img {...usePoster(s.poster_path||s.poster,s.title||s.name,92)} alt={s.title||s.name} className="w-8 h-10 object-cover rounded-lg flex-shrink-0"/>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-white truncate">{s.title||s.name}</p>

@@ -8,10 +8,10 @@ export function VisionPage() {
       <div className="w-full max-w-[1600px] mx-auto px-6 pt-24 pb-16">
         <div className="max-w-6xl">
 
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-200 mb-8">
             <Link to="/" className="hover:text-slate-200 transition-colors">Home</Link>
             <i className="fa-solid fa-chevron-right text-[8px]"></i>
-            <span className="text-slate-400">Vision</span>
+            <span className="text-slate-200">Vision</span>
           </div>
 
           <div className="mb-12">
@@ -80,7 +80,7 @@ export function VisionPage() {
                 ].map(stat => (
                   <div key={stat.label} className="bg-slate-800/60 rounded-2xl p-4 border border-white/5 text-center">
                     <p className="text-2xl font-black text-cyan-400 mb-1">{stat.value}</p>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">{stat.label}</p>
+                    <p className="text-slate-200 text-[10px] font-bold uppercase tracking-widest">{stat.label}</p>
                   </div>
                 ))}
               </div>

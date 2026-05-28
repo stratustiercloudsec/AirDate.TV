@@ -75,7 +75,7 @@ const FAQ_SECTIONS = [
   {
     category: 'Privacy & Data',
     icon: 'fa-shield-halved',
-    color: 'text-slate-400',
+    color: 'text-slate-200',
     faqs: [
       { q: 'What data does AirDate collect?', a: 'AirDate collects your email, watchlist, and notification preferences to power your experience. We do not sell or share your data with third parties.' },
      { q: 'How do I delete my account?', a: 'Go to Account → scroll to the bottom → Delete Account. You will be asked to confirm before anything is removed. Once confirmed, your account, watchlist, and all personal data are permanently deleted within 24 hours. This action cannot be undone.' },
@@ -89,7 +89,7 @@ function FaqItem({ q, a }) {
     <div className="border-b border-white/5 last:border-0">
       <button onClick={() => setOpen(o => !o)} className="w-full flex items-start justify-between py-5 text-left gap-4">
         <span className="text-white font-semibold text-sm leading-relaxed">{q}</span>
-        <i className={`fa-solid fa-chevron-down text-slate-400 text-xs flex-shrink-0 mt-1 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}></i>
+        <i className={`fa-solid fa-chevron-down text-slate-200 text-xs flex-shrink-0 mt-1 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}></i>
       </button>
       {open && <div className="pb-5"><p className="text-slate-300 text-sm leading-relaxed">{a}</p></div>}
     </div>
@@ -109,18 +109,18 @@ export function FAQPage() {
           <span className="text-cyan-400 text-xs font-bold uppercase tracking-widest">Help Center</span>
         </div>
         <h1 className="text-4xl font-black text-white mb-4">Frequently Asked Questions</h1>
-        <p className="text-slate-400 text-base max-w-lg mx-auto">Everything you need to know about AirDate — from tracking shows to managing your membership.</p>
+        <p className="text-slate-200 text-base max-w-lg mx-auto">Everything you need to know about AirDate — from tracking shows to managing your membership.</p>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pb-8">
         <div className="flex flex-wrap justify-center gap-2">
           <button onClick={() => setActiveCategory(null)}
-            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all border ${!activeCategory ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400' : 'bg-slate-900/60 border-white/10 text-slate-400 hover:border-white/20'}`}>
+            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all border ${!activeCategory ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400' : 'bg-slate-900/60 border-white/10 text-slate-200 hover:border-white/20'}`}>
             All Topics
           </button>
           {FAQ_SECTIONS.map(s => (
             <button key={s.category} onClick={() => setActiveCategory(activeCategory === s.category ? null : s.category)}
-              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all border ${activeCategory === s.category ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400' : 'bg-slate-900/60 border-white/10 text-slate-400 hover:border-white/20'}`}>
+              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all border ${activeCategory === s.category ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400' : 'bg-slate-900/60 border-white/10 text-slate-200 hover:border-white/20'}`}>
               {s.category}
             </button>
           ))}
@@ -143,7 +143,7 @@ export function FAQPage() {
         <div className="text-center p-8 bg-slate-900/40 border border-white/10 rounded-3xl">
           <i className="fa-solid fa-envelope text-cyan-400 text-2xl mb-3 block"></i>
           <h3 className="text-white font-black text-lg mb-2">Still have questions?</h3>
-          <p className="text-slate-400 text-sm mb-6">Our team typically responds within 24 hours.</p>
+          <p className="text-slate-200 text-sm mb-6">Our team typically responds within 24 hours.</p>
           <a href="mailto:operations@stratustierlabs.com"
             className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 text-xs font-black uppercase tracking-widest hover:bg-cyan-500/30 transition-all">
             <i className="fa-solid fa-envelope"></i> Contact Support
@@ -155,7 +155,7 @@ export function FAQPage() {
             style={{ background: 'linear-gradient(135deg, rgba(8,145,178,0.15) 0%, rgba(6,182,212,0.08) 100%)' }}>
             <i className="fa-solid fa-bolt text-cyan-400 text-2xl mb-3 block"></i>
             <h3 className="text-white font-black text-lg mb-2">Ready to go Pro?</h3>
-            <p className="text-slate-400 text-sm mb-6">Unlimited watchlist, early premiere alerts, and full Scoop access from $4.99/month.</p>
+            <p className="text-slate-200 text-sm mb-6">Unlimited watchlist, early premiere alerts, and full Scoop access from $4.99/month.</p>
             <Link to="/upgrade"
               className="inline-flex items-center gap-2 px-8 py-3 rounded-xl text-slate-950 font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all"
               style={{ background: 'linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)' }}>

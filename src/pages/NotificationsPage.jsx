@@ -42,7 +42,16 @@ export function NotificationsPage() {
       })
       const data = await res.json()
       const valid = (data.notifications ?? []).filter(n => n.type === 'reply' || n.shows?.length > 0)
-      setNotifications(valid)
+      // Explode multi-show notifications — one card per show
+      const exploded = valid.flatMap(n => {
+        if (n.type === 'reply' || (n.shows ?? []).length <= 1) return [n]
+        return (n.shows ?? []).map((show, i) => ({
+          ...n,
+          shows: [show],
+          _explodeKey: `${n.created_at}_${i}`,
+        }))
+      })
+      setNotifications(exploded)
       setUnreadCount(data.unread_count ?? valid.filter(n => !n.read).length)
     } catch (e) {
       console.error(e)
@@ -84,7 +93,7 @@ export function NotificationsPage() {
   const filterBtn = (key, label) => (
     <button onClick={() => setFilter(key)}
       className={`filter-btn px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all
-        ${filter === key ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-transparent text-slate-400 border-white/5 hover:text-slate-200 hover:border-white/10'}`}>
+        ${filter === key ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-transparent text-slate-200 border-white/5 hover:text-slate-200 hover:border-white/10'}`}>
       {label}
     </button>
   )
@@ -97,7 +106,7 @@ export function NotificationsPage() {
             <h1 className="text-2xl font-black uppercase tracking-widest text-white">
               <i className="fa-solid fa-bell text-cyan-400 mr-3"></i>Notifications
             </h1>
-            <p className="text-slate-400 text-xs mt-1 uppercase tracking-widest">Premiere alerts &amp; replies</p>
+            <p className="text-slate-200 text-xs mt-1 uppercase tracking-widest">Premiere alerts &amp; replies</p>
           </div>
           <div className="flex items-center gap-3">
             {unreadCount > 0 && (
@@ -127,8 +136,8 @@ export function NotificationsPage() {
               ? (
                 <div className="text-center py-20">
                   <div className="text-5xl mb-4">🔔</div>
-                  <p className="text-slate-400 font-bold text-sm uppercase tracking-widest mb-2">No notifications yet</p>
-                  <p className="text-slate-500 text-xs">When shows in your watchlist are about to premiere, you'll see them here.</p>
+                  <p className="text-slate-200 font-bold text-sm uppercase tracking-widest mb-2">No notifications yet</p>
+                  <p className="text-slate-200 text-xs">When shows in your watchlist are about to premiere, you'll see them here.</p>
                   <Link to="/account"
                     className="inline-block mt-6 px-6 py-2.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-cyan-500/20 transition-all">
                     <i className="fa-solid fa-sliders mr-1.5"></i>Manage Preferences
@@ -144,7 +153,7 @@ export function NotificationsPage() {
                   : ''
 
                 return (
-                  <div key={n.created_at}
+                  <div key={n._explodeKey ?? n.created_at}
                     className={`bg-slate-900 rounded-2xl p-5 border cursor-pointer transition-all hover:border-white/10
                       ${isUnread ? (isReply ? 'border-purple-500/20' : 'border-cyan-500/20') : 'border-white/5'}`}
                     onClick={() => {
@@ -170,7 +179,7 @@ export function NotificationsPage() {
                             <span className={`text-[10px] font-black uppercase tracking-widest ${isReply ? 'text-purple-400' : 'text-cyan-400'}`}>
                               {isReply ? 'Reply to your comment' : 'Premiere Alert'}
                             </span>
-                            <span className="text-slate-400 text-[10px]">{dateStr}</span>
+                            <span className="text-slate-200 text-[10px]">{dateStr}</span>
                           </div>
                           {isUnread && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isReply ? 'bg-purple-400' : 'bg-cyan-400'}`}/>}
                         </div>
@@ -185,7 +194,7 @@ export function NotificationsPage() {
                               </p>
                             )}
                             {n.parent_text && (
-                              <p className="text-slate-500 text-[10px] mt-1.5 line-clamp-1">
+                              <p className="text-slate-200 text-[10px] mt-1.5 line-clamp-1">
                                 Your comment: "{n.parent_text}…"
                               </p>
                             )}
@@ -197,10 +206,10 @@ export function NotificationsPage() {
                               : s.days_until === 0 ? 'TODAY' : 'TOMORROW'
                             const color = s.days_until === 0 ? 'text-red-400' : 'text-cyan-400'
                             return (
-                              <div key={s.title} className="flex items-center justify-between mt-2">
+                              <div key={s.title} className="flex items-center justify-between mt-3 pt-3 border-t border-white/5 first:border-0 first:pt-0 first:mt-2">
                                 <div>
                                   <span className="text-white text-sm font-bold">{s.title}</span>
-                                  {s.network && <span className="text-slate-400 text-xs ml-2">{s.network}</span>}
+                                  {s.network && <span className="text-slate-200 text-xs ml-2">{s.network}</span>}
                                 </div>
                                 <span className={`${color} text-[10px] font-black uppercase tracking-widest`}>{label}</span>
                               </div>

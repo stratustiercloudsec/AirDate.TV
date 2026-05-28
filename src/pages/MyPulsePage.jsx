@@ -23,12 +23,12 @@ const TMDB_KEY  = 'd80b629f69e7c5393047c32a865ed697'
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 
 function ratingColor(rating) {
-  if (!rating) return 'border-white/20 text-slate-400'
+  if (!rating) return 'border-white/20 text-slate-200'
   if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
   if (rating === 'TV-14')  return 'border-orange-500/50 text-orange-400'
   if (rating === 'TV-PG')  return 'border-yellow-500/50 text-yellow-400'
   if (['TV-G','TV-Y','TV-Y7'].includes(rating)) return 'border-green-500/50 text-green-400'
-  return 'border-white/20 text-slate-400'
+  return 'border-white/20 text-slate-200'
 }
 
 function ShowCard({ show, liveData, onRemove }) {
@@ -77,7 +77,7 @@ function ShowCard({ show, liveData, onRemove }) {
         {show.name ?? ''}
       </h3>
       {network && (
-        <p className="text-[9px] sm:text-[10px] text-slate-400 font-semibold truncate leading-tight mb-0.5">
+        <p className="text-[9px] sm:text-[10px] text-slate-200 font-semibold truncate leading-tight mb-0.5">
           {network}
         </p>
       )}
@@ -157,7 +157,7 @@ export function MyPulsePage() {
     })
   }, [watchlist.length])
 
-  const tier          = userData?.tier ?? (isPremium ? 'pro' : 'free')
+  const tier          = isPremium ? 'pro' : (userData?.tier === 'pro' ? 'pro' : 'free')
   const isProTier     = tier === 'pro' || tier === 'premium'
   const cancelPending = userData?.cancel_at_period_end === true
   const periodEnd     = userData?.subscription_period_end
@@ -256,11 +256,11 @@ export function MyPulsePage() {
               <i className="fa-solid fa-bolt text-cyan-400 text-xs flex-shrink-0"/>
               <p className="hidden sm:block text-slate-200 text-xs font-bold truncate">
                 <span className="text-white">You're on the Free Plan</span>
-                <span className="mx-2 text-slate-400">·</span>
+                <span className="mx-2 text-slate-200">·</span>
                 Track unlimited shows, get early alerts, and unlock The Scoop.
               </p>
               <p className="sm:hidden text-slate-200 text-xs font-bold">
-                <span className="text-white">Free Plan</span><span className="mx-1.5 text-slate-400">·</span>Upgrade for full access.
+                <span className="text-white">Free Plan</span><span className="mx-1.5 text-slate-200">·</span>Upgrade for full access.
               </p>
             </div>
             <Link to="/upgrade"
@@ -286,8 +286,8 @@ export function MyPulsePage() {
             }
             <div className="flex-1 min-w-0">
               <h2 className="text-sm font-black text-white truncate">{user?.name || email || 'Loading…'}</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{email}</p>
-              <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${isProTier ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400 border border-white/8'}`}>
+              <p className="text-[10px] font-bold text-slate-200 uppercase tracking-widest truncate">{email}</p>
+              <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${isProTier ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-200 border border-white/8'}`}>
                 {isProTier ? '★ Pro' : 'Free Plan'}
               </span>
             </div>
@@ -307,8 +307,8 @@ export function MyPulsePage() {
                   </div>
               }
               <h2 className="text-base font-black text-white truncate mb-1">{user?.name || email || 'Loading…'}</h2>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{email}</p>
-              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 ${isProTier ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400 border border-white/8'}`}>
+              <p className="text-xs font-bold text-slate-200 uppercase tracking-widest mb-1">{email}</p>
+              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 ${isProTier ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-200 border border-white/8'}`}>
                 {isProTier ? '★ Pro' : 'Free Plan'}
               </span>
               <div className="space-y-2">
@@ -356,7 +356,7 @@ export function MyPulsePage() {
                         <p className="text-white font-black text-sm uppercase tracking-widest">Story Archive</p>
                         <span className="bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">Pro</span>
                       </div>
-                      <p className="text-slate-400 text-xs">30 days of AirDate TV Originals — every story, always accessible.</p>
+                      <p className="text-slate-200 text-xs">30 days of AirDate TV Originals — every story, always accessible.</p>
                     </div>
                   </div>
                   <i className="fa-solid fa-arrow-right text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-1 transition-all flex-shrink-0"/>
@@ -379,7 +379,7 @@ export function MyPulsePage() {
                             <p className="text-white font-black text-sm uppercase tracking-widest">Pro Plan</p>
                             <span className="bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">Active</span>
                           </div>
-                          <p className="text-slate-400 text-xs">$4.99 / month · Renews <span className="text-slate-200 font-bold">{periodEnd}</span></p>
+                          <p className="text-slate-200 text-xs">$4.99 / month · Renews <span className="text-slate-200 font-bold">{periodEnd}</span></p>
                         </div>
                       </div>
                       <button onClick={() => setCancelModal(true)}
@@ -401,7 +401,7 @@ export function MyPulsePage() {
                             <p className="text-white font-black text-sm uppercase tracking-widest">Pro Plan</p>
                             <span className="bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">Canceling</span>
                           </div>
-                          <p className="text-slate-400 text-xs">Pro access ends <span className="text-amber-400 font-bold">{periodEnd}</span> — all features active until then.</p>
+                          <p className="text-slate-200 text-xs">Pro access ends <span className="text-amber-400 font-bold">{periodEnd}</span> — all features active until then.</p>
                         </div>
                       </div>
                       <button onClick={() => setReactivate(true)}
@@ -416,11 +416,11 @@ export function MyPulsePage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-slate-800 border border-white/10 rounded-2xl flex items-center justify-center flex-shrink-0">
-                          <i className="fa-solid fa-user text-slate-400 text-lg"/>
+                          <i className="fa-solid fa-user text-slate-200 text-lg"/>
                         </div>
                         <div>
                           <p className="text-white font-black text-sm uppercase tracking-widest mb-1">Free Plan</p>
-                          <p className="text-slate-400 text-xs">Track up to 5 shows · No early premiere alerts</p>
+                          <p className="text-slate-200 text-xs">Track up to 5 shows · No early premiere alerts</p>
                         </div>
                       </div>
                       <Link to="/upgrade"
@@ -442,12 +442,12 @@ export function MyPulsePage() {
                   </div>
                   <h2 className="text-white font-black text-base sm:text-lg uppercase tracking-widest">
                     Tracked
-                    <span className="ml-1.5 text-slate-500 text-sm font-bold">({watchlist.length})</span>
+                    <span className="ml-1.5 text-slate-200 text-sm font-bold">({watchlist.length})</span>
                   </h2>
                 </div>
               </div>
               {watchlist.length === 0 ? (
-                <div className="text-center p-10 text-slate-500 text-sm uppercase tracking-widest border border-dashed border-white/5 rounded-2xl">
+                <div className="text-center p-10 text-slate-200 text-sm uppercase tracking-widest border border-dashed border-white/5 rounded-2xl">
                   <i className="fa-solid fa-heart text-3xl text-slate-700 mb-3 block"/>
                   No shows tracked yet
                 </div>
@@ -478,8 +478,8 @@ export function MyPulsePage() {
                 {/* Networks */}
                 <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-5 sm:p-6">
                   <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Preferred Networks</h3>
-                  <p className="text-slate-400 text-xs mb-1">We'll prioritize these in your recommendations.</p>
-                  <p className="text-slate-500 text-[10px] mb-4 leading-relaxed">Shows from these networks will appear first in your premiere calendar and discovery results. Add the services you actually subscribe to for the most relevant feed.</p>
+                  <p className="text-slate-200 text-xs mb-1">We'll prioritize these in your recommendations.</p>
+                  <p className="text-slate-200 text-[10px] mb-4 leading-relaxed">Shows from these networks will appear first in your premiere calendar and discovery results. Add the services you actually subscribe to for the most relevant feed.</p>
                   {networks.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {networks.map(n => (
@@ -510,8 +510,8 @@ export function MyPulsePage() {
                 {/* Genres */}
                 <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-5 sm:p-6">
                   <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Preferred Genres</h3>
-                  <p className="text-slate-400 text-xs mb-1">Tailor your discovery feed to what you love.</p>
-                  <p className="text-slate-500 text-[10px] mb-4 leading-relaxed">Selected genres filter your personalized premiere feed and improve show suggestions. Genres you don't pick won't disappear — they'll just rank lower.</p>
+                  <p className="text-slate-200 text-xs mb-1">Tailor your discovery feed to what you love.</p>
+                  <p className="text-slate-200 text-[10px] mb-4 leading-relaxed">Selected genres filter your personalized premiere feed and improve show suggestions. Genres you don't pick won't disappear — they'll just rank lower.</p>
                   {genrePrefs.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {genrePrefs.map(g => (
@@ -539,8 +539,8 @@ export function MyPulsePage() {
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Premiere Alerts</h3>
-                      <p className="text-slate-400 text-xs mb-1">Get notified when tracked shows are about to premiere.</p>
-                      <p className="text-slate-500 text-[10px] leading-relaxed max-w-sm">When enabled, AirDate sends an email alert for every show on your watchlist. Pro members can also choose how far in advance to be notified.</p>
+                      <p className="text-slate-200 text-xs mb-1">Get notified when tracked shows are about to premiere.</p>
+                      <p className="text-slate-200 text-[10px] leading-relaxed max-w-sm">When enabled, AirDate sends an email alert for every show on your watchlist. Pro members can also choose how far in advance to be notified.</p>
                     </div>
                     <button onClick={toggleNotifs}
                       className={`relative flex-shrink-0 w-12 h-6 rounded-full border transition-all ml-4 ${notifsOn ? 'bg-cyan-500 border-cyan-400' : 'border-white/10 bg-slate-700'}`}>
@@ -553,11 +553,11 @@ export function MyPulsePage() {
                         <span className="text-white text-xs font-black uppercase tracking-widest">Alert Timing</span>
                         <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[9px] font-black uppercase tracking-widest rounded-full">Pro</span>
                       </div>
-                      <p className="text-slate-400 text-xs mb-4">How far in advance do you want to be notified?</p>
+                      <p className="text-slate-200 text-xs mb-4">How far in advance do you want to be notified?</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {ALERT_DAYS.map(d => (
                           <button key={d} onClick={() => handleSetAlertDays(d)}
-                            className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${alertDays === d ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-transparent border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-200'}`}>
+                            className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${alertDays === d ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-transparent border-white/10 text-slate-200 hover:border-white/20 hover:text-slate-200'}`}>
                             <div className="text-sm font-black mb-0.5">{ALERT_LABELS[d].emoji}</div>
                             {ALERT_LABELS[d].label}
                           </button>
@@ -590,11 +590,11 @@ export function MyPulsePage() {
               <i className="fa-solid fa-triangle-exclamation text-red-400 text-2xl"/>
             </div>
             <h3 className="text-white font-black text-xl text-center mb-2">Cancel Pro Plan?</h3>
-            <p className="text-slate-400 text-sm text-center mb-1 leading-relaxed">You'll keep all Pro features until your billing period ends on</p>
+            <p className="text-slate-200 text-sm text-center mb-1 leading-relaxed">You'll keep all Pro features until your billing period ends on</p>
             <p className="text-cyan-400 font-black text-center text-base mb-6">{periodEnd}</p>
             <ul className="space-y-2 mb-8 bg-slate-800/40 border border-white/5 rounded-2xl p-4">
-              <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-check text-slate-400 w-4"/> Pro features stay active until the end date</li>
-              <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-check text-slate-400 w-4"/> No further charges after cancellation</li>
+              <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-check text-slate-200 w-4"/> Pro features stay active until the end date</li>
+              <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-check text-slate-200 w-4"/> No further charges after cancellation</li>
               <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> Watchlist over 5 shows becomes read-only</li>
               <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> Early premiere alerts will stop</li>
             </ul>
@@ -616,7 +616,7 @@ export function MyPulsePage() {
               <i className="fa-solid fa-bolt text-cyan-400 text-2xl"/>
             </div>
             <h3 className="text-white font-black text-xl mb-2">Keep your Pro plan?</h3>
-            <p className="text-slate-400 text-sm mb-8 leading-relaxed">Your subscription will stay active and you'll continue to be billed $4.99/month.</p>
+            <p className="text-slate-200 text-sm mb-8 leading-relaxed">Your subscription will stay active and you'll continue to be billed $4.99/month.</p>
             <div className="flex flex-col sm:flex-row gap-3">
               <button onClick={() => setReactivate(false)} className="flex-1 h-12 bg-slate-800 border border-white/10 rounded-xl text-slate-200 text-xs font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all">Go Back</button>
               <button onClick={confirmReactivate} disabled={actionLoading} className="flex-1 h-12 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-60">
@@ -635,7 +635,7 @@ export function MyPulsePage() {
               <i className="fa-solid fa-trash text-red-400 text-2xl"/>
             </div>
             <h3 className="text-white font-black text-xl text-center mb-2">Delete Your Account?</h3>
-            <p className="text-slate-400 text-sm text-center mb-6 leading-relaxed">This will permanently delete your account, watchlist, and all personal data. <span className="text-red-400 font-bold">This cannot be undone.</span></p>
+            <p className="text-slate-200 text-sm text-center mb-6 leading-relaxed">This will permanently delete your account, watchlist, and all personal data. <span className="text-red-400 font-bold">This cannot be undone.</span></p>
             <ul className="space-y-2 mb-6 bg-slate-800/40 border border-white/5 rounded-2xl p-4">
               <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> Your watchlist will be permanently deleted</li>
               <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> Your preferences and history will be removed</li>
@@ -643,7 +643,7 @@ export function MyPulsePage() {
               <li className="flex items-center gap-3 text-sm text-slate-200"><i className="fa-solid fa-xmark text-red-500/70 w-4"/> You will be signed out immediately</li>
             </ul>
             <div className="mb-6">
-              <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Type <span className="text-red-400">DELETE</span> to confirm</label>
+              <label className="block text-slate-200 text-xs font-bold uppercase tracking-widest mb-2">Type <span className="text-red-400">DELETE</span> to confirm</label>
               <input type="text" value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="DELETE"
                 className="w-full bg-slate-800 border border-white/10 focus:border-red-500/50 rounded-xl px-4 py-3 text-white text-sm font-bold placeholder-slate-600 focus:outline-none transition-colors"/>
             </div>

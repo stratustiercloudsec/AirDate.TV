@@ -101,7 +101,7 @@ export function VerifyEmailPage() {
           </div>
 
           <h1 className="text-2xl font-black text-white tracking-tight mb-1">Check your inbox</h1>
-          <p className="text-slate-400 text-sm mb-1">We sent a 6-digit code to</p>
+          <p className="text-slate-200 text-sm mb-1">We sent a 6-digit code to</p>
           <p className="text-cyan-400 font-bold text-sm mb-7 truncate">
             {email || 'your email address'}
           </p>
@@ -159,7 +159,7 @@ export function VerifyEmailPage() {
           </button>
 
           {/* Resend */}
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm text-slate-200">
             Didn't receive it?{' '}
             <button
               onClick={handleResend}
@@ -178,7 +178,7 @@ export function VerifyEmailPage() {
           </div>
 
           <p className="text-center">
-            <Link to="/auth/login" className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
+            <Link to="/auth/login" className="text-slate-200 hover:text-slate-300 text-sm transition-colors">
               ← Back to sign in
             </Link>
           </p>

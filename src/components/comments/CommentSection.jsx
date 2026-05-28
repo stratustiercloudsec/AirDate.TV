@@ -102,7 +102,7 @@ function ReplyComposer({ showId, parentCommentId, onPosted, onCancel, user }) {
             placeholder="Write a reply… (100 words max)"
             rows={2}
             autoFocus
-            className="w-full bg-slate-900/60 border border-white/10 focus:border-cyan-500/40 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 resize-none outline-none transition-colors"
+            className="w-full bg-slate-900/60 border border-white/10 focus:border-cyan-500/40 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder:text-slate-200 resize-none outline-none transition-colors"
           />
           <div className="flex items-center justify-between mt-1.5">
             <span className={`text-[10px] font-bold ${overLimit ? 'text-red-400' : 'text-slate-600'}`}>
@@ -111,7 +111,7 @@ function ReplyComposer({ showId, parentCommentId, onPosted, onCancel, user }) {
             <div className="flex items-center gap-2">
               <button
                 onClick={onCancel}
-                className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-200 transition-colors"
+                className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-200 hover:text-slate-200 transition-colors"
               >
                 Cancel
               </button>
@@ -140,7 +140,7 @@ function ReplyCard({ reply }) {
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-white text-[11px] font-bold">{reply.username || 'Anonymous'}</span>
           <span className="text-slate-600 text-[9px]">·</span>
-          <span className="text-slate-500 text-[9px]">{timeAgo(reply.created_at)}</span>
+          <span className="text-slate-200 text-[9px]">{timeAgo(reply.created_at)}</span>
         </div>
         <p className="text-slate-300 text-xs leading-relaxed">{reply.text}</p>
       </div>
@@ -167,7 +167,7 @@ function CommentCard({ comment, showId, isAuthenticated, user, onReplyPosted }) 
           <div className="flex items-center gap-2 mb-1">
             <span className="text-white text-xs font-bold">{comment.username || 'Anonymous'}</span>
             <span className="text-slate-600 text-[10px]">·</span>
-            <span className="text-slate-500 text-[10px]">{timeAgo(comment.created_at)}</span>
+            <span className="text-slate-200 text-[10px]">{timeAgo(comment.created_at)}</span>
             {replies.length > 0 && (
               <span className="text-slate-600 text-[9px] font-bold uppercase tracking-widest">
                 · {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
@@ -180,7 +180,7 @@ function CommentCard({ comment, showId, isAuthenticated, user, onReplyPosted }) 
           {isAuthenticated && !showReplyBox && (
             <button
               onClick={() => setShowReplyBox(true)}
-              className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-cyan-400 transition-colors"
+              className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-200 hover:text-cyan-400 transition-colors"
             >
               <i className="fa-solid fa-reply text-[9px]"/>
               Reply
@@ -254,11 +254,11 @@ function CommentComposer({ showId, onPosted, user }) {
             onChange={e => { setText(e.target.value); setError('') }}
             placeholder="Share your thoughts on this show… (100 words max)"
             rows={3}
-            className="w-full bg-slate-900/60 border border-white/10 focus:border-cyan-500/40 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-500 resize-none outline-none transition-colors"
+            className="w-full bg-slate-900/60 border border-white/10 focus:border-cyan-500/40 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-200 resize-none outline-none transition-colors"
           />
           <div className="flex items-center justify-between mt-2">
             <span className={`text-[10px] font-bold ${
-              overLimit ? 'text-red-400' : remaining <= 20 ? 'text-amber-400' : 'text-slate-500'
+              overLimit ? 'text-red-400' : remaining <= 20 ? 'text-amber-400' : 'text-slate-200'
             }`}>
               {wordCount}/{MAX_WORDS} words{overLimit ? ' — too long' : ''}
             </span>
@@ -283,7 +283,7 @@ function CommentComposer({ showId, onPosted, user }) {
         </div>
       </div>
       <div className="mt-3 pt-3 border-t border-white/5">
-        <p className="text-[10px] text-slate-500 leading-relaxed">
+        <p className="text-[10px] text-slate-200 leading-relaxed">
           <i className="fa-solid fa-shield-halved text-cyan-500/60 mr-1"/>
           Keep it civil. No profanity or abusive language. Comments are visible to everyone and expire after 45 days. Max 100 words.
         </p>
@@ -349,7 +349,7 @@ export function CommentSection({ showId }) {
         </div>
         <h2 className="text-2xl font-black text-white uppercase tracking-tight">Community</h2>
         {!loading && (
-          <span className="px-2 py-1 bg-slate-800/60 border border-white/10 rounded-lg text-xs font-black text-slate-400">
+          <span className="px-2 py-1 bg-slate-800/60 border border-white/10 rounded-lg text-xs font-black text-slate-200">
             {totalCount} comment{totalCount !== 1 ? 's' : ''}
           </span>
         )}
@@ -361,7 +361,7 @@ export function CommentSection({ showId }) {
         <div className="bg-slate-800/30 border border-white/8 rounded-2xl px-5 py-4 mb-6 flex items-center justify-between gap-4">
           <div>
             <p className="text-white text-sm font-bold mb-0.5">Join the conversation</p>
-            <p className="text-slate-400 text-xs">Sign in to leave a comment. It's free.</p>
+            <p className="text-slate-200 text-xs">Sign in to leave a comment. It's free.</p>
           </div>
           <Link to="/auth/login"
             className="flex-shrink-0 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black uppercase tracking-widest rounded-xl transition-all">
@@ -374,12 +374,12 @@ export function CommentSection({ showId }) {
         {loading ? (
           <div className="py-10 flex items-center justify-center gap-3">
             <div className="w-4 h-4 border-2 border-slate-600 border-t-cyan-400 rounded-full animate-spin"/>
-            <span className="text-slate-400 text-sm">Loading comments…</span>
+            <span className="text-slate-200 text-sm">Loading comments…</span>
           </div>
         ) : comments.length === 0 ? (
           <div className="py-10 text-center">
             <i className="fa-solid fa-comment-slash text-slate-700 text-3xl mb-3"/>
-            <p className="text-slate-500 text-sm font-bold uppercase tracking-widest">No comments yet</p>
+            <p className="text-slate-200 text-sm font-bold uppercase tracking-widest">No comments yet</p>
             <p className="text-slate-600 text-xs mt-1">Be the first to share your thoughts</p>
           </div>
         ) : (

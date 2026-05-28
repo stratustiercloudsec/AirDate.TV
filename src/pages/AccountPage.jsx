@@ -18,7 +18,7 @@ function Section({ title, subtitle, children }) {
     <div className="bg-slate-900 rounded-3xl overflow-hidden">
       <div className="px-5 sm:px-6 py-5">
         <h2 className="text-base font-black text-white">{title}</h2>
-        {subtitle && <p className="text-slate-400 text-xs mt-0.5">{subtitle}</p>}
+        {subtitle && <p className="text-slate-200 text-xs mt-0.5">{subtitle}</p>}
       </div>
       <div className="px-5 sm:px-6 py-5">{children}</div>
     </div>
@@ -159,10 +159,10 @@ export function AccountPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">My Account</h1>
-            <p className="text-slate-400 text-sm mt-1 truncate">{user?.email}</p>
+            <p className="text-slate-200 text-sm mt-1 truncate">{user?.email}</p>
           </div>
           <span className={`self-start sm:self-auto flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest border
-            ${isPro ? 'bg-amber-500/10 border-amber-500/25 text-amber-400' : 'bg-slate-800 border-white/10 text-slate-400'}`}>
+            ${isPro ? 'bg-amber-500/10 border-amber-500/25 text-amber-400' : 'bg-slate-800 border-white/10 text-slate-200'}`}>
             {isPro ? '★ Pro' : 'Free Plan'}
           </span>
         </div>
@@ -179,11 +179,11 @@ export function AccountPage() {
               }
               <div className="min-w-0">
                 <p className="text-white font-bold text-sm truncate">{user?.name}</p>
-                <p className="text-slate-400 text-xs mt-0.5 truncate">{user?.email}</p>
+                <p className="text-slate-200 text-xs mt-0.5 truncate">{user?.email}</p>
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Display name</label>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-1.5">Display name</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name"
                 className="w-full px-4 py-3 bg-slate-800/60 border border-white/10 focus:border-cyan-500/40 focus:ring-2 focus:ring-cyan-500/10 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none transition-all"/>
             </div>
@@ -197,7 +197,7 @@ export function AccountPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <p className="text-white font-bold text-sm">{isPro ? 'AirDate Pro' : 'AirDate Free'}</p>
-              <p className="text-slate-400 text-xs mt-0.5">
+              <p className="text-slate-200 text-xs mt-0.5">
                 {isPro ? 'Unlimited show tracking, early alerts, and more' : 'Track up to 5 shows · Upgrade for unlimited access'}
               </p>
             </div>
@@ -226,25 +226,25 @@ export function AccountPage() {
           <Section title="Password" subtitle="Update your password. You'll stay signed in on this device.">
             <form onSubmit={handleChangePassword} className="space-y-4" noValidate>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Current password</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-1.5">Current password</label>
                 <div className="relative">
                   <input type={showOld ? 'text' : 'password'} value={oldPw} onChange={e => setOldPw(e.target.value)}
                     placeholder="Your current password" autoComplete="current-password"
                     className="w-full px-4 py-3 pr-11 bg-slate-800/60 border border-white/10 focus:border-cyan-500/40 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none transition-all"/>
                   <button type="button" onClick={() => setShowOld(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-slate-500 hover:text-slate-300">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-slate-200 hover:text-slate-300">
                     <i className={`fa-solid ${showOld ? 'fa-eye-slash' : 'fa-eye'} text-sm`}/>
                   </button>
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">New password</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-1.5">New password</label>
                 <div className="relative">
                   <input type={showNew ? 'text' : 'password'} value={newPw} onChange={e => setNewPw(e.target.value)}
                     onFocus={() => setPwFocused(true)} placeholder="Create new password" autoComplete="new-password"
                     className="w-full px-4 py-3 pr-11 bg-slate-800/60 border border-white/10 focus:border-cyan-500/40 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none transition-all"/>
                   <button type="button" onClick={() => setShowNew(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-slate-500 hover:text-slate-300">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-slate-200 hover:text-slate-300">
                     <i className={`fa-solid ${showNew ? 'fa-eye-slash' : 'fa-eye'} text-sm`}/>
                   </button>
                 </div>
@@ -260,7 +260,7 @@ export function AccountPage() {
                 )}
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Confirm new password</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-1.5">Confirm new password</label>
                 <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
                   placeholder="Repeat new password" autoComplete="new-password"
                   className={`w-full px-4 py-3 bg-slate-800/60 border rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none transition-all
@@ -275,8 +275,8 @@ export function AccountPage() {
 
         {isGoogleUser && (
           <Section title="Password" subtitle="Password management.">
-            <div className="flex items-center gap-3 text-sm text-slate-400">
-              <i className="fa-brands fa-google text-slate-500 flex-shrink-0"/>
+            <div className="flex items-center gap-3 text-sm text-slate-200">
+              <i className="fa-brands fa-google text-slate-200 flex-shrink-0"/>
               Your account uses Google for authentication. Password changes are managed through your Google account.
             </div>
           </Section>
@@ -289,7 +289,7 @@ export function AccountPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <p className="text-white font-bold text-sm">Return to Free Plan</p>
-                <p className="text-slate-400 text-xs mt-0.5">You'll lose unlimited tracking and early alerts. Your data stays safe. Takes effect at end of billing period.</p>
+                <p className="text-slate-200 text-xs mt-0.5">You'll lose unlimited tracking and early alerts. Your data stays safe. Takes effect at end of billing period.</p>
               </div>
               <button onClick={openBillingPortal} disabled={portalLoading}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all flex-shrink-0 disabled:opacity-50">
@@ -308,7 +308,7 @@ export function AccountPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <p className="text-white font-bold text-sm">Go Anonymous</p>
-                <p className="text-slate-400 text-xs mt-0.5">Deletes your profile, watchlist, and preferences. You can still browse AirDate without an account.</p>
+                <p className="text-slate-200 text-xs mt-0.5">Deletes your profile, watchlist, and preferences. You can still browse AirDate without an account.</p>
               </div>
               <button onClick={() => setGuestModal(true)}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all flex-shrink-0">
@@ -323,7 +323,7 @@ export function AccountPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <p className="text-white font-bold text-sm">Sign out</p>
-              <p className="text-slate-400 text-xs mt-0.5">Sign out from all devices</p>
+              <p className="text-slate-200 text-xs mt-0.5">Sign out from all devices</p>
             </div>
             <button onClick={handleSignOut}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 font-black text-xs uppercase tracking-widest rounded-xl transition-all">
@@ -337,7 +337,7 @@ export function AccountPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <p className="text-white font-bold text-sm">Delete Account</p>
-              <p className="text-slate-400 text-xs mt-0.5">Permanently removes your account, watchlist, and all personal data. Cannot be undone.</p>
+              <p className="text-slate-200 text-xs mt-0.5">Permanently removes your account, watchlist, and all personal data. Cannot be undone.</p>
             </div>
             <button onClick={() => { setDeleteModal(true); setDeleteConfirm(''); setDeleteError('') }}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 font-black text-xs uppercase tracking-widest rounded-xl transition-all flex-shrink-0">
@@ -359,7 +359,7 @@ export function AccountPage() {
               </div>
             </div>
             <h3 className="text-white font-black text-xl text-center mb-2">Continue as Guest?</h3>
-            <p className="text-slate-400 text-sm text-center mb-4">This will permanently remove your account data. You can create a new account anytime.</p>
+            <p className="text-slate-200 text-sm text-center mb-4">This will permanently remove your account data. You can create a new account anytime.</p>
             <ul className="space-y-2 mb-5">
               {['Your watchlist will be deleted','Notification preferences removed','You will be signed out immediately'].map(item => (
                 <li key={item} className="flex items-center gap-3 text-sm text-slate-200">
@@ -390,7 +390,7 @@ export function AccountPage() {
               <i className="fa-solid fa-trash text-red-400 text-2xl"/>
             </div>
             <h3 className="text-white font-black text-xl text-center mb-2">Delete Your Account?</h3>
-            <p className="text-slate-400 text-sm text-center mb-6 leading-relaxed">
+            <p className="text-slate-200 text-sm text-center mb-6 leading-relaxed">
               This will permanently delete everything. <span className="text-red-400 font-bold">Cannot be undone.</span>
             </p>
             <ul className="space-y-2 mb-6 bg-slate-800/40 border border-white/5 rounded-2xl p-4">
@@ -401,7 +401,7 @@ export function AccountPage() {
               ))}
             </ul>
             <div className="mb-6">
-              <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">
+              <label className="block text-slate-200 text-xs font-bold uppercase tracking-widest mb-2">
                 Type <span className="text-red-400">DELETE</span> to confirm
               </label>
               <input type="text" value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="DELETE"

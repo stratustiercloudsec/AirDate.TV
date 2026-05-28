@@ -12,7 +12,7 @@ export function NotFoundPage() {
             <i className="fa-solid fa-satellite-dish text-cyan-400 text-2xl"></i>
           </div>
           <h1 className="text-3xl font-black text-white mb-3 tracking-tight">Signal Lost</h1>
-          <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+          <p className="text-slate-200 text-sm mb-8 leading-relaxed">
             This page couldn't be found. The show may have been cancelled, or the URL might be incorrect.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

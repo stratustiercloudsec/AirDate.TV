@@ -99,7 +99,7 @@ export function ProfilePage() {
             <i className="fa-solid fa-check text-green-400 text-4xl"/>
           </div>
           <h2 className="text-4xl font-black text-white mb-4">Account Deleted</h2>
-          <p className="text-slate-400 text-sm max-w-sm leading-relaxed mb-3">Your account, watchlist, and all personal data have been permanently removed.</p>
+          <p className="text-slate-200 text-sm max-w-sm leading-relaxed mb-3">Your account, watchlist, and all personal data have been permanently removed.</p>
           <p className="text-slate-600 text-xs uppercase tracking-widest">Redirecting you home...</p>
         </div>
       )}
@@ -107,15 +107,15 @@ export function ProfilePage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-12">
           <div>
             <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">My Account</h1>
-            <p className="text-slate-500 text-sm mt-1">{user?.email}</p>
+            <p className="text-slate-200 text-sm mt-1">{user?.email}</p>
           </div>
-          <span className={`self-start sm:self-auto px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest ${isPro ? "bg-amber-500/10 text-amber-400" : "bg-slate-800 text-slate-400"}`}>
+          <span className={`self-start sm:self-auto px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest ${isPro ? "bg-amber-500/10 text-amber-400" : "bg-slate-800 text-slate-200"}`}>
             {isPro ? "★ Pro" : "Free Plan"}
           </span>
         </div>
         <div className="space-y-12">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Profile</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 mb-1">Profile</p>
             <h2 className="text-lg font-black text-white mb-6">Your Identity</h2>
             <div className="flex items-center gap-4 mb-6">
               {user?.picture
@@ -126,12 +126,12 @@ export function ProfilePage() {
               }
               <div>
                 <p className="text-white font-bold text-sm">{user?.name}</p>
-                <p className="text-slate-500 text-xs mt-0.5">{user?.email}</p>
+                <p className="text-slate-200 text-xs mt-0.5">{user?.email}</p>
               </div>
             </div>
             <form onSubmit={handleSaveName} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Display name</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-2">Display name</label>
                 <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name"
                   className="w-full px-4 py-3 bg-slate-800/40 border border-white/5 focus:border-cyan-500/40 focus:ring-2 focus:ring-cyan-500/10 rounded-xl text-white text-sm placeholder-slate-600 focus:outline-none transition-all"/>
               </div>
@@ -141,16 +141,16 @@ export function ProfilePage() {
           </div>
           <div className="h-px bg-transparent"/>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Subscription</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 mb-1">Subscription</p>
             <h2 className="text-lg font-black text-white mb-6">Your Plan</h2>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-slate-800/30 rounded-2xl">
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isPro ? "bg-amber-500/10" : "bg-slate-700/50"}`}>
-                  <i className={`fa-solid fa-bolt text-sm ${isPro ? "text-amber-400" : "text-slate-500"}`}/>
+                  <i className={`fa-solid fa-bolt text-sm ${isPro ? "text-amber-400" : "text-slate-200"}`}/>
                 </div>
                 <div>
                   <p className="text-white font-bold text-sm">{isPro ? "AirDate Pro" : "AirDate Free"}</p>
-                  <p className="text-slate-500 text-xs mt-0.5">{isPro ? "Unlimited tracking · Early alerts · Full Scoop access" : "Track up to 5 shows · Upgrade for unlimited access"}</p>
+                  <p className="text-slate-200 text-xs mt-0.5">{isPro ? "Unlimited tracking · Early alerts · Full Scoop access" : "Track up to 5 shows · Upgrade for unlimited access"}</p>
                 </div>
               </div>
               {!isPro && (
@@ -164,11 +164,11 @@ export function ProfilePage() {
           <div className="h-px bg-transparent"/>
           {!isGoogleUser ? (
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Security</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 mb-1">Security</p>
               <h2 className="text-lg font-black text-white mb-6">Change Password</h2>
               <form onSubmit={handleChangePassword} className="space-y-4" noValidate>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Current password</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-2">Current password</label>
                   <div className="relative">
                     <input type={showOld ? "text" : "password"} value={oldPw} onChange={e => setOldPw(e.target.value)} placeholder="Your current password" autoComplete="current-password"
                       className="w-full px-4 py-3 pr-11 bg-slate-800/40 border border-white/5 focus:border-cyan-500/40 rounded-xl text-white text-sm placeholder-slate-600 focus:outline-none transition-all"/>
@@ -178,7 +178,7 @@ export function ProfilePage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">New password</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-2">New password</label>
                   <div className="relative">
                     <input type={showNew ? "text" : "password"} value={newPw} onChange={e => setNewPw(e.target.value)} onFocus={() => setPwFocused(true)} placeholder="Create new password" autoComplete="new-password"
                       className="w-full px-4 py-3 pr-11 bg-slate-800/40 border border-white/5 focus:border-cyan-500/40 rounded-xl text-white text-sm placeholder-slate-600 focus:outline-none transition-all"/>
@@ -198,7 +198,7 @@ export function ProfilePage() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Confirm new password</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-200 mb-2">Confirm new password</label>
                   <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="Repeat new password" autoComplete="new-password"
                     className={`w-full px-4 py-3 bg-slate-800/40 border rounded-xl text-white text-sm placeholder-slate-600 focus:outline-none transition-all ${confirmPw && newPw !== confirmPw ? "border-red-500/40" : "border-white/5 focus:border-cyan-500/40"}`}/>
                   {confirmPw && newPw !== confirmPw && <p className="text-red-400 text-[10px] font-bold mt-1">Passwords don't match</p>}
@@ -209,19 +209,19 @@ export function ProfilePage() {
             </div>
           ) : (
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Security</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 mb-1">Security</p>
               <h2 className="text-lg font-black text-white mb-6">Password</h2>
-              <div className="flex items-center gap-3 text-slate-500 text-sm p-5 bg-slate-800/30 rounded-2xl">
+              <div className="flex items-center gap-3 text-slate-200 text-sm p-5 bg-slate-800/30 rounded-2xl">
                 <i className="fa-brands fa-google flex-shrink-0"/>Managed through your Google account.
               </div>
             </div>
           )}
           <div className="h-px bg-transparent"/>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Session</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 mb-1">Session</p>
             <h2 className="text-lg font-black text-white mb-6">Sign Out</h2>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <p className="text-slate-500 text-sm">Sign out from AirDate on this device.</p>
+              <p className="text-slate-200 text-sm">Sign out from AirDate on this device.</p>
               <button onClick={handleSignOut} className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-800/60 hover:bg-slate-700/60 text-slate-300 hover:text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all">
                 <i className="fa-solid fa-right-from-bracket"/> Sign Out
               </button>
@@ -232,7 +232,7 @@ export function ProfilePage() {
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/60 mb-1">Danger Zone</p>
             <h2 className="text-lg font-black text-white mb-6">Delete Account</h2>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-red-500/5 rounded-2xl border border-red-500/10">
-              <p className="text-slate-500 text-sm">Permanently removes your account, watchlist, and all personal data. Cannot be undone.</p>
+              <p className="text-slate-200 text-sm">Permanently removes your account, watchlist, and all personal data. Cannot be undone.</p>
               <button onClick={() => { setDeleteModal(true); setDeleteConfirm(""); setDeleteError("") }}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-black text-xs uppercase tracking-widest rounded-xl transition-all flex-shrink-0">
                 <i className="fa-solid fa-trash"/> Delete Account
@@ -249,14 +249,14 @@ export function ProfilePage() {
               <i className="fa-solid fa-trash text-red-400 text-xl"/>
             </div>
             <h3 className="text-white font-black text-xl text-center mb-2">Delete Your Account?</h3>
-            <p className="text-slate-400 text-sm text-center mb-6 leading-relaxed">This permanently removes everything. <span className="text-red-400 font-bold">Cannot be undone.</span></p>
+            <p className="text-slate-200 text-sm text-center mb-6 leading-relaxed">This permanently removes everything. <span className="text-red-400 font-bold">Cannot be undone.</span></p>
             <ul className="space-y-2 mb-6 p-4 bg-slate-800/40 rounded-2xl">
               {["Your watchlist will be permanently deleted","Preferences and history removed","Active Pro subscription cancelled","You will be signed out immediately"].map(item => (
                 <li key={item} className="flex items-center gap-3 text-sm text-slate-300"><i className="fa-solid fa-xmark text-red-500/60 w-4 flex-shrink-0"/>{item}</li>
               ))}
             </ul>
             <div className="mb-6">
-              <label className="block text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Type <span className="text-red-400">DELETE</span> to confirm</label>
+              <label className="block text-slate-200 text-xs font-bold uppercase tracking-widest mb-2">Type <span className="text-red-400">DELETE</span> to confirm</label>
               <input type="text" value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="DELETE"
                 className="w-full bg-slate-800/60 border border-white/5 focus:border-red-500/40 rounded-xl px-4 py-3 text-white text-sm font-bold placeholder-slate-600 focus:outline-none transition-colors"/>
             </div>

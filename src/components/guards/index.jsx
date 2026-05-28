@@ -26,7 +26,7 @@ export function FreemiumGate({ children, fallback }) {
       <div className="freemium-gate p-6 bg-slate-900/60 border border-cyan-500/20 rounded-2xl text-center">
         <i className="fa-solid fa-bolt text-cyan-400 text-2xl mb-3 block"></i>
         <p className="text-white font-black text-sm uppercase tracking-widest mb-1">Free Plan Limit Reached</p>
-        <p className="text-slate-400 text-xs mb-4">Upgrade to track unlimited shows.</p>
+        <p className="text-slate-200 text-xs mb-4">Upgrade to track unlimited shows.</p>
         <a href="/upgrade" className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-xl transition-all">
           <i className="fa-solid fa-bolt text-xs"></i> Upgrade to Pro
         </a>

@@ -52,7 +52,7 @@ export function UpdateSuccessPage() {
         </div>
         <h1 className="text-4xl font-black text-white mb-4">You're Pro Now</h1>
         <p className="text-slate-200 mb-2">Your account has been upgraded. Unlimited tracking, early alerts, and full Scoop access are now active.</p>
-        <p className="text-slate-400 text-sm mb-10">
+        <p className="text-slate-200 text-sm mb-10">
           {refreshed ? 'Redirecting to your account...' : 'Refreshing your session...'}
         </p>
         <div className="flex flex-col gap-3">

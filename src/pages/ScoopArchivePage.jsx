@@ -79,7 +79,7 @@ function ArchiveCard({ story, onSave, onUnsave, isSaved }) {
         {/* Footer */}
         <div className="flex items-center justify-between pt-2.5 border-t border-white/5">
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 text-[10px] font-bold">{timeAgo(story.published_at)}</span>
+            <span className="text-slate-200 text-[10px] font-bold">{timeAgo(story.published_at)}</span>
             {story.source_domain && (
               <>
                 <span className="text-slate-700">·</span>
@@ -231,7 +231,7 @@ export function ScoopArchivePage() {
         {/* Header */}
         <div className="mb-10">
           <button onClick={() => navigate('/scoop')}
-            className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-6 transition-colors group">
+            className="flex items-center gap-2 text-slate-200 hover:text-white text-sm mb-6 transition-colors group">
             <i className="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"/>
             Back to The Scoop
           </button>
@@ -245,7 +245,7 @@ export function ScoopArchivePage() {
                   Story Archive
                 </h1>
               </div>
-              <p className="text-slate-400 text-sm ml-12">
+              <p className="text-slate-200 text-sm ml-12">
                 30 days of AirDate TV Originals — every story, always accessible
               </p>
             </div>
@@ -269,7 +269,7 @@ export function ScoopArchivePage() {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
                 activeTab === tab.key
                   ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400'
-                  : 'bg-slate-800/40 border-white/5 text-slate-400 hover:text-white hover:border-white/10'
+                  : 'bg-slate-800/40 border-white/5 text-slate-200 hover:text-white hover:border-white/10'
               }`}>
               <i className={`fa-solid fa-${tab.icon} text-[10px]`}/>
               {tab.label}
@@ -287,7 +287,7 @@ export function ScoopArchivePage() {
                   font-black uppercase tracking-widest transition-all border ${
                   activeFilter === key
                     ? 'border-current'
-                    : 'bg-slate-800/40 border-white/5 text-slate-400 hover:text-white hover:border-white/10'
+                    : 'bg-slate-800/40 border-white/5 text-slate-200 hover:text-white hover:border-white/10'
                 }`}
                 style={activeFilter === key
                   ? { background:`${conf.color}20`, color:conf.color, borderColor:`${conf.color}40` }
@@ -302,7 +302,7 @@ export function ScoopArchivePage() {
 
         {/* Search Bar */}
         <div className="relative mb-6">
-          <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none"/>
+          <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-200 text-sm pointer-events-none"/>
           <input
             type="text"
             value={searchQuery}
@@ -313,7 +313,7 @@ export function ScoopArchivePage() {
               rounded-xl text-sm text-white placeholder-slate-500 transition-all"/>
           {searchQuery && (
             <button onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-200
                 hover:text-white transition-colors p-1">
               <i className="fa-solid fa-xmark text-xs"/>
             </button>
@@ -333,7 +333,7 @@ export function ScoopArchivePage() {
             <h3 className="text-xl font-black text-white mb-2">
               {activeTab === 'saved' ? 'No saved stories yet' : 'No stories found'}
             </h3>
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-200 text-sm">
               {activeTab === 'saved'
                 ? 'Bookmark stories from The Scoop to find them here anytime.'
                 : 'Try a different category filter.'}

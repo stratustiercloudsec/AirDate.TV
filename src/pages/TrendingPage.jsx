@@ -41,12 +41,12 @@ function todayISO() {
 
 // ─── Rating helpers (mirror of HomePage) ─────────────────────────────────────
 function ratingColor(rating) {
-  if (!rating) return 'border-white/20 text-slate-400'
+  if (!rating) return 'border-white/20 text-slate-200'
   if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
   if (rating === 'TV-14')  return 'border-orange-500/50 text-orange-400'
   if (rating === 'TV-PG')  return 'border-yellow-500/50 text-yellow-400'
   if (['TV-G','TV-Y','TV-Y7'].includes(rating)) return 'border-green-500/50 text-green-400'
-  return 'border-white/20 text-slate-400'
+  return 'border-white/20 text-slate-200'
 }
 
 // ─── Non-blocking ratings enrichment ─────────────────────────────────────────
@@ -146,10 +146,10 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = '
         {show.name}
       </h3>
       {network && (
-        <p className="text-[10px] sm:text-xs font-medium text-slate-400 mb-0.5">{network}</p>
+        <p className="text-[10px] sm:text-xs font-medium text-slate-200 mb-0.5">{network}</p>
       )}
       {show.first_air_date && (
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-200">
           {new Date(show.first_air_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
         </p>
       )}
@@ -169,7 +169,7 @@ function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthentica
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-bold text-white truncate mb-1">{show.name}</h3>
         {show.first_air_date && (
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+          <p className="text-[10px] text-slate-200 font-bold uppercase tracking-widest">
             {new Date(show.first_air_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
         )}
@@ -309,7 +309,7 @@ export function TrendingPage() {
     <div className="flex items-center gap-3 mb-5 border-b border-white/5 pb-4">
       <i className={`fa-solid ${icon} ${color} text-lg`}/>
       <h2 className="text-xl font-black text-white tracking-tighter uppercase">{title}</h2>
-      {subtitle && <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">{subtitle}</span>}
+      {subtitle && <span className="text-[10px] font-bold uppercase tracking-widest text-slate-200 ml-1">{subtitle}</span>}
     </div>
   )
 
@@ -322,7 +322,7 @@ export function TrendingPage() {
             <i className="fa-solid fa-fire animate-pulse"/> Live Trending Intelligence
           </div>
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-3">What's Trending</h1>
-          <p className="text-slate-400 text-base max-w-2xl">Real-time signals across TMDB popularity, weekly spikes, and upcoming premiere anticipation.</p>
+          <p className="text-slate-200 text-base max-w-2xl">Real-time signals across TMDB popularity, weekly spikes, and upcoming premiere anticipation.</p>
         </div>
 
         {/* Sticky tabs */}
@@ -334,7 +334,7 @@ export function TrendingPage() {
                 document.getElementById(t.id)?.scrollIntoView({ behavior: 'smooth' })
               }}
                 className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all
-                  ${activeSection === t.id ? 'bg-white/8 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+                  ${activeSection === t.id ? 'bg-white/8 text-white' : 'text-slate-200 hover:text-slate-200'}`}>
                 <i className={`fa-solid ${t.icon} ${t.color}`}/>{t.label}
               </button>
             ))}
@@ -365,7 +365,7 @@ export function TrendingPage() {
         {/* 2. Most Anticipated */}
         <section id="most-anticipated" className="mb-16">
           <SectionHeader icon="fa-calendar-star" color="text-purple-400" title="Most Anticipated Premieres" subtitle="Upcoming · Sorted by Popularity"/>
-          <p className="text-slate-400 text-xs mb-6">English-language shows with future premiere dates, ranked by TMDB popularity score.</p>
+          <p className="text-slate-200 text-xs mb-6">English-language shows with future premiere dates, ranked by TMDB popularity score.</p>
           {loading.anticipated ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -390,7 +390,7 @@ export function TrendingPage() {
         {/* 3. Rising */}
         <section id="rising" className="mb-16">
           <SectionHeader icon="fa-arrow-trend-up" color="text-green-400" title="Rising Right Now" subtitle="Today's Signals"/>
-          <p className="text-slate-400 text-xs mb-6">Trending today but not yet in this week's top 5 — early signals before they go mainstream.</p>
+          <p className="text-slate-200 text-xs mb-6">Trending today but not yet in this week's top 5 — early signals before they go mainstream.</p>
           {loading.rising ? (
             <div className={GRID_CLASS}>{Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i}/>)}</div>
           ) : (
@@ -411,7 +411,7 @@ export function TrendingPage() {
                 className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all
                   ${activeNetwork.id === n.id
                     ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                    : 'bg-transparent border-white/10 text-slate-400 hover:text-slate-200 hover:border-white/20'}`}>
+                    : 'bg-transparent border-white/10 text-slate-200 hover:text-slate-200 hover:border-white/20'}`}>
                 {n.label}
               </button>
             ))}
@@ -436,7 +436,7 @@ export function TrendingPage() {
                 className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all
                   ${activeGenre.id === g.id
                     ? 'bg-pink-500/10 border-pink-500/30 text-pink-400'
-                    : 'bg-transparent border-white/10 text-slate-400 hover:text-slate-200 hover:border-white/20'}`}>
+                    : 'bg-transparent border-white/10 text-slate-200 hover:text-slate-200 hover:border-white/20'}`}>
                 {g.label}
               </button>
             ))}

@@ -188,7 +188,7 @@ export function AboutPage() {
                 {n}
               </span>
             ))}
-            <span className="px-3 py-1.5 bg-slate-800 border border-white/8 rounded-xl text-slate-500 text-xs font-bold italic">
+            <span className="px-3 py-1.5 bg-slate-800 border border-white/8 rounded-xl text-slate-200 text-xs font-bold italic">
               + many more
             </span>
           </div>
@@ -215,7 +215,7 @@ export function AboutPage() {
                 'Smart search with autocomplete',
               ].map(item => (
                 <li key={item} className="flex items-center gap-2.5 text-sm text-slate-300">
-                  <i className="fa-solid fa-check text-slate-500 text-xs flex-shrink-0"/>
+                  <i className="fa-solid fa-check text-slate-200 text-xs flex-shrink-0"/>
                   {item}
                 </li>
               ))}

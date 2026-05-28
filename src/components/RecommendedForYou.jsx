@@ -35,8 +35,8 @@ function ShowPill({ show }) {
       <p className="text-white text-[11px] font-bold leading-tight truncate group-hover:text-cyan-400 transition-colors">
         {show.title}
       </p>
-      {show.network && <p className="text-slate-400 text-[10px] truncate mt-0.5">{show.network}</p>}
-      {dateLabel    && <p className="text-slate-500 text-[10px] mt-0.5">{dateLabel}</p>}
+      {show.network && <p className="text-slate-200 text-[10px] truncate mt-0.5">{show.network}</p>}
+      {dateLabel    && <p className="text-slate-200 text-[10px] mt-0.5">{dateLabel}</p>}
     </Link>
   )
 }
@@ -94,7 +94,7 @@ export default function RecommendedForYou({ className = '' }) {
           </div>
           <div>
             <h2 className="text-white font-black text-sm uppercase tracking-widest leading-tight">{label}</h2>
-            <p className="text-slate-500 text-[10px] font-medium mt-0.5">
+            <p className="text-slate-200 text-[10px] font-medium mt-0.5">
               {strategy === 'fm' ? 'AI-powered · Factorization Machine' : 'Based on your preferences'}
             </p>
           </div>
@@ -149,7 +149,7 @@ export default function RecommendedForYou({ className = '' }) {
           ))}
         </div>
       ) : error ? (
-        <p className="text-slate-500 text-sm">{error}</p>
+        <p className="text-slate-200 text-sm">{error}</p>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
           {pageShows.map((show, i) => <ShowPill key={`${show.id}-${page}-${i}`} show={show}/>)}

@@ -46,7 +46,7 @@ function FaqItem({ q, a }) {
     <div className="bg-slate-900/60 border border-white/10 rounded-2xl overflow-hidden">
       <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-6 py-5 text-left">
         <span className="text-white font-bold text-sm">{q}</span>
-        <i className={`fa-solid fa-plus text-slate-400 text-sm flex-shrink-0 ml-4 transition-transform duration-200 ${open ? 'rotate-45' : ''}`}></i>
+        <i className={`fa-solid fa-plus text-slate-200 text-sm flex-shrink-0 ml-4 transition-transform duration-200 ${open ? 'rotate-45' : ''}`}></i>
       </button>
       {open && (
         <div className="px-6 pb-5">
@@ -141,22 +141,22 @@ export function UpdatePage() {
           {/* Free */}
           <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-6">
             <div className="mb-6">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Free</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-200 mb-2">Free</p>
               <div className="flex items-end gap-1">
                 <span className="text-4xl font-black text-white">$0</span>
-                <span className="text-slate-400 text-sm mb-1">/month</span>
+                <span className="text-slate-200 text-sm mb-1">/month</span>
               </div>
-              <p className="text-slate-400 text-xs mt-1">No credit card required</p>
+              <p className="text-slate-200 text-xs mt-1">No credit card required</p>
             </div>
             <ul className="space-y-3 mb-8">
               {FREE_FEATURES.map(f => (
-                <li key={f.text} className={`flex items-center gap-3 text-sm ${f.included ? 'text-slate-200' : 'text-slate-500 line-through'}`}>
-                  <i className={`fa-solid ${f.included ? 'fa-check text-slate-400' : 'fa-xmark text-slate-600'} w-4`}></i>
+                <li key={f.text} className={`flex items-center gap-3 text-sm ${f.included ? 'text-slate-200' : 'text-slate-200 line-through'}`}>
+                  <i className={`fa-solid ${f.included ? 'fa-check text-slate-200' : 'fa-xmark text-slate-600'} w-4`}></i>
                   {f.text}
                 </li>
               ))}
             </ul>
-            <div className="w-full h-12 bg-slate-800 border border-white/10 rounded-xl flex items-center justify-center text-xs font-bold uppercase tracking-widest text-slate-400">
+            <div className="w-full h-12 bg-slate-800 border border-white/10 rounded-xl flex items-center justify-center text-xs font-bold uppercase tracking-widest text-slate-200">
               Current Plan
             </div>
           </div>
@@ -170,9 +170,9 @@ export function UpdatePage() {
               <p className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-2">Pro · Monthly</p>
               <div className="flex items-end gap-1">
                 <span className="text-4xl font-black text-white">$4.99</span>
-                <span className="text-slate-400 text-sm mb-1">/month</span>
+                <span className="text-slate-200 text-sm mb-1">/month</span>
               </div>
-              <p className="text-slate-400 text-xs mt-1">Billed monthly · Cancel anytime</p>
+              <p className="text-slate-200 text-xs mt-1">Billed monthly · Cancel anytime</p>
             </div>
             <ul className="space-y-3 mb-8">
               {PRO_FEATURES.map(f => (
@@ -206,7 +206,7 @@ export function UpdatePage() {
               <p className="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2">Pro · Annual</p>
               <div className="flex items-end gap-1">
                 <span className="text-4xl font-black text-white">$4.16</span>
-                <span className="text-slate-400 text-sm mb-1">/month</span>
+                <span className="text-slate-200 text-sm mb-1">/month</span>
               </div>
               <p className="text-green-400 text-xs font-bold mt-1">Billed $49.90/year — save $9.98</p>
             </div>
@@ -236,17 +236,17 @@ export function UpdatePage() {
         </div>
 
         {/* Trust signals */}
-        <div className="mt-12 flex flex-wrap justify-center gap-8 text-slate-400 text-sm">
-          <span className="flex items-center gap-2"><i className="fa-solid fa-lock text-slate-400"></i> Secured by Stripe</span>
-          <span className="flex items-center gap-2"><i className="fa-solid fa-rotate-left text-slate-400"></i> Cancel anytime</span>
-          <span className="flex items-center gap-2"><i className="fa-solid fa-shield text-slate-400"></i> No hidden fees</span>
+        <div className="mt-12 flex flex-wrap justify-center gap-8 text-slate-200 text-sm">
+          <span className="flex items-center gap-2"><i className="fa-solid fa-lock text-slate-200"></i> Secured by Stripe</span>
+          <span className="flex items-center gap-2"><i className="fa-solid fa-rotate-left text-slate-200"></i> Cancel anytime</span>
+          <span className="flex items-center gap-2"><i className="fa-solid fa-shield text-slate-200"></i> No hidden fees</span>
         </div>
 
         {/* FAQ */}
         <div className="mt-20">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-black text-white mb-3">Frequently Asked Questions</h2>
-            <p className="text-slate-400 text-sm max-w-lg mx-auto">Everything you need to know about AirDate Pro.</p>
+            <p className="text-slate-200 text-sm max-w-lg mx-auto">Everything you need to know about AirDate Pro.</p>
           </div>
           <div className="max-w-2xl mx-auto space-y-3">
             {FAQS.map(f => <FaqItem key={f.q} q={f.q} a={f.a} />)}
@@ -257,7 +257,7 @@ export function UpdatePage() {
         <div className="mt-10 text-center p-8 bg-slate-900/40 border border-white/10 rounded-3xl max-w-2xl mx-auto">
           <i className="fa-solid fa-envelope text-cyan-400 text-2xl mb-3 block"></i>
           <h3 className="text-white font-black text-lg mb-2">Still have questions?</h3>
-          <p className="text-slate-400 text-sm mb-4">Our team is happy to help with anything not covered above.</p>
+          <p className="text-slate-200 text-sm mb-4">Our team is happy to help with anything not covered above.</p>
           <Link to="/contact" className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 text-xs font-black uppercase tracking-widest hover:bg-cyan-500/30 transition-all">
             <i className="fa-solid fa-envelope"></i> Contact Us
           </Link>

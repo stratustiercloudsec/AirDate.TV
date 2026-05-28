@@ -48,10 +48,10 @@ export function ContactPage() {
       <div className="w-full max-w-[1400px] mx-auto px-6 pt-28 pb-20">
 
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-16">
+        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-200 mb-16">
           <Link to="/" className="hover:text-slate-300 transition-colors">Home</Link>
           <i className="fa-solid fa-chevron-right text-[7px]"></i>
-          <span className="text-slate-400">Contact</span>
+          <span className="text-slate-200">Contact</span>
         </div>
 
         {/* Page header */}
@@ -64,7 +64,7 @@ export function ContactPage() {
             style={{fontSize:'clamp(2rem, 4vw, 3rem)', letterSpacing:'-0.02em'}}>
             Let's Talk.
           </h1>
-          <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
+          <p className="text-slate-200 text-lg leading-relaxed max-w-xl">
             Whether you're a network, streamer, journalist, or fan — we want to hear from you.
           </p>
         </div>
@@ -81,17 +81,17 @@ export function ContactPage() {
                 <i className="fa-solid fa-envelope text-cyan-400 text-base"></i>
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-0.5">Email Us</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 mb-0.5">Email Us</p>
                 <p className="text-sm font-bold text-cyan-400 group-hover:underline truncate">support@airdate.tv</p>
               </div>
-              <i className="fa-solid fa-arrow-up-right text-slate-600 text-[10px] ml-auto group-hover:text-slate-400 transition-colors"></i>
+              <i className="fa-solid fa-arrow-up-right text-slate-600 text-[10px] ml-auto group-hover:text-slate-200 transition-colors"></i>
             </a>
 
             <div className="h-px bg-white/5"></div>
 
             {/* What to expect */}
             <div className="space-y-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">What to Expect</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200">What to Expect</p>
               {[
                 { icon: 'fa-clock',               color: 'text-cyan-400',  text: 'We typically respond within 1–2 business days.' },
                 { icon: 'fa-triangle-exclamation', color: 'text-amber-400', text: 'For urgent issues, select "Report an Issue" and we\'ll prioritize your message.' },
@@ -99,7 +99,7 @@ export function ContactPage() {
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <i className={`fa-solid ${item.icon} ${item.color} text-xs mt-1 flex-shrink-0`}></i>
-                  <p className="text-slate-400 text-xs leading-relaxed">{item.text}</p>
+                  <p className="text-slate-200 text-xs leading-relaxed">{item.text}</p>
                 </div>
               ))}
             </div>
@@ -108,7 +108,7 @@ export function ContactPage() {
 
             {/* Social links */}
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">Find Us</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 mb-4">Find Us</p>
               <div className="flex gap-3">
                 {[
                   { icon:'fa-brands fa-instagram', href:'https://www.instagram.com/airdatetv/', label:'Instagram' },
@@ -118,7 +118,7 @@ export function ContactPage() {
                   { icon:'fa-brands fa-x-twitter', href:'https://x.com/airdatetv',              label:'X' },
                 ].map(s => (
                   <a key={s.label} href={s.href} target="_blank" rel="noreferrer"
-                    className="w-10 h-10 bg-slate-800/60 hover:bg-slate-700 border border-white/5 hover:border-cyan-500/20 rounded-xl flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-all">
+                    className="w-10 h-10 bg-slate-800/60 hover:bg-slate-700 border border-white/5 hover:border-cyan-500/20 rounded-xl flex items-center justify-center text-slate-200 hover:text-cyan-400 transition-all">
                     <i className={`${s.icon} text-sm`}></i>
                   </a>
                 ))}
@@ -134,10 +134,10 @@ export function ContactPage() {
                   <i className="fa-solid fa-circle-check text-green-400 text-2xl"></i>
                 </div>
                 <h2 className="text-white font-black text-2xl uppercase tracking-tight mb-3">Message Sent</h2>
-                <p className="text-slate-400 text-sm mb-1">We'll follow up at</p>
+                <p className="text-slate-200 text-sm mb-1">We'll follow up at</p>
                 <p className="text-cyan-400 font-bold text-sm mb-8">{form.email}</p>
                 <button onClick={() => { setSuccess(false); setForm({ name:'', email:'', type:'general', message:'' }) }}
-                  className="text-slate-500 text-xs font-bold uppercase tracking-widest hover:text-slate-300 transition-colors">
+                  className="text-slate-200 text-xs font-bold uppercase tracking-widest hover:text-slate-300 transition-colors">
                   Send another →
                 </button>
               </div>
@@ -163,7 +163,7 @@ export function ContactPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <label htmlFor="form-name"
-                      className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block">
+                      className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 block">
                       Your Name <span className="text-cyan-500">*</span>
                     </label>
                     <input id="form-name" type="text" placeholder="Jane Smith"
@@ -172,7 +172,7 @@ export function ContactPage() {
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="form-email"
-                      className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block">
+                      className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 block">
                       Email <span className="text-cyan-500">*</span>
                     </label>
                     <input id="form-email" type="email" placeholder="jane@company.com"
@@ -184,7 +184,7 @@ export function ContactPage() {
                 {/* Inquiry type */}
                 <div className="space-y-2">
                   <label htmlFor="form-type"
-                    className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block">
+                    className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 block">
                     Inquiry Type
                   </label>
                   <div className="relative">
@@ -194,14 +194,14 @@ export function ContactPage() {
                         <option key={t.value} value={t.value}>{t.label}</option>
                       ))}
                     </select>
-                    <i className="fa-solid fa-chevron-down text-slate-500 text-[10px] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <i className="fa-solid fa-chevron-down text-slate-200 text-[10px] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                   </div>
                 </div>
 
                 {/* Message */}
                 <div className="space-y-2">
                   <label htmlFor="form-message"
-                    className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block">
+                    className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 block">
                     Message <span className="text-cyan-500">*</span>
                   </label>
                   <textarea id="form-message" rows="6"
@@ -226,7 +226,7 @@ export function ContactPage() {
 
                 <p className="text-slate-600 text-[10px] text-center">
                   By submitting you agree to our{' '}
-                  <Link to="/privacy" className="text-slate-500 hover:text-slate-300 transition-colors">Privacy Policy</Link>.
+                  <Link to="/privacy" className="text-slate-200 hover:text-slate-300 transition-colors">Privacy Policy</Link>.
                 </p>
               </form>
             )}

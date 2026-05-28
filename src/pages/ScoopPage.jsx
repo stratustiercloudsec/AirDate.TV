@@ -92,8 +92,8 @@ function HeroCard({ item }) {
           <span className="flex items-center gap-1.5 text-cyan-400 text-[10px] sm:text-xs font-black">
             <i className="fa-solid fa-sparkles text-[9px]"/>AirDate Original
           </span>
-          <span className="text-slate-500 text-xs">•</span>
-          <span className="text-slate-400 text-[10px] sm:text-xs">{formatTime(item.published_at)}</span>
+          <span className="text-slate-200 text-xs">•</span>
+          <span className="text-slate-200 text-[10px] sm:text-xs">{formatTime(item.published_at)}</span>
           <span className="ml-auto flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur text-white text-[10px] sm:text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl transition-all border border-white/10 group-hover:border-cyan-500/40 whitespace-nowrap">
             Read Story <i className="fa-solid fa-arrow-right text-[9px]"/>
           </span>
@@ -135,7 +135,7 @@ function FeaturedCard({ item }) {
           <span className="text-cyan-400 text-[10px] font-black flex items-center gap-1">
             <i className="fa-solid fa-sparkles" style={{fontSize:'8px'}}/>AirDate Original
           </span>
-          <span className="text-slate-400 text-[10px]">{formatTime(item.published_at)}</span>
+          <span className="text-slate-200 text-[10px]">{formatTime(item.published_at)}</span>
         </div>
       </div>
     </article>
@@ -174,13 +174,13 @@ function GridCard({ item }) {
           {item.headline}
         </h3>
         {item.summary && (
-          <p className="text-slate-500 text-[11px] leading-relaxed line-clamp-2 mb-3">{item.summary}</p>
+          <p className="text-slate-200 text-[11px] leading-relaxed line-clamp-2 mb-3">{item.summary}</p>
         )}
         <div className="flex items-center justify-between pt-2.5 border-t border-white/5">
           <span className="text-cyan-400 text-[10px] font-black flex items-center gap-1">
             <i className="fa-solid fa-sparkles" style={{fontSize:'8px'}}/>AirDate Original
           </span>
-          <span className="text-slate-500 text-[10px]">{formatTime(item.published_at)}</span>
+          <span className="text-slate-200 text-[10px]">{formatTime(item.published_at)}</span>
         </div>
       </div>
     </article>
@@ -212,7 +212,7 @@ function ListRow({ item, index }) {
         <h4 className="text-white text-xs font-bold leading-snug line-clamp-2 group-hover:text-cyan-400 transition-colors">
           {item.headline}
         </h4>
-        <p className="text-slate-500 text-[10px] mt-1">{formatTime(item.published_at)}</p>
+        <p className="text-slate-200 text-[10px] mt-1">{formatTime(item.published_at)}</p>
       </div>
     </article>
   )
@@ -311,7 +311,7 @@ export function ScoopPage() {
 
           <div className="flex items-center gap-3 mb-1">
             {lastUpdated && (
-              <span className="text-slate-500 text-xs flex items-center gap-1.5">
+              <span className="text-slate-200 text-xs flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse inline-block"/>
                 Updated {lastUpdated}
               </span>
@@ -341,7 +341,7 @@ export function ScoopPage() {
             className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
               activeTab === 'all'
                 ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400'
-                : 'bg-slate-800/40 border-white/5 text-slate-400 hover:text-white hover:border-white/10'
+                : 'bg-slate-800/40 border-white/5 text-slate-200 hover:text-white hover:border-white/10'
             }`}>
             <i className="fa-solid fa-layer-group text-[10px]"/>All
             <span className="bg-slate-700/60 text-slate-300 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
@@ -353,7 +353,7 @@ export function ScoopPage() {
               key={key}
               onClick={() => setActiveTab(key)}
               className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
-                activeTab === key ? 'border-current' : 'bg-slate-800/40 border-white/5 text-slate-400 hover:text-white hover:border-white/10'
+                activeTab === key ? 'border-current' : 'bg-slate-800/40 border-white/5 text-slate-200 hover:text-white hover:border-white/10'
               }`}
               style={activeTab === key
                 ? {background:`${conf.color}20`, color:conf.color, borderColor:`${conf.color}40`}
@@ -378,7 +378,7 @@ export function ScoopPage() {
           <div className="text-center py-32 border border-dashed border-slate-700/50 rounded-3xl">
             <i className="fa-solid fa-satellite-dish text-slate-600 text-5xl mb-4 block"/>
             <h3 className="text-xl font-black text-white mb-2">Agent mid-run</h3>
-            <p className="text-slate-400 text-sm mb-6">{error}</p>
+            <p className="text-slate-200 text-sm mb-6">{error}</p>
             <button onClick={loadScoop}
               className="bg-cyan-500 text-slate-950 font-black px-6 py-3 rounded-xl text-sm hover:bg-cyan-400 transition-all">
               Try Again
@@ -389,7 +389,7 @@ export function ScoopPage() {
           <div className="text-center py-32 border border-dashed border-slate-700/50 rounded-3xl">
             <i className="fa-solid fa-satellite-dish text-slate-600 text-5xl mb-4 block"/>
             <h3 className="text-xl font-black text-white mb-2">No stories yet</h3>
-            <p className="text-slate-400 text-sm mb-6">The agent runs every 4 hours. Check back soon.</p>
+            <p className="text-slate-200 text-sm mb-6">The agent runs every 4 hours. Check back soon.</p>
             <button onClick={loadScoop}
               className="bg-cyan-500 text-slate-950 font-black px-6 py-3 rounded-xl text-sm hover:bg-cyan-400 transition-all">
               Refresh Feed

@@ -63,7 +63,7 @@ export function CallbackPage() {
         <p className="text-white font-bold text-sm uppercase tracking-widest mb-1">
           Signing you in
         </p>
-        <p className="text-slate-500 text-xs">Just a moment…</p>
+        <p className="text-slate-200 text-xs">Just a moment…</p>
       </div>
     </div>
   )

@@ -56,7 +56,7 @@ export function NavbarAuth() {
         <span className="font-bold text-xs text-slate-200 hidden sm:inline max-w-[100px] truncate">
           {user?.name || user?.email?.split('@')[0]}
         </span>
-        <i className={`fa-solid fa-chevron-down text-[8px] text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}/>
+        <i className={`fa-solid fa-chevron-down text-[8px] text-slate-200 transition-transform ${open ? 'rotate-180' : ''}`}/>
       </button>
 
       {/* Dropdown */}
@@ -65,11 +65,11 @@ export function NavbarAuth() {
           {/* User info */}
           <div className="px-4 py-3 border-b border-white/8">
             <p className="text-white text-xs font-bold truncate">{user?.name}</p>
-            <p className="text-slate-500 text-[10px] truncate mt-0.5">{user?.email}</p>
+            <p className="text-slate-200 text-[10px] truncate mt-0.5">{user?.email}</p>
             <span className={`inline-block mt-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest
               ${(user?.tier === 'pro' || user?.tier === 'premium')
                 ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
-                : 'bg-slate-800 text-slate-500 border border-white/8'}`}>
+                : 'bg-slate-800 text-slate-200 border border-white/8'}`}>
               {(user?.tier === 'pro' || user?.tier === 'premium') ? '★ Pro' : 'Free Plan'}
             </span>
           </div>
@@ -114,7 +114,7 @@ function MenuItem({ icon, label, onClick }) {
       onClick={onClick}
       className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
     >
-      <i className={`fa-solid ${icon} w-4 text-center text-slate-500`}/>
+      <i className={`fa-solid ${icon} w-4 text-center text-slate-200`}/>
       {label}
     </button>
   )

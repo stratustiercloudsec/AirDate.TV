@@ -187,7 +187,7 @@ function ScoopSidebar() {
   )
 
   if (!stories.length) return (
-    <div className="text-center py-8 text-slate-500 text-xs">
+    <div className="text-center py-8 text-slate-200 text-xs">
       <i className="fa-solid fa-satellite-dish text-2xl mb-2 block"/>
       No stories yet — check back soon.
     </div>
@@ -256,12 +256,12 @@ function SuggestionItem({ show, query, onClick }) {
       <div className="w-8 h-11 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
         {poster
           ? <img src={poster} alt={show.name} className="w-full h-full object-cover"/>
-          : <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs font-black">{(show.name||'?')[0].toUpperCase()}</div>
+          : <div className="w-full h-full flex items-center justify-center text-slate-200 text-xs font-black">{(show.name||'?')[0].toUpperCase()}</div>
         }
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold text-white truncate">{show.name}</p>
-        {year && <p className="text-[10px] text-slate-400 font-bold">{year}</p>}
+        {year && <p className="text-[10px] text-slate-200 font-bold">{year}</p>}
       </div>
       {isExact && (
         <span className="flex-shrink-0 px-1.5 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded text-cyan-400 text-[9px] font-black uppercase tracking-widest">EXACT</span>
@@ -362,7 +362,7 @@ function SearchBar({ query, setQuery, network, setNetwork, onSearch, onClear, sh
             ))}
           </div>
           <div className="px-3 py-2 border-t border-white/5 flex items-center justify-between">
-            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{suggestions.length} suggestions · Enter to search all</span>
+            <span className="text-[9px] text-slate-200 font-bold uppercase tracking-widest">{suggestions.length} suggestions · Enter to search all</span>
             <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">↑↓ navigate · ↵ select</span>
           </div>
         </div>
@@ -376,12 +376,12 @@ function SkeletonCard() {
 }
 
 function ratingColor(rating) {
-  if (!rating) return 'border-white/20 text-slate-400'
+  if (!rating) return 'border-white/20 text-slate-200'
   if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
   if (rating === 'TV-14')  return 'border-orange-500/50 text-orange-400'
   if (rating === 'TV-PG')  return 'border-yellow-500/50 text-yellow-400'
   if (['TV-G','TV-Y','TV-Y7'].includes(rating)) return 'border-green-500/50 text-green-400'
-  return 'border-white/20 text-slate-400'
+  return 'border-white/20 text-slate-200'
 }
 
 function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) {
@@ -437,7 +437,7 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) 
         </span>
       )}
       {show.network && (
-        <p className="text-[10px] sm:text-xs font-medium text-slate-400 mb-0.5">{show.network}</p>
+        <p className="text-[10px] sm:text-xs font-medium text-slate-200 mb-0.5">{show.network}</p>
       )}
       {(() => {
         const d = show.first_air_date || show.premiereDate
@@ -450,7 +450,7 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) 
         } catch {}
         return (
           <>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-200">{label}</p>
             {label === 'TBA' && (
               <PredictionBadge showId={show.id} premiereDate={null} compact={true}/>
             )}
@@ -466,7 +466,7 @@ function SectionHeader({ icon, iconColor, title, subtitle }) {
     <div className="flex items-center gap-3 mb-5 border-b border-white/5 pb-4">
       <i className={`${icon} ${iconColor} text-lg`}></i>
       <h2 className="text-xl font-black text-white tracking-tighter uppercase">{title}</h2>
-      {subtitle && <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">{subtitle}</span>}
+      {subtitle && <span className="text-[10px] font-bold uppercase tracking-widest text-slate-200 ml-1">{subtitle}</span>}
     </div>
   )
 }
@@ -660,7 +660,7 @@ export function HomePage() {
               <i className="fa-solid fa-bolt text-cyan-400 text-xs flex-shrink-0"></i>
               <p className="text-slate-200 text-xs font-bold">
                 <span className="text-white">You're on the Free Plan</span>
-                <span className="mx-2 text-slate-400">·</span>
+                <span className="mx-2 text-slate-200">·</span>
                 Track unlimited shows, get early alerts, and unlock The Scoop.
               </p>
             </div>
@@ -681,7 +681,7 @@ export function HomePage() {
             showResults={showResults}
           />
           <div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 block">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 mb-2 block">
               Trending Intelligence:
             </span>
             <div className="flex flex-wrap gap-2 mb-5">
@@ -725,14 +725,14 @@ export function HomePage() {
                   <img {...usePoster(show.poster_path, show.name, 92)} alt={show.name} className="w-12 h-16 object-cover rounded-xl flex-shrink-0"/>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-bold text-white truncate">{show.name}</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{(()=>{
+                    <p className="text-[10px] text-slate-200 font-bold uppercase tracking-widest mt-0.5">{(()=>{
                       const d=show.first_air_date
                       if(!d)return 'TBA'
                       try{const dt=new Date(d.includes('T')?d:d+'T12:00:00');return isNaN(dt.getTime())?'TBA':dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
                       catch{return 'TBA'}
                     })()}</p>
                   </div>
-                  <button onClick={e=>{e.stopPropagation();handleTrack(show)}} className="text-slate-400 hover:text-red-400 transition-colors flex-shrink-0">
+                  <button onClick={e=>{e.stopPropagation();handleTrack(show)}} className="text-slate-200 hover:text-red-400 transition-colors flex-shrink-0">
                     <i className="fa-solid fa-xmark"></i>
                   </button>
                 </div>
@@ -747,7 +747,7 @@ export function HomePage() {
               <div>
                 <div className="mb-5">
                   <h2 className="text-2xl font-black text-white mb-1">{resultsHeader}</h2>
-                  {resultsCount && <p className="text-slate-400 text-sm">{resultsCount}</p>}
+                  {resultsCount && <p className="text-slate-200 text-sm">{resultsCount}</p>}
                 </div>
                 {searching
                   ? <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">{Array.from({length:6}).map((_,i)=><SkeletonCard key={i}/>)}</div>
@@ -755,12 +755,12 @@ export function HomePage() {
                       {searchResults.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
                           <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-5">
-                            <i className="fa-solid fa-magnifying-glass text-slate-500 text-2xl"/>
+                            <i className="fa-solid fa-magnifying-glass text-slate-200 text-2xl"/>
                           </div>
                           <h3 className="text-white font-black text-lg uppercase tracking-widest mb-2">
                             No Results Found
                           </h3>
-                          <p className="text-slate-400 text-sm max-w-sm leading-relaxed mb-6">
+                          <p className="text-slate-200 text-sm max-w-sm leading-relaxed mb-6">
                             We couldn't find any shows matching that search. Try a different title, network, or date range.
                           </p>
                           <div className="flex flex-wrap justify-center gap-2">
@@ -782,7 +782,7 @@ export function HomePage() {
                         <div className="flex items-center justify-center gap-2 mt-6 mb-10">
                           <button onClick={()=>handleSearch(query,page-1)} disabled={page===1}
                             className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">← Prev</button>
-                          <span className="text-xs font-bold text-slate-400 px-3">Page {page} of {totalPages}{resultsCount ? ` (${resultsCount})` : ''}</span>
+                          <span className="text-xs font-bold text-slate-200 px-3">Page {page} of {totalPages}{resultsCount ? ` (${resultsCount})` : ''}</span>
                           <button onClick={()=>handleSearch(query,page+1)} disabled={page===totalPages}
                             className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">Next →</button>
                         </div>
@@ -831,7 +831,7 @@ export function HomePage() {
                 </div>
                 <div>
                   <h2 className="text-sm font-black uppercase tracking-wide text-cyan-400 mb-0.5">Get The Scoop</h2>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Latest TV Intelligence</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-200">Latest TV Intelligence</p>
                 </div>
               </div>
               <ScoopSidebar />
@@ -845,7 +845,7 @@ export function HomePage() {
                 </div>
                 <div>
                   <h2 className="text-sm font-black uppercase tracking-wide text-pink-400 mb-0.5">Global Hype Ranking</h2>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Top Tracked Series</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-200">Top Tracked Series</p>
                 </div>
               </div>
               <div className="space-y-3">
@@ -858,7 +858,7 @@ export function HomePage() {
                     ))
                   : dedupById(leaderboard).slice(0,10).map((s,idx) => (
                       <div key={`${s.id??idx}-${idx}`} className="flex items-center gap-3 p-3 bg-slate-800/40 border border-white/5 rounded-2xl hover:border-pink-500/20 transition-all cursor-pointer" onClick={() => window.location.href=`/details/${s.id}`}>
-                        <span className="w-6 text-center text-[10px] font-black text-slate-400">{idx+1}</span>
+                        <span className="w-6 text-center text-[10px] font-black text-slate-200">{idx+1}</span>
                         <img {...usePoster(s.poster_path||s.poster, s.title||s.name, 92)} alt={s.title||s.name} className="w-8 h-10 object-cover rounded-lg flex-shrink-0"/>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-white truncate">{s.title||s.name}</p>
@@ -886,7 +886,7 @@ export function HomePage() {
             </div>
             <div className="text-slate-200 leading-relaxed text-base font-medium overflow-y-auto">
               {modalLoading
-                ? <div className="flex items-center gap-3 py-8 justify-center"><div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div><span className="text-slate-400 text-sm">Generating recap...</span></div>
+                ? <div className="flex items-center gap-3 py-8 justify-center"><div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div><span className="text-slate-200 text-sm">Generating recap...</span></div>
                 : <p>{modalContent}</p>
               }
             </div>
