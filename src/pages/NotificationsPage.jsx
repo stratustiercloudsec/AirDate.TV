@@ -41,7 +41,7 @@ export function NotificationsPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
-      const valid = (data.notifications ?? []).filter(n => n.shows?.length > 0)
+      const valid = (data.notifications ?? []).filter(n => n.type === 'reply' || n.shows?.length > 0)
       setNotifications(valid)
       setUnreadCount(data.unread_count ?? valid.filter(n => !n.read).length)
     } catch (e) {
@@ -97,7 +97,7 @@ export function NotificationsPage() {
             <h1 className="text-2xl font-black uppercase tracking-widest text-white">
               <i className="fa-solid fa-bell text-cyan-400 mr-3"></i>Notifications
             </h1>
-            <p className="text-slate-400 text-xs mt-1 uppercase tracking-widest">Your premiere alerts</p>
+            <p className="text-slate-400 text-xs mt-1 uppercase tracking-widest">Premiere alerts &amp; replies</p>
           </div>
           <div className="flex items-center gap-3">
             {unreadCount > 0 && (
@@ -137,49 +137,76 @@ export function NotificationsPage() {
               )
               : filtered.map(n => {
                 const isUnread = !n.read
-                const poster = n.shows?.[0]?.poster
+                const isReply  = n.type === 'reply'
+                const poster   = n.shows?.[0]?.poster
+                const dateStr  = n.created_at
+                  ? new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : ''
 
                 return (
                   <div key={n.created_at}
                     className={`bg-slate-900 rounded-2xl p-5 border cursor-pointer transition-all hover:border-white/10
-                      ${isUnread ? 'border-cyan-500/20' : 'border-white/5'}`}
+                      ${isUnread ? (isReply ? 'border-purple-500/20' : 'border-cyan-500/20') : 'border-white/5'}`}
                     onClick={() => {
                       if (isUnread) markOneRead(n.created_at)
-                      const showId = n.shows?.[0]?.id
+                      const showId = isReply ? n.show_id : n.shows?.[0]?.id
                       if (showId) navigate(`/details/${showId}`)
                     }}>
                     <div className="flex items-start gap-4">
-                      {poster
-                        ? <img src={poster} className="w-10 h-14 rounded-lg object-cover flex-shrink-0" alt="" />
-                        : <div className="w-10 h-14 rounded-lg bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
-                            <i className="fa-solid fa-tv text-cyan-400 text-xs"></i>
-                          </div>
-                      }
+                      {isReply ? (
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0 mt-1">
+                          <i className="fa-solid fa-reply text-purple-400 text-sm"/>
+                        </div>
+                      ) : poster ? (
+                        <img src={poster} className="w-10 h-14 rounded-lg object-cover flex-shrink-0" alt="" />
+                      ) : (
+                        <div className="w-10 h-14 rounded-lg bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
+                          <i className="fa-solid fa-tv text-cyan-400 text-xs"/>
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2">
-                            <span className="text-cyan-400 text-[10px] font-black uppercase tracking-widest">Premiere Alert</span>
-                            <span className="text-slate-400 text-[10px]">
-                              {n.created_at ? new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${isReply ? 'text-purple-400' : 'text-cyan-400'}`}>
+                              {isReply ? 'Reply to your comment' : 'Premiere Alert'}
                             </span>
+                            <span className="text-slate-400 text-[10px]">{dateStr}</span>
                           </div>
-                          {isUnread && <span className="w-2 h-2 rounded-full bg-cyan-400 flex-shrink-0"></span>}
+                          {isUnread && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isReply ? 'bg-purple-400' : 'bg-cyan-400'}`}/>}
                         </div>
-                        {(n.shows ?? []).map(s => {
-                          const label = s.premiere_date
-                            ? new Date(s.premiere_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                            : s.days_until === 0 ? 'TODAY' : 'TOMORROW'
-                          const color = s.days_until === 0 ? 'text-red-400' : 'text-cyan-400'
-                          return (
-                            <div key={s.title} className="flex items-center justify-between mt-2">
-                              <div>
-                                <span className="text-white text-sm font-bold">{s.title}</span>
-                                {s.network && <span className="text-slate-400 text-xs ml-2">{s.network}</span>}
+                        {isReply ? (
+                          <div>
+                            <p className="text-white text-sm font-bold mb-1">
+                              <span className="text-purple-300">{n.replier || 'Someone'}</span> replied to your comment
+                            </p>
+                            {n.preview && (
+                              <p className="text-slate-300 text-xs leading-relaxed line-clamp-2 bg-slate-800/50 rounded-lg px-3 py-2 border border-white/5">
+                                "{n.preview}"
+                              </p>
+                            )}
+                            {n.parent_text && (
+                              <p className="text-slate-500 text-[10px] mt-1.5 line-clamp-1">
+                                Your comment: "{n.parent_text}…"
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          (n.shows ?? []).map(s => {
+                            const label = s.premiere_date
+                              ? new Date(s.premiere_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                              : s.days_until === 0 ? 'TODAY' : 'TOMORROW'
+                            const color = s.days_until === 0 ? 'text-red-400' : 'text-cyan-400'
+                            return (
+                              <div key={s.title} className="flex items-center justify-between mt-2">
+                                <div>
+                                  <span className="text-white text-sm font-bold">{s.title}</span>
+                                  {s.network && <span className="text-slate-400 text-xs ml-2">{s.network}</span>}
+                                </div>
+                                <span className={`${color} text-[10px] font-black uppercase tracking-widest`}>{label}</span>
                               </div>
-                              <span className={`${color} text-[10px] font-black uppercase tracking-widest`}>{label}</span>
-                            </div>
-                          )
-                        })}
+                            )
+                          })
+                        )}
                       </div>
                     </div>
                   </div>

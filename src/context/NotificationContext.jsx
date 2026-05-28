@@ -41,7 +41,7 @@ export function NotificationProvider({ children }) {
 
       // Filter out any records with no shows (data integrity guard)
       const notifs = (data.notifications ?? data.items ?? []).filter(
-        n => !n.shows || n.shows.length > 0
+        n => n.type === 'reply' || !n.shows || n.shows.length > 0
       )
       setNotifications(notifs)
       setUnreadCount(data.unread_count ?? notifs.filter(n => !n.read).length)

@@ -182,7 +182,7 @@ def handle_send_email(event: dict):
         try:
             existing = dynamo.Table(NOTIFICATIONS_TABLE).query(
                 KeyConditionExpression=Key("user_id").eq(user_id),
-                FilterExpression=Attr("alert_date").eq(alert_date) & Attr("type").eq("premiere_alert"),
+                FilterExpression=Attr("alert_date").eq(alert_date),
             )
             if existing.get("Count", 0) > 0:
                 logger.info(f"Duplicate suppressed — {user_id} already alerted for {alert_date}")

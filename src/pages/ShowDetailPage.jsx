@@ -934,8 +934,13 @@ export function ShowDetailPage() {
             {/* Cast */}
             <CastGrid cast={cast}/>
 
+            {/* Community Comments */}
+            <CommentSection showId={id} />
+
             {/* Lazy Trailer */}
             <LazyTrailer youtubeId={youtubeId}/>
+
+            
 
             {/* Recommendations */}
             {recs.length>0&&(
@@ -957,10 +962,6 @@ export function ShowDetailPage() {
                 </div>
               </section>
             )}
-
-          {/* Community Comments */}
-          <CommentSection showId={id} />
-
           </div>
 
           {/* ── Sidebar ── */}
