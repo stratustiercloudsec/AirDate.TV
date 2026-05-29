@@ -1,6 +1,21 @@
 // src/pages/TrailersPage.jsx
 // Upcoming TV Trailers — embedded YouTube players, grouped by month
-// Only shows WITH trailers are displayed; affiliate networks prioritized
+// Only SEASON PREMIERES are shown — not mid-run episodes
+//
+// FILTERING STRATEGY (in priority order per show):
+//   1. next_episode_to_air.episode_number === 1 AND air_date in this month → season premiere starting this month
+//   2. last_episode_to_air.episode_number === 1 AND air_date in this month → just started this month
+//   3. first_air_date in this month AND status is upcoming/in-production → brand new unaired show
+//   4. first_air_date in this month (fallback for any new show) → include
+//   5. Anything else (mid-run weekly episode) → EXCLUDE
+//
+// TRAILER STRATEGY:
+//   Pass season_number to get-trailer so it fetches current season trailer, not S1
+//
+// COVERAGE STRATEGY:
+//   - Fetch pages 1+2 for high-value Apple TV+, Max, Disney+, Hulu networks
+//   - Fetch page 1 only for others
+//   - Cap 3 per network (up from 2) to allow more high-value shows through
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -12,8 +27,6 @@ import { Footer }       from '@/components/layout/Footer'
 
 const IMAGE_BASE = 'https://image.tmdb.org'
 
-// Affiliate-priority network IDs — ordered by partnership value
-// Apple TV+, Max/HBO, Disney+, Hulu, Paramount+, Peacock, STARZ, Netflix, Prime, Tubi
 const AFFILIATE_NETWORK_IDS = [
   2552,  // Apple TV+
   3186,  // Max / HBO Max
@@ -21,13 +34,15 @@ const AFFILIATE_NETWORK_IDS = [
   453,   // Hulu
   4330,  // Paramount+
   3353,  // Peacock
-  4406,  // STARZ
+  318,   // STARZ
   213,   // Netflix
   1024,  // Prime Video
   2503,  // Tubi
 ]
 
-// Affiliate display names for badge coloring
+// Networks where we fetch page 1 AND page 2 to get deeper coverage
+const DEEP_FETCH_NETWORK_IDS = new Set([2552, 3186, 2739, 453, 213, 1024])
+
 const NETWORK_META = {
   'Apple TV+':    { color: '#a3a3a3', bg: '#a3a3a320' },
   'Max':          { color: '#00b4d8', bg: '#00b4d820' },
@@ -47,29 +62,132 @@ const CAT_COLORS = {
   cancellations: '#f87171', casting: '#c084fc', production: '#fb923c',
 }
 
+// Statuses that indicate a show hasn't started airing yet
+const UPCOMING_STATUSES = new Set([
+  'Planned', 'In Production', 'Post Production', 'Pilot', 'In Development'
+])
+
+// ─── Month helpers ────────────────────────────────────────────────────────────
 function getMonthRange(offset = 0) {
-  const now  = new Date()
-  const d    = new Date(now.getFullYear(), now.getMonth() + offset, 1)
-  const year = d.getFullYear()
+  const now   = new Date()
+  const d     = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+  const year  = d.getFullYear()
   const month = d.getMonth() + 1
   const lastDay = new Date(year, month, 0).getDate()
   return {
+    year,
+    month,
     gte:   `${year}-${String(month).padStart(2,'0')}-01`,
     lte:   `${year}-${String(month).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`,
-    label: d.toLocaleString('default', { month:'long', year:'numeric' }),
+    label: d.toLocaleString('default', { month: 'long', year: 'numeric' }),
     key:   `${year}-${month}`,
     isCurrentMonth: offset === 0,
   }
 }
 
+// Returns true if YYYY-MM-DD falls in the given year+month (1-indexed)
+function dateInMonth(dateStr, year, month) {
+  if (!dateStr) return false
+  try {
+    const [y, m] = dateStr.split('-').map(Number)
+    return y === year && m === month
+  } catch { return false }
+}
+
+// ─── Season premiere resolver ─────────────────────────────────────────────────
+// Returns { passes: bool, air_date_for_month: string|null, season_number: int }
+// Only passes if a SEASON PREMIERE (ep 1) is dated in the target month,
+// OR it's a brand-new unaired show with first_air_date in this month.
+function resolveSeasonPremiere(detail, s, year, month) {
+  const NO = { passes: false, air_date_for_month: null, season_number: 1 }
+
+  if (!detail) {
+    // No detail: only include brand-new shows by first_air_date
+    if (dateInMonth(s.first_air_date, year, month)) {
+      return { passes: true, air_date_for_month: s.first_air_date, season_number: 1 }
+    }
+    return NO
+  }
+
+  const next   = detail.next_episode_to_air
+  const last   = detail.last_episode_to_air
+  const status = detail.status || ''
+
+  // Check 1: next upcoming episode is E1 of a season, airing this month
+  if (next && next.episode_number === 1 && dateInMonth(next.air_date, year, month)) {
+    return { passes: true, air_date_for_month: next.air_date, season_number: next.season_number || 1 }
+  }
+
+  // Check 2: last aired episode is E1, aired this month (show just started)
+  if (last && last.episode_number === 1 && dateInMonth(last.air_date, year, month)) {
+    return { passes: true, air_date_for_month: last.air_date, season_number: last.season_number || 1 }
+  }
+
+  // Check 3: brand-new show not yet airing — first_air_date in this month
+  // Works for shows like Cape Fear / Sugar S2 where TMDB hasn't populated next_episode_to_air yet
+  const firstAirDate = detail.first_air_date || s.first_air_date
+  if (dateInMonth(firstAirDate, year, month)) {
+    // Determine season number: if number_of_seasons > 0 it's a returning show
+    const seasonNum = (detail.number_of_seasons && detail.number_of_seasons > 0)
+      ? detail.number_of_seasons
+      : 1
+    return { passes: true, air_date_for_month: firstAirDate, season_number: seasonNum }
+  }
+
+  // Not a premiere this month
+  return NO
+}
+
+// ─── Utility ──────────────────────────────────────────────────────────────────
 function dedupById(shows) {
   const seen = new Set()
-  return shows.filter(s => { if (!s.id||seen.has(s.id)) return false; seen.add(s.id); return true })
+  return shows.filter(s => {
+    if (!s.id || seen.has(s.id)) return false
+    seen.add(s.id); return true
+  })
 }
 function mapTMDB(s) {
-  return { id:s.id, name:s.name??s.original_name, poster_path:s.poster_path,
-    backdrop_path:s.backdrop_path, first_air_date:s.first_air_date,
-    vote_average:s.vote_average??0, overview:s.overview, network:'' }
+  return {
+    id: s.id,
+    name: s.name ?? s.original_name,
+    poster_path: s.poster_path,
+    backdrop_path: s.backdrop_path,
+    first_air_date: s.first_air_date,
+    vote_average: s.vote_average ?? 0,
+    overview: s.overview,
+    network: '',
+    air_date_for_month: s.first_air_date,
+    season_number: 1,
+  }
+}
+// ─── Trailer overrides — TWO lookup strategies ───────────────────────────────
+// Strategy A: by TMDB numeric ID (exact, fast) — add ID once confirmed from console logs
+// Strategy B: by normalized show name (fallback when ID unknown) — always works
+//
+// CONSOLE LOG: open DevTools → Console, filter "[AirDate]" to see each show's TMDB ID.
+// Once you see the real ID, move the entry from TRAILER_OVERRIDES_BY_NAME to TRAILER_OVERRIDES_BY_ID.
+
+// By TMDB ID — add confirmed IDs here
+const TRAILER_OVERRIDES_BY_ID = {
+  124394: 'U7RT9LZ_6M0',   // Power Book III: Raising Kanan — S5 trailer (confirmed)
+}
+
+// By normalized name — catches shows regardless of TMDB ID (lowercased, stripped)
+const TRAILER_OVERRIDES_BY_NAME = {
+  'sugar':      'WJMbHySi5eQ',   // Sugar S2 Colin Farrell Apple TV+
+  'the agency': 'cYpslA2ytis',   // The Agency S2 Fassbender Paramount+
+}
+
+// Shows to skip entirely — no trailer exists yet for the current season
+const NO_TRAILER_IDS = new Set([
+  136315, // The Bear S5 — no official trailer yet; remove when trailer drops
+])
+
+// Resolve override: check ID first, then name
+function getTrailerOverride(show) {
+  if (TRAILER_OVERRIDES_BY_ID[show.id]) return TRAILER_OVERRIDES_BY_ID[show.id]
+  const normalized = (show.name || '').toLowerCase().trim()
+  return TRAILER_OVERRIDES_BY_NAME[normalized] || null
 }
 
 function extractVideoId(url) {
@@ -79,36 +197,30 @@ function extractVideoId(url) {
     return u.searchParams.get('v') || u.pathname.split('/').pop()
   } catch { return null }
 }
-
 function getNetworkMeta(name) {
   if (!name) return null
   const key = Object.keys(NETWORK_META).find(k => name.toLowerCase().includes(k.toLowerCase()))
   return key ? NETWORK_META[key] : null
 }
-
-// Sort shows by affiliate priority, then popularity
 function sortByAffiliatePriority(shows) {
   const networkOrder = {
-    'Apple TV+': 0, 'Max': 1, 'HBO Max': 1, 'HBO': 1,
-    'Disney+': 2, 'Hulu': 3, 'Paramount+': 4, 'Showtime': 4,
-    'Peacock': 5, 'Starz': 6, 'Netflix': 7, 'Prime Video': 8, 'Tubi TV': 9,
+    'Apple TV+':0,'Max':1,'HBO Max':1,'HBO':1,'Disney+':2,'Hulu':3,
+    'Paramount+':4,'Showtime':4,'Peacock':5,'Starz':6,'Netflix':7,'Prime Video':8,'Tubi TV':9,
   }
   return [...shows].sort((a, b) => {
-    const aOrder = Object.keys(networkOrder).find(k => (a.network||'').includes(k))
-    const bOrder = Object.keys(networkOrder).find(k => (b.network||'').includes(k))
-    const aRank  = aOrder != null ? networkOrder[aOrder] : 99
-    const bRank  = bOrder != null ? networkOrder[bOrder] : 99
-    if (aRank !== bRank) return aRank - bRank
+    const aO = Object.keys(networkOrder).find(k => (a.network||'').includes(k))
+    const bO = Object.keys(networkOrder).find(k => (b.network||'').includes(k))
+    const aR = aO != null ? networkOrder[aO] : 99
+    const bR = bO != null ? networkOrder[bO] : 99
+    if (aR !== bR) return aR - bR
     return (b.vote_average||0) - (a.vote_average||0)
   })
 }
-
-// Limit per-network to max 2 per section to prevent Netflix flooding
-function capNetworkRepresentation(shows, maxPerNetwork = 2) {
+function capNetworkRepresentation(shows, maxPerNetwork = 3) {
   const counts = {}
   return shows.filter(s => {
     const key = s.network || 'unknown'
-    counts[key] = (counts[key] || 0) + 1
+    counts[key] = (counts[key]||0) + 1
     return counts[key] <= maxPerNetwork
   })
 }
@@ -128,12 +240,17 @@ function ScoopSidebar() {
       )).catch(()=>{}).finally(()=>setLoading(false))
   }, [])
 
-  if (loading) return <div className="space-y-3">{Array.from({length:5}).map((_,i)=>(
-    <div key={i} className="animate-pulse flex gap-3 p-3 rounded-xl">
-      <div className="w-6 h-4 bg-slate-700 rounded"/><div className="w-12 h-12 bg-slate-700 rounded-lg flex-shrink-0"/>
-      <div className="flex-1"><div className="h-3 bg-slate-700 rounded w-full mb-2"/><div className="h-2 bg-slate-700 rounded w-2/3"/></div>
+  if (loading) return (
+    <div className="space-y-3">
+      {Array.from({length:5}).map((_,i)=>(
+        <div key={i} className="animate-pulse flex gap-3 p-3 rounded-xl">
+          <div className="w-6 h-4 bg-slate-700 rounded"/>
+          <div className="w-12 h-12 bg-slate-700 rounded-lg flex-shrink-0"/>
+          <div className="flex-1"><div className="h-3 bg-slate-700 rounded w-full mb-2"/><div className="h-2 bg-slate-700 rounded w-2/3"/></div>
+        </div>
+      ))}
     </div>
-  ))}</div>
+  )
 
   return (
     <div className="space-y-1">
@@ -172,16 +289,16 @@ function ScoopSidebar() {
 function FeaturedTrailerHero({ show, videoId, monthLabel }) {
   const navigate = useNavigate()
   if (!show || !videoId) return null
-
   const meta = getNetworkMeta(show.network)
   const dateLabel = (() => {
-    const d = show.first_air_date
+    const d = show.air_date_for_month || show.first_air_date
     if (!d) return 'TBA'
     try {
-      const dt = new Date(d.includes('T') ? d : d+'T12:00:00')
+      const dt = new Date(d + 'T12:00:00')
       return isNaN(dt.getTime()) ? 'TBA' : dt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
     } catch { return 'TBA' }
   })()
+  const seasonLabel = show.season_number > 1 ? `Season ${show.season_number} Premiere` : 'Series Premiere'
 
   return (
     <div className="mb-6 rounded-3xl overflow-hidden border border-white/10 bg-slate-900 relative">
@@ -202,16 +319,15 @@ function FeaturedTrailerHero({ show, videoId, monthLabel }) {
         <div>
           <h3 className="text-white font-black text-lg leading-tight">{show.name}</h3>
           <div className="flex items-center gap-2 mt-1">
-            {show.network && meta && (
+            {show.network && meta ? (
               <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
-                style={{background: meta.bg, color: meta.color, border: `1px solid ${meta.color}30`}}>
+                style={{background:meta.bg,color:meta.color,border:`1px solid ${meta.color}30`}}>
                 {show.network}
               </span>
-            )}
-            {show.network && !meta && (
+            ) : show.network ? (
               <span className="text-xs font-medium text-slate-400">{show.network}</span>
-            )}
-            <span className="text-slate-400 text-xs">Premieres {dateLabel}</span>
+            ) : null}
+            <span className="text-slate-400 text-xs">{seasonLabel} · {dateLabel}</span>
           </div>
         </div>
         <button onClick={()=>navigate(`/details/${show.id}`)}
@@ -227,15 +343,15 @@ function FeaturedTrailerHero({ show, videoId, monthLabel }) {
 function TrailerEmbedCard({ show, videoId }) {
   const navigate = useNavigate()
   const meta = getNetworkMeta(show.network)
-
   const dateLabel = (() => {
-    const d = show.first_air_date
+    const d = show.air_date_for_month || show.first_air_date
     if (!d) return 'TBA'
     try {
-      const dt = new Date(d.includes('T') ? d : d+'T12:00:00')
+      const dt = new Date(d + 'T12:00:00')
       return isNaN(dt.getTime()) ? 'TBA' : dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})
     } catch { return 'TBA' }
   })()
+  const seasonBadge = show.season_number > 1 ? `S${show.season_number}` : null
 
   return (
     <div className="flex flex-col bg-slate-900 rounded-2xl overflow-hidden border border-white/5 hover:border-white/10 transition-all">
@@ -247,6 +363,11 @@ function TrailerEmbedCard({ show, videoId }) {
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
         />
+        {seasonBadge && (
+          <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded-lg">
+            <span className="text-[9px] font-black uppercase tracking-widest text-cyan-400">{seasonBadge}</span>
+          </div>
+        )}
       </div>
       <div className="p-3 flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -257,7 +378,7 @@ function TrailerEmbedCard({ show, videoId }) {
           <div className="flex items-center gap-2">
             {show.network && meta ? (
               <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
-                style={{background: meta.bg, color: meta.color}}>
+                style={{background:meta.bg,color:meta.color}}>
                 {show.network}
               </span>
             ) : show.network ? (
@@ -278,45 +399,62 @@ function TrailerEmbedCard({ show, videoId }) {
 
 // ─── Month Section ────────────────────────────────────────────────────────────
 function MonthSection({ monthRange, token }) {
-  const [readyShows, setReadyShows] = useState([]) // only shows WITH trailers
+  const [readyShows, setReadyShows] = useState([])
   const [loading, setLoading]       = useState(true)
   const [fetching, setFetching]     = useState(false)
   const [progress, setProgress]     = useState(0)
   const [total, setTotal]           = useState(0)
 
+  const { year, month } = monthRange
+
   useEffect(() => {
     const { gte, lte } = monthRange
-    const dateFilter = { 'air_date.gte':gte, 'air_date.lte':lte, sort_by:'popularity.desc' }
 
-    // Fetch per-network to guarantee affiliate coverage; 3 per network max
-    Promise.all(
-      AFFILIATE_NETWORK_IDS.map(nid =>
-        tmdbDiscover({...dateFilter, with_networks: String(nid), page:1})
-          .then(d => (d.results||[]).slice(0,3).map(mapTMDB))
-          .catch(()=>[])
+    // Build per-network fetch promises — deep networks get pages 1+2
+    const fetchPromises = AFFILIATE_NETWORK_IDS.flatMap(nid => {
+      const base = {
+        'air_date.gte': gte,
+        'air_date.lte': lte,
+        sort_by: 'popularity.desc',
+        with_networks: String(nid),
+      }
+      const pages = DEEP_FETCH_NETWORK_IDS.has(nid) ? [1, 2] : [1]
+      return pages.map(page =>
+        tmdbDiscover({ ...base, page })
+          .then(d => (d.results||[]).slice(0, 8).map(mapTMDB))
+          .catch(() => [])
       )
-    ).then(async perNetwork => {
-      // Merge + dedup
-      const merged = dedupById(perNetwork.flat())
+    })
 
-      // Enrich with real network names
-      const enriched = await Promise.all(merged.map(s =>
-        tmdbShow(s.id).then(d => {
-          const detail = (d && typeof d.json === 'function') ? null : d
-          return { ...s, network: detail?.networks?.[0]?.name || s.network || '' }
-        }).catch(() => s)
-      ))
+    Promise.all(fetchPromises).then(async allPages => {
+      const merged = dedupById(allPages.flat())
 
-      // Sort by affiliate priority
-      const sorted = sortByAffiliatePriority(enriched)
-      // Cap to 2 per network
-      const capped = capNetworkRepresentation(sorted, 2)
+      // Enrich: fetch detail for season premiere detection + season number
+      const enriched = await Promise.all(merged.map(async s => {
+        try {
+          const detail = await tmdbShow(s.id)
+          const { passes, air_date_for_month, season_number } = resolveSeasonPremiere(detail, s, year, month)
+          if (!passes) return null
+          return {
+            ...s,
+            network: detail?.networks?.[0]?.name || s.network || '',
+            air_date_for_month,
+            season_number,
+          }
+        } catch {
+          if (!dateInMonth(s.first_air_date, year, month)) return null
+          return { ...s, air_date_for_month: s.first_air_date, season_number: 1 }
+        }
+      }))
+
+      const filtered = enriched.filter(Boolean)
+      const sorted   = sortByAffiliatePriority(filtered)
+      const capped   = capNetworkRepresentation(sorted, 3)
 
       setLoading(false)
       setTotal(capped.length)
       setFetching(true)
 
-      // Fetch trailers — only keep shows that have one
       const headers = { 'Content-Type': 'application/json' }
       if (token) headers['Authorization'] = token
 
@@ -326,19 +464,37 @@ function MonthSection({ monthRange, token }) {
         const batch = capped.slice(i, i + 3)
         await Promise.all(batch.map(async show => {
           try {
-            const res  = await fetch(`${API_BASE}/get-trailer`, {
-              method: 'POST', headers,
-              body: JSON.stringify({ tmdb_id: String(show.id), title: show.name }),
-            })
-            const data = await res.json()
-            const videoId = extractVideoId(data.trailer_url)
+            // Log show IDs to console so TMDB IDs can be confirmed for TRAILER_OVERRIDES
+            console.log(`[AirDate Trailers] id=${show.id} name="${show.name}" season=${show.season_number}`)
+
+            // Skip shows with no trailer available yet
+            if (NO_TRAILER_IDS.has(show.id)) {
+              setProgress(p => p + 1)
+              return
+            }
+
+            // Check hardcoded override first — bypasses Lambda for known wrong-season results
+            let videoId = getTrailerOverride(show)
+
+            if (!videoId) {
+              const res = await fetch(`${API_BASE}/get-trailer`, {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                  tmdb_id: String(show.id),
+                  title: show.name,
+                  season_number: show.season_number || 1,
+                }),
+              })
+              const data = await res.json()
+              videoId = extractVideoId(data.trailer_url)
+            }
+
             if (videoId) {
               withTrailers.push({ ...show, videoId })
-              // Sort by affiliate priority each time we add
               withTrailers.sort((a, b) => {
                 const networkOrder = {
                   'Apple TV+':0,'Max':1,'HBO Max':1,'HBO':1,'Disney+':2,'Hulu':3,
-                  'Paramount+':4,'Showtime':4,'Peacock':5,'Starz':6,'Netflix':7,'Prime Video':8,'Tubi TV':9
+                  'Paramount+':4,'Showtime':4,'Peacock':5,'Starz':6,'Netflix':7,'Prime Video':8,'Tubi TV':9,
                 }
                 const aO = Object.keys(networkOrder).find(k=>(a.network||'').includes(k))
                 const bO = Object.keys(networkOrder).find(k=>(b.network||'').includes(k))
@@ -356,20 +512,12 @@ function MonthSection({ monthRange, token }) {
   }, [monthRange.key])
 
   const featured = readyShows[0] || null
-  const rest      = readyShows.slice(1)
+  const rest     = readyShows.slice(1)
 
   return (
     <section className="mb-16">
-      {/* Featured hero */}
-      {featured && (
-        <FeaturedTrailerHero
-          show={featured}
-          videoId={featured.videoId}
-          monthLabel={monthRange.label}
-        />
-      )}
 
-      {/* Month header */}
+      {/* Month header — always first */}
       <div className="flex items-center gap-4 mb-6 pb-4 border-b border-white/5">
         <div className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border
           ${monthRange.isCurrentMonth
@@ -395,6 +543,16 @@ function MonthSection({ monthRange, token }) {
         </div>
       </div>
 
+      {/* Featured hero */}
+      {featured && (
+        <FeaturedTrailerHero
+          show={featured}
+          videoId={featured.videoId}
+          monthLabel={monthRange.label}
+        />
+      )}
+
+      {/* Trailer grid */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({length:8}).map((_,i)=>(
@@ -414,7 +572,6 @@ function MonthSection({ monthRange, token }) {
           {rest.map(show => (
             <TrailerEmbedCard key={show.id} show={show} videoId={show.videoId} />
           ))}
-          {/* Loading placeholders while fetching */}
           {fetching && rest.length < 8 && Array.from({length: Math.min(4, total - readyShows.length)}).map((_,i)=>(
             <div key={`ph-${i}`} className="animate-pulse bg-slate-800/50 rounded-2xl overflow-hidden">
               <div className="w-full bg-slate-700" style={{paddingTop:'56.25%'}}/>
@@ -457,14 +614,14 @@ export function TrailersPage() {
                 Upcoming Trailers
               </h1>
               <p className="text-slate-400 text-sm font-medium mt-1">
-                Official trailers for TV premieres — current &amp; next 3 months
+                Official trailers for TV season premieres — current &amp; next 3 months
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3 mt-3 flex-wrap">
             {Object.entries(NETWORK_META).slice(0,8).map(([name, meta]) => (
               <span key={name} className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg"
-                style={{background: meta.bg, color: meta.color, border:`1px solid ${meta.color}30`}}>
+                style={{background:meta.bg,color:meta.color,border:`1px solid ${meta.color}30`}}>
                 {name}
               </span>
             ))}
