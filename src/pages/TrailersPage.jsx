@@ -167,15 +167,16 @@ function mapTMDB(s) {
 // CONSOLE LOG: open DevTools → Console, filter "[AirDate]" to see each show's TMDB ID.
 // Once you see the real ID, move the entry from TRAILER_OVERRIDES_BY_NAME to TRAILER_OVERRIDES_BY_ID.
 
-// By TMDB ID — add confirmed IDs here
+// By TMDB ID — confirmed IDs (fastest lookup, no ambiguity)
 const TRAILER_OVERRIDES_BY_ID = {
-  124394: 'U7RT9LZ_6M0',   // Power Book III: Raising Kanan — S5 trailer (confirmed)
+  124394: 'U7RT9LZ_6M0',   // Power Book III: Raising Kanan — S5 trailer
+  203744: 'WJMbHySi5eQ',   // Sugar (Colin Farrell, Apple TV+) — S2 trailer
+  219971: 'cYpslA2ytis',   // The Agency (Fassbender, Paramount+) — S2 trailer
 }
 
-// By normalized name — catches shows regardless of TMDB ID (lowercased, stripped)
+// By normalized name — fallback for any show where TMDB ID is not yet confirmed
 const TRAILER_OVERRIDES_BY_NAME = {
-  'sugar':      'WJMbHySi5eQ',   // Sugar S2 Colin Farrell Apple TV+
-  'the agency': 'cYpslA2ytis',   // The Agency S2 Fassbender Paramount+
+  'ted lasso':  'PxZg4SfIURg',   // Ted Lasso S4 Apple TV+ (TMDB ID TBD)
 }
 
 // Shows to skip entirely — no trailer exists yet for the current season
