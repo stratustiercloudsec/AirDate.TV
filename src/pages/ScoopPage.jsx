@@ -57,7 +57,7 @@ function HeroCard({ item }) {
       style={{height:'clamp(320px, 40vw, 480px)'}}
     >
       {poster
-        ? <img src={poster} alt=""
+        ? <img src={poster} onError={e => { e.currentTarget.style.display="none"; e.currentTarget.parentElement.classList.add("no-image") }} alt=""
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"/>
         : <div className="absolute inset-0" style={{background:'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)'}}/>
       }
@@ -116,7 +116,7 @@ function FeaturedCard({ item }) {
       style={{minHeight:'200px'}}
     >
       {poster
-        ? <img src={poster} alt=""
+        ? <img src={poster} onError={e => { e.currentTarget.style.display="none"; e.currentTarget.parentElement.classList.add("no-image") }} alt=""
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
         : <div className="absolute inset-0 bg-slate-800"/>
       }
@@ -155,7 +155,7 @@ function GridCard({ item }) {
     >
       {poster ? (
         <div className="relative h-36 overflow-hidden flex-shrink-0">
-          <img src={poster} alt={item.show_title||''}
+          <img src={poster} onError={e => { e.currentTarget.style.display="none"; e.currentTarget.parentElement.classList.add("no-image") }} alt={item.show_title||''}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
           <div className="absolute inset-0" style={{background:'linear-gradient(to top,rgba(15,23,42,0.9) 0%,transparent 60%)'}}/>
           <div className="absolute top-2.5 left-2.5"><CatBadge cat={cat} small/></div>
@@ -204,7 +204,7 @@ function ListRow({ item, index }) {
       </span>
       {poster && (
         <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
-          <img src={poster} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"/>
+          <img src={poster} onError={e => { e.currentTarget.style.display="none"; e.currentTarget.parentElement.classList.add("no-image") }} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"/>
         </div>
       )}
       <div className="flex-1 min-w-0">

@@ -197,7 +197,7 @@ function ScoopSidebar() {
     <div className="space-y-1">
       {stories.map((item, i) => {
         const color  = CAT_COLORS[item.category] || '#22d3ee'
-        const poster = item.image_url || item.poster_url || item.poster
+        const poster = item.image_url || item.poster_url || item.poster || null
         return (
           <article
             key={item.story_hash || i}
@@ -255,7 +255,7 @@ function SuggestionItem({ show, query, onClick }) {
     >
       <div className="w-8 h-11 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
         {poster
-          ? <img src={poster} alt={show.name} className="w-full h-full object-cover"/>
+          ? <img src={poster} onError={e => { e.currentTarget.style.display="none" }} alt={show.name} className="w-full h-full object-cover"/>
           : <div className="w-full h-full flex items-center justify-center text-slate-200 text-xs font-black">{(show.name||'?')[0].toUpperCase()}</div>
         }
       </div>

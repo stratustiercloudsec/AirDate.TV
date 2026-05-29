@@ -279,12 +279,12 @@ export function AboutPage() {
                 You're already in.
               </h2>
               <p className="text-slate-200 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
-                Head to My Pulse to manage your watchlist, set alert preferences, and never miss another premiere.
+                Head to My Persona to manage your watchlist, set alert preferences, and never miss another premiere.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link to="/pulse"
+                <Link to="/persona"
                   className="w-full sm:w-auto px-8 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm uppercase tracking-widest rounded-xl transition-all">
-                  Go to My Pulse
+                  Go to My Persona
                 </Link>
                 <Link to="/"
                   className="w-full sm:w-auto px-8 py-3.5 bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-200 font-black text-sm uppercase tracking-widest rounded-xl transition-all">

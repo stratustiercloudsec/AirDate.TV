@@ -113,7 +113,7 @@ export function Navbar() {
           <NavLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
           <NavLink to="/scoop"     icon="fa-fire"           label="The Scoop"/>
           {isAuthenticated && (
-            <NavLink to="/pulse"   icon="fa-heart"          label="My Pulse"/>
+            <NavLink to="/persona"   icon="fa-heart"          label="My Persona"/>
           )}
           <NavLink to="/about"     icon="fa-circle-info"    label="About"/>
         </div>
@@ -339,7 +339,7 @@ export function Navbar() {
                 </div>
                 <div className="py-1">
                   <DropdownLink to="/account"       icon="fa-circle-user"  iconColor="text-cyan-400"  label="My Account"/>
-                  <DropdownLink to="/pulse"          icon="fa-heart"        iconColor="text-rose-400"  label="My Pulse"/>
+                  <DropdownLink to="/persona"          icon="fa-heart"        iconColor="text-rose-400"  label="My Persona"/>
                   <DropdownLink to="/notifications"  icon="fa-bell"         iconColor="text-amber-400" label="Notifications"/>
                 </div>
                 {(user?.tier !== 'pro' && user?.tier !== 'premium') && (
@@ -390,7 +390,7 @@ export function Navbar() {
             <MobileLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
             <MobileLink to="/scoop"     icon="fa-fire"           label="The Scoop"/>
             {isAuthenticated && (
-              <MobileLink to="/pulse"   icon="fa-heart"          label="My Pulse"/>
+              <MobileLink to="/persona"   icon="fa-heart"          label="My Persona"/>
             )}
             <MobileLink to="/about"     icon="fa-circle-info"    label="About"/>
 

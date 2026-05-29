@@ -37,7 +37,7 @@ export function Footer() {
           <Link to="/trending"  className="hover:text-cyan-400 transition-colors">Trending</Link>
           <Link to="/premieres" className="hover:text-cyan-400 transition-colors">Premieres</Link>
           <Link to="/scoop"     className="hover:text-cyan-400 transition-colors">The Scoop</Link>
-          {isAuthenticated && <Link to="/account" className="hover:text-cyan-400 transition-colors">My Pulse</Link>}
+          {isAuthenticated && <Link to="/account" className="hover:text-cyan-400 transition-colors">My Persona</Link>}
         </div>
       </div>
       <div className="flex flex-col md:flex-row justify-between items-center gap-x-6 gap-y-4 px-8 border-t border-white/5 pt-3">

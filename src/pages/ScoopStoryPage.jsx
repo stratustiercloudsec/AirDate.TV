@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { API_BASE } from '@/config/aws'
 import { Footer } from '@/components/layout/Footer'
 
-const STORY_BASE = '/scoop/stories/'
+const STORY_BASE = import.meta.env.VITE_STORY_BASE || 'https://dev.airdate.tv/scoop/stories/'
 
 const CATS = {
   premieres:     { label:'Premiere Dates',     icon:'calendar-star', color:'#22d3ee' },
@@ -160,7 +160,7 @@ export function ScoopStoryPage() {
     fetch(`${STORY_BASE}${hash}.json`)
       .then(r => {
         if (r.ok) return r.json()
-        return fetch('/scoop/stories.json')
+        return fetch(`${MANIFEST_URL}?t=${Date.now()}`)
           .then(m => m.json())
           .then(manifest => {
             const found = (manifest.items || []).find(s => s.story_hash === hash)
@@ -168,6 +168,18 @@ export function ScoopStoryPage() {
             return found
           })
       })
+      .then(story =>
+        // If individual file loaded but lacks image_url, hydrate from manifest
+        story.image_url
+          ? story
+          : fetch(`${MANIFEST_URL}?t=${Date.now()}`)
+              .then(m => m.json())
+              .then(manifest => {
+                const found = (manifest.items || []).find(s => s.story_hash === hash)
+                return found ? { ...story, image_url: found.image_url, image_source: found.image_source } : story
+              })
+              .catch(() => story)
+      )
       .then(setStory)
       .catch(e => setError(e.message))
   }, [hash])

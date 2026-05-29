@@ -31,7 +31,7 @@ import { AboutPage }             from '@/pages/AboutPage'
 import { FAQPage }               from '@/pages/FAQPage'
 
 // ── Protected pages ─────────────────────────────────────────────────────────
-import { MyPulsePage }       from '@/pages/MyPulsePage'
+import { MyPersonaPage }     from '@/pages/MyPersonaPage'
 import { NotificationsPage } from '@/pages/NotificationsPage'
 
 // ── Auth pages ──────────────────────────────────────────────────────────────
@@ -80,8 +80,8 @@ export default function App() {
                 <Route path="/account" element={
                   <ProtectedRoute><AccountPage /></ProtectedRoute>
                 } />
-                <Route path="/pulse" element={
-                  <ProtectedRoute><MyPulsePage /></ProtectedRoute>
+                <Route path="/persona" element={
+                  <ProtectedRoute><MyPersonaPage /></ProtectedRoute>
                 } />
                 <Route path="/notifications" element={
                   <ProtectedRoute><NotificationsPage /></ProtectedRoute>
