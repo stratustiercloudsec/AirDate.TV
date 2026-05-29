@@ -110,6 +110,7 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-1">
           <NavLink to="/"          icon="fa-house"          label="Home"/>
           <NavLink to="/premieres" icon="fa-calendar"       label="Premieres"/>
+          <NavLink to="/trailers"  icon="fa-brands fa-youtube" label="Trailers"/>
           <NavLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
           <NavLink to="/scoop"     icon="fa-fire"           label="The Scoop"/>
           {isAuthenticated && (
@@ -387,6 +388,7 @@ export function Navbar() {
           <div className="px-6 py-4 flex flex-col gap-1">
             <MobileLink to="/"          icon="fa-house"          label="Home"/>
             <MobileLink to="/premieres" icon="fa-calendar"       label="Premieres"/>
+            <MobileLink to="/trailers"  icon="fa-brands fa-youtube" label="Trailers"/>
             <MobileLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
             <MobileLink to="/scoop"     icon="fa-fire"           label="The Scoop"/>
             {isAuthenticated && (
@@ -421,17 +423,21 @@ export function Navbar() {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function NavLink({ to, icon, label }) {
+  const iconClass = icon.startsWith('fa-brands') || icon.startsWith('fa-regular') || icon.startsWith('fa-solid')
+    ? icon : `fa-solid ${icon}`
   return (
     <Link to={to} className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-slate-200 hover:text-white hover:bg-white/5 transition-all">
-      <i className={`fa-solid ${icon} mr-1.5`}/>{label}
+      <i className={`${iconClass} mr-1.5`}/>{label}
     </Link>
   )
 }
 
 function MobileLink({ to, icon, label }) {
+  const iconClass = icon.startsWith('fa-brands') || icon.startsWith('fa-regular') || icon.startsWith('fa-solid')
+    ? icon : `fa-solid ${icon}`
   return (
     <Link to={to} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-white/5">
-      <i className={`fa-solid ${icon} w-4`}/>{label}
+      <i className={`${iconClass} w-4`}/>{label}
     </Link>
   )
 }

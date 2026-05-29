@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider }         from '@/context/AuthContext'
 import { WatchlistProvider }    from '@/context/WatchlistContext'
 import { NotificationProvider } from '@/context/NotificationContext'
+import { TrailersPage } from '@/pages/TrailersPage'
 
 // Layout
 import { Navbar } from '@/components/layout/Navbar'
@@ -54,8 +55,10 @@ export default function App() {
 
                 {/* ── Public routes ───────────────────────────────────── */}
                 <Route path="/"                element={<HomePage />} />
+                <Route path="/trailers"       element={<TrailersPage />} />
                 <Route path="/trending"        element={<TrendingPage />} />
                 <Route path="/premieres"       element={<PremieresCalendarPage />} />
+                <Route path="/trailers"        element={<TrailersPage />} />
                 <Route path="/scoop"           element={<ScoopPage />} />
                 <Route path="/scoop/archive"   element={<ScoopArchivePage />} />
                 <Route path="/scoop/:hash"     element={<ScoopStoryPage />} />
