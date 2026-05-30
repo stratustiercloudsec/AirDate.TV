@@ -157,29 +157,26 @@ export function ScoopStoryPage() {
   const [error,  setError]  = useState(null)
 
   useEffect(() => {
-    fetch(`${STORY_BASE}${hash}.json?t=${Date.now()}`)
-      .then(r => {
-        if (r.ok) return r.json()
-        return fetch(`${MANIFEST_URL}?t=${Date.now()}`)
-          .then(m => m.json())
-          .then(manifest => {
-            const found = (manifest.items || []).find(s => s.story_hash === hash)
-            if (!found) throw new Error('Story not found')
-            return found
-          })
+    // Step 1: fetch manifest first (single source of truth for metadata)
+    // Step 2: fetch individual story file for full body
+    // Step 3: merge — story file body + manifest image_url
+    Promise.all([
+      fetch(`${STORY_BASE}${hash}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${MANIFEST_URL}?t=${Date.now()}`).then(r => r.json()).catch(() => ({ items: [] }))
+    ])
+      .then(([storyFile, manifest]) => {
+        const manifestItem = (manifest.items || []).find(s => s.story_hash === hash)
+        if (!storyFile && !manifestItem) throw new Error('Story not found')
+        // Merge: prefer storyFile for body/content, manifest for image_url
+        const merged = {
+          ...(manifestItem || {}),
+          ...(storyFile || {}),
+          image_url: (storyFile?.image_url) || (manifestItem?.image_url) || null,
+          image_source: (storyFile?.image_source) || (manifestItem?.image_source) || null,
+        }
+        if (!merged.headline) throw new Error('Story not found')
+        return merged
       })
-      .then(story =>
-        // If individual file loaded but lacks image_url, hydrate from manifest
-        story.image_url
-          ? story
-          : fetch(`${MANIFEST_URL}?t=${Date.now()}`)
-              .then(m => m.json())
-              .then(manifest => {
-                const found = (manifest.items || []).find(s => s.story_hash === hash)
-                return found ? { ...story, image_url: found.image_url, image_source: found.image_source } : story
-              })
-              .catch(() => story)
-      )
       .then(setStory)
       .catch(e => setError(e.message))
   }, [hash])
