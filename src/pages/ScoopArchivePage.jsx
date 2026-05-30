@@ -104,7 +104,7 @@ function ArchiveCard({ story, onSave, onUnsave, isSaved }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export function ScoopArchivePage() {
   const navigate = useNavigate()
-  const { user, token, isAuthenticated } = useAuth()
+  const { user, token, isAuthenticated, loading: authLoading } = useAuth()
   const isPro = user?.tier === 'pro' || user?.tier === 'premium'
 
   const [activeTab,    setActiveTab]    = useState('archive')   // 'archive' | 'saved'
@@ -120,9 +120,10 @@ export function ScoopArchivePage() {
 
   // ── Redirect non-Pro users ──────────────────────────────────────────────
   useEffect(() => {
+    if (authLoading) return
     if (!isAuthenticated) { navigate('/login'); return }
     if (isAuthenticated && !isPro) { navigate('/upgrade'); return }
-  }, [isAuthenticated, isPro])
+  }, [authLoading, isAuthenticated, isPro])
 
   // ── Load archive stories ────────────────────────────────────────────────
   const loadStories = useCallback(async (category = 'all', startKey = null, append = false) => {
