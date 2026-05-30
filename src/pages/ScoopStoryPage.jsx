@@ -8,6 +8,7 @@ import { API_BASE } from '@/config/aws'
 import { Footer } from '@/components/layout/Footer'
 
 const STORY_BASE = import.meta.env.VITE_STORY_BASE || 'https://airdate.tv/scoop/stories/'
+const MANIFEST_URL = import.meta.env.VITE_SCOOP_MANIFEST_URL || 'https://airdate.tv/scoop/stories.json'
 
 const CATS = {
   premieres:     { label:'Premiere Dates',     icon:'calendar-star', color:'#22d3ee' },
