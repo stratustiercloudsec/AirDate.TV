@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { API_BASE } from '@/config/aws'
 import { Footer } from '@/components/layout/Footer'
 
-const STORY_BASE = import.meta.env.VITE_STORY_BASE || 'https://dev.airdate.tv/scoop/stories/'
+const STORY_BASE = import.meta.env.VITE_STORY_BASE || 'https://airdate.tv/scoop/stories/'
 
 const CATS = {
   premieres:     { label:'Premiere Dates',     icon:'calendar-star', color:'#22d3ee' },
@@ -157,7 +157,7 @@ export function ScoopStoryPage() {
   const [error,  setError]  = useState(null)
 
   useEffect(() => {
-    fetch(`${STORY_BASE}${hash}.json`)
+    fetch(`${STORY_BASE}${hash}.json?t=${Date.now()}`)
       .then(r => {
         if (r.ok) return r.json()
         return fetch(`${MANIFEST_URL}?t=${Date.now()}`)
