@@ -36,10 +36,10 @@ const AFFILIATE_NETWORK_IDS = [213, 2552, 4330, 3353, 3186, 4406, 2503, 1024, 45
 const CHIPS = [
   'Premiering Today',
   'Taylor Sheridan',
-  'Netflix June 2026',
-  'Marvel Cinematic TV Shows',
+  'Documentaries 2026',
+  'Reality TV 2026',
   'Comedy Premieres 2026',
-  'Ted Lasso',
+  'HBO Max Premieres 2026',
   'Power Universe',
   'Shonda Rhimes'
 ]

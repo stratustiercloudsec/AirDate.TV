@@ -367,6 +367,17 @@ export function MyPersonaPage() {
   function removeCustomInterest(val) {
     setPreferences(prev => ({ ...prev, customInterests: (prev.customInterests ?? []).filter(x => x !== val) }))
   }
+  function addCustomInterest() {
+    const val = customInput.trim()
+    if (!val) return
+    const existing = preferences.customInterests ?? []
+    if (existing.map(x => x.toLowerCase()).includes(val.toLowerCase())) return
+    setPreferences(prev => ({ ...prev, customInterests: [...(prev.customInterests ?? []), val] }))
+    setCustomInput('')
+  }
+  function removeCustomInterest(val) {
+    setPreferences(prev => ({ ...prev, customInterests: (prev.customInterests ?? []).filter(x => x !== val) }))
+  }
   function toggleGenre(g) {
     setPreferences(prev => ({ ...prev, genres: prev.genres.includes(g) ? prev.genres.filter(x => x !== g) : [...prev.genres, g] }))
   }
@@ -645,26 +656,40 @@ export function MyPersonaPage() {
             {/* ── PERSONA TAB ── */}
             {activeTab === 'persona' && (
               <div className="space-y-6">
-                <PersonaCard persona={persona} onRefresh={generatePersona} loading={personaLoading}/>
-
-                {!persona && !personaLoading && (
-                  <div className="text-center py-12 bg-slate-900/40 border border-white/10 rounded-3xl">
+                {!isProTier && (
+                  <div className="text-center py-16 bg-slate-900/40 border border-amber-500/20 rounded-3xl">
                     <div className="text-5xl mb-4">🎭</div>
-                    <p className="text-white font-black text-sm uppercase tracking-widest mb-2">No Persona Yet</p>
+                    <p className="text-white font-black text-sm uppercase tracking-widest mb-2">Pro Feature</p>
                     <p className="text-slate-200 text-xs mb-6 max-w-xs mx-auto leading-relaxed">
-                      Add shows to your watchlist and set genre preferences, then generate your AI viewer persona.
+                      Your AI Viewer Persona is available on the Pro plan. Upgrade to unlock personalized insights, coming premieres, and AI-matched recommendations.
                     </p>
-                    <button onClick={generatePersona} disabled={personaLoading || watchlist.length === 0}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-violet-500/20 border border-violet-500/30 text-violet-400 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-violet-500/30 transition-all disabled:opacity-50">
-                      <i className="fa-solid fa-wand-magic-sparkles"/>
-                      {watchlist.length === 0 ? 'Add shows to get started' : 'Generate My Persona'}
-                    </button>
+                    <a href="/upgrade" className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black uppercase tracking-widest rounded-xl transition-all">
+                      <i className="fa-solid fa-bolt"/> Upgrade to Pro — $4.99/mo
+                    </a>
                   </div>
                 )}
-
-                <WeeklyDigest digest={digest} loading={digestLoading}/>
-                {persona?.recommendations?.length > 0 && (
-                  <PersonaRecs recs={persona.recommendations} loading={personaLoading}/>
+                {isProTier && (
+                  <>
+                    <PersonaCard persona={persona} onRefresh={generatePersona} loading={personaLoading}/>
+                    {!persona && !personaLoading && (
+                      <div className="text-center py-12 bg-slate-900/40 border border-white/10 rounded-3xl">
+                        <div className="text-5xl mb-4">🎭</div>
+                        <p className="text-white font-black text-sm uppercase tracking-widest mb-2">No Persona Yet</p>
+                        <p className="text-slate-200 text-xs mb-6 max-w-xs mx-auto leading-relaxed">
+                          Add shows to your watchlist and set genre preferences, then generate your AI viewer persona.
+                        </p>
+                        <button onClick={generatePersona} disabled={personaLoading || watchlist.length === 0}
+                          className="inline-flex items-center gap-2 px-6 py-3 bg-violet-500/20 border border-violet-500/30 text-violet-400 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-violet-500/30 transition-all disabled:opacity-50">
+                          <i className="fa-solid fa-wand-magic-sparkles"/>
+                          {watchlist.length === 0 ? 'Add shows to get started' : 'Generate My Persona'}
+                        </button>
+                      </div>
+                    )}
+                    <WeeklyDigest digest={digest} loading={digestLoading}/>
+                    {persona?.recommendations?.length > 0 && (
+                      <PersonaRecs recs={persona.recommendations} loading={personaLoading}/>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -713,6 +738,37 @@ export function MyPersonaPage() {
                       <button key={g} onClick={() => toggleGenre(g)}
                         className="px-3 py-1.5 bg-slate-800 border border-white/10 rounded-full text-slate-200 text-xs font-bold hover:border-violet-500/50 hover:text-violet-400 transition-all">{g}</button>
                     ))}
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-5 sm:p-6">
+                  <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Custom Interests</h3>
+                  <p className="text-slate-200 text-[10px] mb-4 leading-relaxed">Add anything specific — "Black Showrunners", "Psychological Thrillers", "Rom-Coms", "Black Comedies", "LGBTQ+ Dramas", etc. These power your AI Persona.</p>
+                  {(preferences.customInterests ?? []).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {(preferences.customInterests ?? []).map(v => (
+                        <span key={v} className="flex items-center gap-1.5 px-3 py-1 bg-pink-500/10 border border-pink-500/20 text-pink-400 text-xs font-bold rounded-full">
+                          {v}
+                          <button onClick={() => removeCustomInterest(v)} className="hover:text-red-400 transition-colors">
+                            <i className="fa-solid fa-xmark text-[9px]"/>
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={customInput}
+                      onChange={e => setCustomInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && addCustomInterest()}
+                      placeholder="e.g. Black Showrunners, Rom-Coms, Slow Burn Thrillers…"
+                      className="flex-1 bg-slate-800 border border-white/10 rounded-xl px-3 py-2.5 text-slate-200 text-xs font-bold placeholder-slate-600 focus:outline-none focus:border-pink-500/50 transition-colors"
+                    />
+                    <button onClick={addCustomInterest}
+                      className="w-full sm:w-auto px-4 py-2.5 bg-pink-500/20 border border-pink-500/30 rounded-xl text-pink-400 text-xs font-bold uppercase tracking-widest hover:bg-pink-500/30 transition-all">
+                      Add
+                    </button>
                   </div>
                 </div>
 

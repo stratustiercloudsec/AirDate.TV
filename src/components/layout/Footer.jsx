@@ -6,6 +6,7 @@ const SOCIAL = [
   { icon: 'fa-brands fa-tiktok',    href: 'https://tiktok.com/@airdatetv',        label: 'TikTok'    },
   { icon: 'fa-brands fa-youtube',   href: 'https://youtube.com/@AirDateTV_Premieres',       label: 'YouTube'   },
   { icon: 'fa-brands fa-x-twitter', href: 'https://x.com/AirdatetvF42317',        label: 'X'         },
+  { icon: 'fa-brands fa-linkedin', href: 'https://www.linkedin.com/company/airdate-tv',        label: 'LinkedIn'         }
 ]
 
 export function Footer() {
@@ -37,7 +38,7 @@ export function Footer() {
           <Link to="/trending"  className="hover:text-cyan-400 transition-colors">Trending</Link>
           <Link to="/premieres" className="hover:text-cyan-400 transition-colors">Premieres</Link>
           <Link to="/scoop"     className="hover:text-cyan-400 transition-colors">The Scoop</Link>
-          {isAuthenticated && <Link to="/account" className="hover:text-cyan-400 transition-colors">My Persona</Link>}
+          {isAuthenticated && <Link to="/persona" className="hover:text-cyan-400 transition-colors">My Persona</Link>}
         </div>
       </div>
       <div className="flex flex-col md:flex-row justify-between items-center gap-x-6 gap-y-4 px-8 border-t border-white/5 pt-3">
