@@ -88,6 +88,7 @@ function ShowCard({ show, liveData, onRemove }) {
 
 function PersonaCard({ persona, onRefresh, loading }) {
   if (!persona && !loading) return null
+  // Empty digest is valid — show friendly message
   const colorIdx = hashLabel(persona?.persona_label)
   const colors   = PERSONA_COLORS[colorIdx]
   return (
@@ -148,7 +149,7 @@ function PersonaCard({ persona, onRefresh, loading }) {
 
 function WeeklyDigest({ digest, loading }) {
   const navigate = useNavigate()
-  if (loading) return (
+  if (loading || digest === null) return (
     <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-5 sm:p-6">
       <div className="h-4 w-40 bg-slate-800 rounded animate-pulse mb-4"/>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -157,6 +158,7 @@ function WeeklyDigest({ digest, loading }) {
     </div>
   )
   const items = [...(digest?.this_week || []), ...(digest?.persona_picks || [])]
+  const hasDigestData = items.length > 0
   if (!items.length) return null
   return (
     <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-5 sm:p-6">
@@ -165,7 +167,7 @@ function WeeklyDigest({ digest, loading }) {
           <i className="fa-solid fa-calendar-week text-green-400 text-sm"/>
         </div>
         <div>
-          <h2 className="text-white font-black text-sm uppercase tracking-widest">Coming This Week</h2>
+          <h2 className="text-white font-black text-sm uppercase tracking-widest">Coming Up</h2>
           <p className="text-slate-200 text-[10px]">
             {digest?.week_start && new Date(digest.week_start + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}
             {' — '}
@@ -251,8 +253,9 @@ export function MyPersonaPage() {
 
   const [userData,        setUserData]      = useState(null)
   const [liveShowData,    setLiveShowData]  = useState({})
-  const [preferences,     setPreferences]   = useState({ networks: [], genres: [], notifications: false, alertDays: 1 })
+  const [preferences,     setPreferences]   = useState({ networks: [], genres: [], notifications: false, alertDays: 1, customInterests: [] })
   const [networkInput,    setNetworkInput]  = useState('')
+  const [customInput,     setCustomInput]   = useState('')
   const [toast,           setToast]         = useState(null)
   const [prefSaving,      setPrefSaving]    = useState(false)
   const [actionLoading,   setActionLoading] = useState(false)
@@ -267,7 +270,7 @@ export function MyPersonaPage() {
   const [personaLoading, setPersonaLoading]= useState(false)
   const [digest,         setDigest]        = useState(null)
   const [digestLoading,  setDigestLoading] = useState(false)
-  const [activeTab,      setActiveTab]     = useState('watchlist') // 'watchlist' | 'persona' | 'preferences'
+  const [activeTab,      setActiveTab]     = useState('persona') // 'persona' | 'watchlist' | 'preferences'
 
   const email = user?.email ?? ''
   const sub   = user?.sub   ?? ''
@@ -285,7 +288,15 @@ export function MyPersonaPage() {
         if (!d) return
         setUserData(d)
         if (d.preferences) setPreferences(prev => ({ ...prev, ...d.preferences }))
-        if (d.persona) setPersona(d.persona)
+        if (d.persona) {
+          setPersona(d.persona)
+          setDigestLoading(true)
+          fetch(`${API_BASE}/user/${sub}/persona/digest`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.ok ? r.json() : null)
+            .then(d2 => { if (d2) setDigest(d2?.weekly_digest || d2) })
+            .catch(() => {})
+            .finally(() => setDigestLoading(false))
+        }
       })
       .catch(() => {})
   }, [token, sub])
@@ -302,17 +313,7 @@ export function MyPersonaPage() {
     })
   }, [watchlist.length])
 
-  // Load digest when persona tab opens
-  useEffect(() => {
-    if (activeTab !== 'persona' || !token || !sub) return
-    if (digest) return // already loaded
-    setDigestLoading(true)
-    fetch(`${API_BASE}/user/${sub}/persona/digest`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => { if (r.status === 404) return null; return r.ok ? r.json() : null })
-      .then(d => { if (d) setDigest(d) })
-      .catch(() => {})
-      .finally(() => setDigestLoading(false))
-  }, [activeTab, token, sub])
+  // digest loaded inline with user data below
 
   async function generatePersona() {
     if (!token || !sub) return
@@ -355,6 +356,17 @@ export function MyPersonaPage() {
     setNetworkInput('')
   }
   function removeNetwork(n) { setPreferences(prev => ({ ...prev, networks: prev.networks.filter(x => x !== n) })) }
+  function addCustomInterest() {
+    const val = customInput.trim()
+    if (!val) return
+    const existing = preferences.customInterests ?? []
+    if (existing.map(x => x.toLowerCase()).includes(val.toLowerCase())) return
+    setPreferences(prev => ({ ...prev, customInterests: [...(prev.customInterests ?? []), val] }))
+    setCustomInput('')
+  }
+  function removeCustomInterest(val) {
+    setPreferences(prev => ({ ...prev, customInterests: (prev.customInterests ?? []).filter(x => x !== val) }))
+  }
   function toggleGenre(g) {
     setPreferences(prev => ({ ...prev, genres: prev.genres.includes(g) ? prev.genres.filter(x => x !== g) : [...prev.genres, g] }))
   }
@@ -416,8 +428,8 @@ export function MyPersonaPage() {
   }
 
   const tabs = [
-    { key: 'watchlist',   label: 'Tracked',    icon: 'fa-heart',         count: watchlist.length },
     { key: 'persona',     label: 'My Persona',  icon: 'fa-masks-theater', count: null },
+    { key: 'watchlist',   label: 'Tracked',    icon: 'fa-heart',         count: watchlist.length },
     { key: 'preferences', label: 'Preferences', icon: 'fa-sliders',       count: null },
   ]
 
