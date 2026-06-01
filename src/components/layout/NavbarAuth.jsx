@@ -4,11 +4,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { useNotifications } from '@/context/NotificationContext'
 
 export function NavbarAuth() {
   const { isAuthenticated, user, signOut } = useAuth()
   const navigate  = useNavigate()
   const [open, setOpen] = useState(false)
+  const { unreadCount } = useNotifications()
   const ref = useRef(null)
 
   // Close on outside click
@@ -35,6 +37,20 @@ export function NavbarAuth() {
   const initials = (user?.name || user?.email || '?')[0].toUpperCase()
 
   return (
+    <div className="flex items-center gap-2">
+      {/* Notification bell */}
+      <button
+        onClick={() => navigate('/notifications')}
+        className="relative flex items-center justify-center w-9 h-9 bg-slate-800/60 hover:bg-slate-800 border border-white/10 hover:border-cyan-500/20 rounded-xl transition-all"
+        aria-label="Notifications"
+      >
+        <i className="fa-solid fa-bell text-slate-300 text-sm"/>
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(v => !v)}
@@ -104,6 +120,7 @@ export function NavbarAuth() {
           </div>
         </div>
       )}
+    </div>
     </div>
   )
 }

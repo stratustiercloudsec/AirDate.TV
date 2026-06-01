@@ -41,10 +41,10 @@ export function NotificationsPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
-      const valid = (data.notifications ?? []).filter(n => n.type === 'reply' || n.shows?.length > 0)
-      // Explode multi-show notifications — one card per show
+      const valid = (data.notifications ?? [])
+      // Explode premiere_alert multi-show notifications — one card per show
       const exploded = valid.flatMap(n => {
-        if (n.type === 'reply' || (n.shows ?? []).length <= 1) return [n]
+        if (n.type !== 'premiere_alert' || (n.shows ?? []).length <= 1) return [n]
         return (n.shows ?? []).map((show, i) => ({
           ...n,
           shows: [show],
@@ -106,7 +106,7 @@ export function NotificationsPage() {
             <h1 className="text-2xl font-black uppercase tracking-widest text-white">
               <i className="fa-solid fa-bell text-cyan-400 mr-3"></i>Notifications
             </h1>
-            <p className="text-slate-200 text-xs mt-1 uppercase tracking-widest">Premiere alerts &amp; replies</p>
+            <p className="text-slate-200 text-xs mt-1 uppercase tracking-widest">Alerts · Replies · Persona · Watchlist</p>
           </div>
           <div className="flex items-center gap-3">
             {unreadCount > 0 && (
@@ -145,76 +145,110 @@ export function NotificationsPage() {
                 </div>
               )
               : filtered.map(n => {
-                const isUnread = !n.read
-                const isReply  = n.type === 'reply'
-                const poster   = n.shows?.[0]?.poster
-                const dateStr  = n.created_at
+                const isUnread        = !n.read
+                const type            = n.type || 'premiere_alert'
+                const isPremiere      = type === 'premiere_alert'
+                const isReply         = type === 'reply' || type === 'comment_reply'
+                const isPersona       = type === 'persona_update'
+                const isExpiry        = type === 'show_expiry'
+                const poster          = n.shows?.[0]?.poster
+                const dateStr         = n.created_at
                   ? new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                   : ''
+
+                // Per-type styling
+                const typeConfig = {
+                  premiere_alert: { icon: 'fa-tv',               color: 'text-cyan-400',   bg: 'bg-cyan-500/10',   border: 'border-cyan-500/20',   dot: 'bg-cyan-400',   label: 'Premiere Alert'    },
+                  comment_reply:  { icon: 'fa-reply',             color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', dot: 'bg-purple-400', label: 'Reply'             },
+                  reply:          { icon: 'fa-reply',             color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', dot: 'bg-purple-400', label: 'Reply'             },
+                  persona_update: { icon: 'fa-masks-theater',     color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20', dot: 'bg-violet-400', label: 'Persona Updated'   },
+                  show_expiry:    { icon: 'fa-calendar-xmark',    color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20',  dot: 'bg-amber-400',  label: 'Watchlist Update'  },
+                }
+                const cfg = typeConfig[type] || typeConfig.premiere_alert
 
                 return (
                   <div key={n._explodeKey ?? n.created_at}
                     className={`bg-slate-900 rounded-2xl p-5 border cursor-pointer transition-all hover:border-white/10
-                      ${isUnread ? (isReply ? 'border-purple-500/20' : 'border-cyan-500/20') : 'border-white/5'}`}
+                      ${isUnread ? cfg.border : 'border-white/5'}`}
                     onClick={() => {
                       if (isUnread) markOneRead(n.created_at)
-                      const showId = isReply ? n.show_id : n.shows?.[0]?.id
-                      if (showId) navigate(`/details/${showId}`)
+                      const showId = (isReply || isExpiry) ? n.show_id : n.shows?.[0]?.id
+                      if (isPersona)       navigate('/pulse')
+                      else if (showId)     navigate(`/details/${showId}`)
                     }}>
                     <div className="flex items-start gap-4">
-                      {isReply ? (
-                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0 mt-1">
-                          <i className="fa-solid fa-reply text-purple-400 text-sm"/>
-                        </div>
-                      ) : poster ? (
+                      {/* Icon / poster */}
+                      {isPremiere && poster ? (
                         <img src={poster} className="w-10 h-14 rounded-lg object-cover flex-shrink-0" alt="" />
                       ) : (
-                        <div className="w-10 h-14 rounded-lg bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
-                          <i className="fa-solid fa-tv text-cyan-400 text-xs"/>
+                        <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center flex-shrink-0 mt-1`}>
+                          <i className={`fa-solid ${cfg.icon} ${cfg.color} text-sm`}/>
                         </div>
                       )}
+
                       <div className="flex-1 min-w-0">
+                        {/* Header row */}
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${isReply ? 'text-purple-400' : 'text-cyan-400'}`}>
-                              {isReply ? 'Reply to your comment' : 'Premiere Alert'}
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${cfg.color}`}>
+                              {cfg.label}
                             </span>
                             <span className="text-slate-200 text-[10px]">{dateStr}</span>
                           </div>
-                          {isUnread && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isReply ? 'bg-purple-400' : 'bg-cyan-400'}`}/>}
+                          {isUnread && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`}/>}
                         </div>
-                        {isReply ? (
+
+                        {/* ── Premiere Alert ── */}
+                        {isPremiere && (n.shows ?? []).map(s => {
+                          const label = s.premiere_date
+                            ? new Date(s.premiere_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                            : s.days_until === 0 ? 'TODAY' : 'TOMORROW'
+                          const dateColor = s.days_until === 0 ? 'text-red-400' : 'text-cyan-400'
+                          return (
+                            <div key={s.title} className="flex items-center justify-between mt-2">
+                              <div>
+                                <span className="text-white text-sm font-bold">{s.title}</span>
+                                {s.network && <span className="text-slate-200 text-xs ml-2">{s.network}</span>}
+                              </div>
+                              <span className={`${dateColor} text-[10px] font-black uppercase tracking-widest`}>{label}</span>
+                            </div>
+                          )
+                        })}
+
+                        {/* ── Comment Reply ── */}
+                        {isReply && (
                           <div>
                             <p className="text-white text-sm font-bold mb-1">
                               <span className="text-purple-300">{n.replier || 'Someone'}</span> replied to your comment
+                              {n.show_title && <span className="text-slate-400 font-normal"> on <span className="text-white font-bold">{n.show_title}</span></span>}
                             </p>
                             {n.preview && (
                               <p className="text-slate-300 text-xs leading-relaxed line-clamp-2 bg-slate-800/50 rounded-lg px-3 py-2 border border-white/5">
                                 "{n.preview}"
                               </p>
                             )}
-                            {n.parent_text && (
-                              <p className="text-slate-200 text-[10px] mt-1.5 line-clamp-1">
-                                Your comment: "{n.parent_text}…"
-                              </p>
-                            )}
                           </div>
-                        ) : (
-                          (n.shows ?? []).map(s => {
-                            const label = s.premiere_date
-                              ? new Date(s.premiere_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                              : s.days_until === 0 ? 'TODAY' : 'TOMORROW'
-                            const color = s.days_until === 0 ? 'text-red-400' : 'text-cyan-400'
-                            return (
-                              <div key={s.title} className="flex items-center justify-between mt-3 pt-3 border-t border-white/5 first:border-0 first:pt-0 first:mt-2">
-                                <div>
-                                  <span className="text-white text-sm font-bold">{s.title}</span>
-                                  {s.network && <span className="text-slate-200 text-xs ml-2">{s.network}</span>}
-                                </div>
-                                <span className={`${color} text-[10px] font-black uppercase tracking-widest`}>{label}</span>
-                              </div>
-                            )
-                          })
+                        )}
+
+                        {/* ── Persona Updated ── */}
+                        {isPersona && (
+                          <div>
+                            <p className="text-white text-sm font-bold mb-1">Your Viewer Persona has been updated</p>
+                            {n.persona_label && (
+                              <p className="text-violet-300 text-xs font-bold">"{n.persona_label}"</p>
+                            )}
+                            <p className="text-slate-400 text-[10px] mt-1">Tap to view your new affinities and recommendations →</p>
+                          </div>
+                        )}
+
+                        {/* ── Show Expiry ── */}
+                        {isExpiry && (
+                          <div>
+                            <p className="text-white text-sm font-bold mb-1">
+                              {n.show_title || 'A show'} was removed from your watchlist
+                            </p>
+                            <p className="text-slate-400 text-[10px]">30-day tracking period ended · Tap to re-add</p>
+                          </div>
                         )}
                       </div>
                     </div>
