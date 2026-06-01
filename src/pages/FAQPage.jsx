@@ -54,11 +54,11 @@ const FAQ_SECTIONS = [
     color: "text-violet-400",
     faqs: [
       { q: "What is My Persona?", a: "My Persona is your AI-powered viewer identity on AirDate. Based on your watchlist and genre preferences, our AI analyzes your taste and generates a personalized viewer persona, along with content affinities, a weekly digest of upcoming shows, and curated recommendations you might be missing." },
-      { q: "How is my persona generated?", a: "When you click Generate My Persona, AirDate analyzes your tracked shows, preferred networks, and genre selections using Claude AI by Anthropic. The AI identifies patterns in your taste and produces a persona label, affinity tags, a personalized welcome message, and show recommendations tailored to your profile." },
+      { q: "How is my persona generated?", a: "AirDate analyzes your tracked shows, preferred networks, genre preferences, and custom interests using Claude AI by Anthropic. The AI automatically produces a persona label, affinity tags, a welcome message, and show recommendations. Your persona updates automatically when you save preferences or add shows." },
       { q: "What is the Coming This Week digest?", a: "The Coming This Week section shows shows from your watchlist with premiere dates in the next 7 days, plus AI-matched picks from your persona affinities that you have not yet tracked. It updates automatically each week." },
       { q: "What does You Might Be Missing show?", a: "You Might Be Missing surfaces shows that match your viewer persona but are not on your watchlist yet. These are AI-curated picks based on your content affinities, like a personal talent scout for your taste." },
-      { q: "How often should I refresh my persona?", a: "Refresh your persona whenever you add new shows to your watchlist or update your genre preferences. The AI uses your current watchlist snapshot, so refreshing after adding a few new shows gives the best results." },
-      { q: "Is My Persona available on the Free plan?", a: "My Persona is available to all registered users. Pro members get enhanced recommendations and the full weekly digest experience." },
+      { q: "How often does my persona update?", a: "Your persona updates automatically whenever you save preferences or add new shows to your watchlist. No manual refresh needed." },
+      { q: "Is My Persona available on the Free plan?", a: "My Persona is a Pro-only feature. Upgrade to Pro to unlock your AI Viewer Persona, Coming Up digest, and AI-matched show recommendations." },
     ],
   },
   {
@@ -67,7 +67,6 @@ const FAQ_SECTIONS = [
     color: 'text-rose-400',
     faqs: [
       { q: 'How many shows can I track on the Free plan?', a: 'Free accounts can track up to 5 shows. Upgrade to Pro for an unlimited watchlist.' },
-      { q: 'What is My Persona?', a: "My Persona is your AI-powered personal dashboard showing all tracked shows, your AI viewer persona, upcoming premieres, and a personalized feed based on your watchlist and genre preferences." },
       { q: 'Does AirDate cover all streaming platforms?', a: 'AirDate covers Netflix, Max, Hulu, Disney+, Apple TV+, Peacock, Paramount+, Prime Video, STARZ, Tubi, and major broadcast networks. Coverage expands regularly.' },
     ],
   },

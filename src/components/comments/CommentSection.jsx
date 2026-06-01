@@ -149,9 +149,24 @@ function ReplyCard({ reply }) {
 }
 
 // ── Top-level comment card ─────────────────────────────────────────────────────
-function CommentCard({ comment, showId, isAuthenticated, user, onReplyPosted }) {
+function CommentCard({ comment, showId, isAuthenticated, user, token, idToken, onReplyPosted, onDelete }) {
   const [showReplyBox, setShowReplyBox] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const replies = comment.replies || []
+  const isOwner = (user?.sub && user.sub === comment.user_sub) || (user?.name && getUsername(user) === comment.username)
+
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      const res = await fetch(`${API_BASE}/show/${showId}/comments/_?show_id=${showId}&comment_id=${encodeURIComponent(comment.comment_id)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${getIdToken()}` }
+      })
+      if (res.ok) onDelete(comment.comment_id)
+    } catch (e) { console.error(e) }
+    setDeleting(false)
+  }
 
   function handleReplyPosted(newReply) {
     onReplyPosted(comment.comment_id, newReply)
@@ -176,16 +191,52 @@ function CommentCard({ comment, showId, isAuthenticated, user, onReplyPosted }) 
           </div>
           <p className="text-slate-300 text-sm leading-relaxed mb-2">{comment.text}</p>
 
-          {/* Reply button */}
-          {isAuthenticated && !showReplyBox && (
-            <button
-              onClick={() => setShowReplyBox(true)}
-              className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-200 hover:text-cyan-400 transition-colors"
-            >
-              <i className="fa-solid fa-reply text-[9px]"/>
-              Reply
-            </button>
-          )}
+          {/* Action buttons */}
+          <div className="flex items-center gap-3">
+            {isAuthenticated && !showReplyBox && (
+              <button
+                onClick={() => setShowReplyBox(true)}
+                className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-200 hover:text-cyan-400 transition-colors"
+              >
+                <i className="fa-solid fa-reply text-[9px]"/>
+                Reply
+              </button>
+            )}
+            {isOwner && (
+              <>
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  disabled={deleting}
+                  className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-red-400 transition-colors disabled:opacity-50"
+                >
+                  <i className="fa-solid fa-trash text-[9px]"/>
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </button>
+                {confirmDelete && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+                    onClick={e => e.target === e.currentTarget && setConfirmDelete(false)}>
+                    <div className="bg-slate-900 border border-red-500/20 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+                      <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <i className="fa-solid fa-trash text-red-400"/>
+                      </div>
+                      <h3 className="text-white font-black text-center text-base mb-2">Delete Comment?</h3>
+                      <p className="text-slate-200 text-xs text-center mb-5 leading-relaxed">This comment will be permanently removed and cannot be restored.</p>
+                      <div className="flex gap-3">
+                        <button onClick={() => setConfirmDelete(false)}
+                          className="flex-1 h-10 bg-slate-800 border border-white/10 rounded-xl text-slate-200 text-xs font-bold uppercase tracking-widest hover:border-white/30 transition-all">
+                          Cancel
+                        </button>
+                        <button onClick={() => { setConfirmDelete(false); handleDelete() }}
+                          className="flex-1 h-10 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-xs font-bold uppercase tracking-widest hover:bg-red-500/30 transition-all">
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -297,15 +348,15 @@ export function CommentSection({ showId }) {
   const { isAuthenticated, user } = useAuth()
   const [comments, setComments]       = useState([])
   const [loading, setLoading]         = useState(true)
-  const [nextToken, setNextToken]     = useState(null)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [nextToken, setNextToken]     = useState(null)
 
   const fetchComments = useCallback(async (token = null, append = false) => {
     try {
-      const params = token ? `?next_token=${encodeURIComponent(token)}` : ''
-      const res = await fetch(`${API_BASE}/show/${showId}/comments${params}`)
-      if (!res.ok) return
-      const data = await res.json()
+      const url = token
+        ? `${API_BASE}/show/${showId}/comments?next_token=${encodeURIComponent(token)}`
+        : `${API_BASE}/show/${showId}/comments`
+      const data = await (await fetch(url)).json()
       setComments(prev => append ? [...prev, ...(data.comments || [])] : (data.comments || []))
       setNextToken(data.next_token || null)
     } catch {
@@ -333,81 +384,61 @@ export function CommentSection({ showId }) {
     ))
   }
 
+  function handleDeleteComment(commentId) {
+    setComments(prev => prev.filter(c => c.comment_id !== commentId))
+  }
+
   async function loadMore() {
     if (!nextToken || loadingMore) return
     setLoadingMore(true)
     await fetchComments(nextToken, true)
+    setLoadingMore(false)
   }
 
-  const totalCount = comments.reduce((sum, c) => sum + 1 + (c.replies?.length || 0), 0)
-
   return (
-    <section>
+    <div className="mt-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-slate-700/50 rounded-lg">
-          <i className="fa-solid fa-comments text-slate-300 text-xl"/>
-        </div>
-        <h2 className="text-2xl font-black text-white uppercase tracking-tight">Community</h2>
-        {!loading && (
-          <span className="px-2 py-1 bg-slate-800/60 border border-white/10 rounded-lg text-xs font-black text-slate-200">
-            {totalCount} comment{totalCount !== 1 ? 's' : ''}
+        <i className="fa-solid fa-comments text-cyan-400 text-xl"/>
+        <h2 className="text-white font-black uppercase tracking-widest text-sm">Community</h2>
+        {comments.length > 0 && (
+          <span className="bg-slate-700 text-slate-300 text-xs font-bold px-2 py-0.5 rounded-full">
+            {comments.length} comment{comments.length !== 1 ? 's' : ''}
           </span>
         )}
       </div>
 
-      {isAuthenticated ? (
-        <CommentComposer showId={showId} onPosted={handlePosted} user={user} />
-      ) : (
-        <div className="bg-slate-800/30 border border-white/8 rounded-2xl px-5 py-4 mb-6 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-white text-sm font-bold mb-0.5">Join the conversation</p>
-            <p className="text-slate-200 text-xs">Sign in to leave a comment. It's free.</p>
-          </div>
-          <Link to="/auth/login"
-            className="flex-shrink-0 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black uppercase tracking-widest rounded-xl transition-all">
-            Sign In
-          </Link>
-        </div>
-      )}
+      <CommentComposer showId={showId} isAuthenticated={isAuthenticated} user={user} onPosted={handlePosted} />
 
-      <div className="bg-slate-800/20 rounded-2xl px-5">
-        {loading ? (
-          <div className="py-10 flex items-center justify-center gap-3">
-            <div className="w-4 h-4 border-2 border-slate-600 border-t-cyan-400 rounded-full animate-spin"/>
-            <span className="text-slate-200 text-sm">Loading comments…</span>
-          </div>
-        ) : comments.length === 0 ? (
-          <div className="py-10 text-center">
-            <i className="fa-solid fa-comment-slash text-slate-700 text-3xl mb-3"/>
-            <p className="text-slate-200 text-sm font-bold uppercase tracking-widest">No comments yet</p>
-            <p className="text-slate-600 text-xs mt-1">Be the first to share your thoughts</p>
-          </div>
-        ) : (
-          <>
-            {comments.map((c) => (
-              <CommentCard
-                key={c.comment_id}
-                comment={c}
-                showId={showId}
-                isAuthenticated={isAuthenticated}
-                user={user}
-                onReplyPosted={handleReplyPosted}
-              />
-            ))}
-            {nextToken && (
-              <div className="py-4 text-center">
-                <button
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className="px-4 py-2 bg-slate-700/60 hover:bg-slate-700 border border-white/10 rounded-xl text-xs font-black text-slate-300 uppercase tracking-widest transition-all disabled:opacity-50"
-                >
-                  {loadingMore ? 'Loading…' : 'Load more comments'}
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </section>
+      {loading ? (
+        <div className="py-8 text-center text-slate-500 text-sm">Loading comments…</div>
+      ) : comments.length === 0 ? (
+        <div className="py-8 text-center text-slate-500 text-sm">No comments yet. Be the first!</div>
+      ) : (
+        <>
+          {comments.map((c) => (
+            <CommentCard
+              key={c.comment_id}
+              comment={c}
+              showId={showId}
+              isAuthenticated={isAuthenticated}
+              user={user}
+              onReplyPosted={handleReplyPosted}
+              onDelete={handleDeleteComment}
+            />
+          ))}
+          {nextToken && (
+            <div className="py-4 text-center">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-cyan-400 transition-colors disabled:opacity-50"
+              >
+                {loadingMore ? 'Loading…' : 'Load more comments'}
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   )
 }

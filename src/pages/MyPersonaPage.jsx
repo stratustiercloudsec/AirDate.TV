@@ -86,7 +86,7 @@ function ShowCard({ show, liveData, onRemove }) {
   )
 }
 
-function PersonaCard({ persona, onRefresh, loading }) {
+function PersonaCard({ persona, loading }) {
   if (!persona && !loading) return null
   // Empty digest is valid — show friendly message
   const colorIdx = hashLabel(persona?.persona_label)
@@ -119,11 +119,6 @@ function PersonaCard({ persona, onRefresh, loading }) {
                 <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">{persona?.persona_label}</h2>
               </div>
             </div>
-            <button onClick={onRefresh} disabled={loading}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/60 border ${colors.border} rounded-xl text-[10px] font-bold uppercase tracking-widest ${colors.accent} hover:bg-slate-900/80 transition-all disabled:opacity-50`}>
-              <i className={`fa-solid fa-rotate ${loading ? 'fa-spin' : ''} text-[9px]`}/>
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
           </div>
           <p className="text-slate-200 text-sm leading-relaxed mb-5 max-w-xl">{persona?.welcome_message}</p>
           {persona?.affinities?.length > 0 && (
@@ -268,6 +263,7 @@ export function MyPersonaPage() {
   // Persona state
   const [persona,        setPersona]       = useState(null)
   const [personaLoading, setPersonaLoading]= useState(false)
+  const [watchlistChanged, setWatchlistChanged] = useState(false)
   const [digest,         setDigest]        = useState(null)
   const [digestLoading,  setDigestLoading] = useState(false)
   const [activeTab,      setActiveTab]     = useState('persona') // 'persona' | 'watchlist' | 'preferences'
@@ -311,6 +307,7 @@ export function MyPersonaPage() {
         .then(data => setLiveShowData(prev => ({ ...prev, [id]: data })))
         .catch(() => {})
     })
+    if (watchlist.length > 0) setWatchlistChanged(true)
   }, [watchlist.length])
 
   // digest loaded inline with user data below
@@ -318,6 +315,7 @@ export function MyPersonaPage() {
   async function generatePersona() {
     if (!token || !sub) return
     setPersonaLoading(true)
+    setWatchlistChanged(false)
     try {
       const res  = await fetch(`${API_BASE}/user/${sub}/persona/generate`, {
         method: 'POST',
@@ -395,6 +393,8 @@ export function MyPersonaPage() {
       })
       if (!res.ok) throw new Error('Save failed')
       showToast('Preferences saved!', 'cyan')
+      // Auto-regenerate persona with updated preferences
+      generatePersona()
     } catch { showToast('Could not save preferences.', 'red') }
     finally { setPrefSaving(false) }
   }
@@ -504,7 +504,7 @@ export function MyPersonaPage() {
               <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 ${isProTier ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-200 border border-white/8'}`}>
                 {isProTier ? '★ Pro' : 'Free Plan'}
               </span>
-              {persona?.persona_label && (
+              {persona?.persona_label && isProTier && (
                 <div className={`mb-6 px-3 py-2 rounded-xl border ${PERSONA_COLORS[hashLabel(persona.persona_label)].border} bg-slate-900/40`}>
                   <p className={`text-[9px] font-black uppercase tracking-widest ${PERSONA_COLORS[hashLabel(persona.persona_label)].accent} mb-0.5`}>Your Persona</p>
                   <p className="text-white text-xs font-bold leading-tight">{persona.persona_label}</p>
@@ -554,7 +554,7 @@ export function MyPersonaPage() {
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 text-[10px] font-bold uppercase tracking-widest mb-4">
                       <i className="fa-solid fa-heart"/> Your Watchlist
                     </div>
-                    <h1 className="text-3xl sm:text-4xl font-black text-white mb-3 tracking-tight">My Persona</h1>
+                    <h1 className="text-3xl sm:text-4xl font-black text-white mb-3 tracking-tight">Tracked Shows</h1>
                     <p className="text-slate-200 text-sm max-w-xl leading-relaxed">
                       Track upcoming premieres you're anticipating. Your watchlist is synced to your account and accessible from any device.
                     </p>
@@ -645,7 +645,7 @@ export function MyPersonaPage() {
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                       {watchlist.filter(Boolean).map(show => (
-                        <ShowCard key={show.id} show={show} liveData={liveShowData[show.id] ?? null} onRemove={toggleWatchlist}/>
+                        <ShowCard key={show.id} show={show} liveData={liveShowData[show.id] ?? null} onRemove={(show) => { toggleWatchlist(show); setTimeout(() => generatePersona(), 1500) }}/>
                       ))}
                     </div>
                   )}
@@ -657,12 +657,17 @@ export function MyPersonaPage() {
             {activeTab === 'persona' && (
               <div className="space-y-6">
                 {!isProTier && (
-                  <div className="text-center py-16 bg-slate-900/40 border border-amber-500/20 rounded-3xl">
+                  <div className="py-10 bg-slate-900/40 border border-amber-500/20 rounded-3xl px-8 text-center">
                     <div className="text-5xl mb-4">🎭</div>
-                    <p className="text-white font-black text-sm uppercase tracking-widest mb-2">Pro Feature</p>
-                    <p className="text-slate-200 text-xs mb-6 max-w-xs mx-auto leading-relaxed">
-                      Your AI Viewer Persona is available on the Pro plan. Upgrade to unlock personalized insights, coming premieres, and AI-matched recommendations.
+                    <p className="text-white font-black text-lg uppercase tracking-widest mb-3">My Viewer Persona</p>
+                    <p className="text-slate-300 text-sm mb-4 max-w-md mx-auto leading-relaxed">
+                      Your AI Viewer Persona analyzes your tracked shows and preferences to build a unique profile of your taste — complete with a persona label, content affinities, and personalized show recommendations.
                     </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6 text-xs text-slate-400">
+                      <span className="flex items-center gap-2"><i className="fa-solid fa-masks-theater text-amber-400"/>AI-generated viewer identity</span>
+                      <span className="flex items-center gap-2"><i className="fa-solid fa-calendar text-cyan-400"/>Coming premieres from your watchlist</span>
+                      <span className="flex items-center gap-2"><i className="fa-solid fa-wand-magic-sparkles text-violet-400"/>AI-matched show recommendations</span>
+                    </div>
                     <a href="/upgrade" className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black uppercase tracking-widest rounded-xl transition-all">
                       <i className="fa-solid fa-bolt"/> Upgrade to Pro — $4.99/mo
                     </a>
@@ -670,7 +675,19 @@ export function MyPersonaPage() {
                 )}
                 {isProTier && (
                   <>
-                    <PersonaCard persona={persona} onRefresh={generatePersona} loading={personaLoading}/>
+                    <PersonaCard persona={persona} loading={personaLoading}/>
+                    {watchlistChanged && persona && !personaLoading && (
+                      <div className="flex items-center justify-between gap-3 px-4 py-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                        <p className="text-amber-400 text-xs font-bold">
+                          <i className="fa-solid fa-rotate mr-2"/>
+                          Your watchlist changed — persona updating automatically.
+                        </p>
+                        <button onClick={generatePersona}
+                          className="text-[10px] font-black uppercase tracking-widest text-amber-400 hover:text-amber-300 transition-colors whitespace-nowrap">
+                          Update Now
+                        </button>
+                      </div>
+                    )}
                     {!persona && !personaLoading && (
                       <div className="text-center py-12 bg-slate-900/40 border border-white/10 rounded-3xl">
                         <div className="text-5xl mb-4">🎭</div>
@@ -678,10 +695,10 @@ export function MyPersonaPage() {
                         <p className="text-slate-200 text-xs mb-6 max-w-xs mx-auto leading-relaxed">
                           Add shows to your watchlist and set genre preferences, then generate your AI viewer persona.
                         </p>
-                        <button onClick={generatePersona} disabled={personaLoading || watchlist.length === 0}
+                        <button onClick={generatePersona} disabled={personaLoading}
                           className="inline-flex items-center gap-2 px-6 py-3 bg-violet-500/20 border border-violet-500/30 text-violet-400 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-violet-500/30 transition-all disabled:opacity-50">
                           <i className="fa-solid fa-wand-magic-sparkles"/>
-                          {watchlist.length === 0 ? 'Add shows to get started' : 'Generate My Persona'}
+                          'Generate My Persona'
                         </button>
                       </div>
                     )}
@@ -741,8 +758,11 @@ export function MyPersonaPage() {
                   </div>
                 </div>
 
+                {isProTier && (
                 <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-5 sm:p-6">
-                  <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Custom Interests</h3>
+                  <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Custom Interests
+                    <span className="ml-2 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[9px] font-black uppercase tracking-widest rounded-full">Pro</span>
+                  </h3>
                   <p className="text-slate-200 text-[10px] mb-4 leading-relaxed">Add anything specific — "Black Showrunners", "Psychological Thrillers", "Rom-Coms", "Black Comedies", "LGBTQ+ Dramas", etc. These power your AI Persona.</p>
                   {(preferences.customInterests ?? []).length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
@@ -771,11 +791,15 @@ export function MyPersonaPage() {
                     </button>
                   </div>
                 </div>
+                )}
 
+                {isProTier && (
                 <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-5 sm:p-6">
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Premiere Alerts</h3>
+                      <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Premiere Alerts
+                        <span className="ml-2 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[9px] font-black uppercase tracking-widest rounded-full">Pro</span>
+                      </h3>
                       <p className="text-slate-200 text-[10px] leading-relaxed max-w-sm">When enabled, AirDate sends email alerts for every show on your watchlist. Pro members choose how far in advance.</p>
                     </div>
                     <button onClick={toggleNotifs}
@@ -802,6 +826,7 @@ export function MyPersonaPage() {
                   )}
                 </div>
 
+                )}
                 <div className="flex justify-end">
                   <button onClick={savePreferences} disabled={prefSaving}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 text-xs font-black uppercase tracking-widest hover:bg-cyan-500/30 transition-all disabled:opacity-50">

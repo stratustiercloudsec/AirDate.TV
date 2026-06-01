@@ -95,6 +95,7 @@ export function AuthProvider({ children }) {
   const isAuthenticated = !!session?.AccessToken
   const isPremium = (user?.tier === 'pro' || user?.tier === 'premium')
   const token           = session?.AccessToken ?? null
+  const idToken         = session?.IdToken ?? null
 
   // Apply tokens to state
   function applySession(tokens) {
@@ -113,6 +114,7 @@ export function AuthProvider({ children }) {
     return {
       ...stored,
       AccessToken: data.access_token,
+      idToken,
       IdToken:     data.id_token,
     }
   }

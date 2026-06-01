@@ -41,7 +41,7 @@ const CHIPS = [
   'Comedy Premieres 2026',
   'HBO Max Premieres 2026',
   'Power Universe',
-  'Shonda Rhimes'
+  'Shonda Rhimes Produced Series'
 ]
 
 const NETWORKS = {
