@@ -935,7 +935,7 @@ export function ShowDetailPage() {
             <CastGrid cast={cast}/>
 
             {/* Community Comments */}
-            <CommentSection showId={id} />
+            <CommentSection showId={id} showTitle={show?.name || title} />
 
             {/* Lazy Trailer */}
             <LazyTrailer youtubeId={youtubeId}/>

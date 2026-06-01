@@ -60,7 +60,7 @@ function UserAvatar({ username, size = 'md' }) {
 }
 
 // ── Inline reply composer ──────────────────────────────────────────────────────
-function ReplyComposer({ showId, parentCommentId, onPosted, onCancel, user }) {
+function ReplyComposer({ showId, parentCommentId, onPosted, onCancel, user, showTitle }) {
   const [text, setText]     = useState('')
   const [error, setError]   = useState('')
   const [posting, setPosting] = useState(false)
@@ -78,7 +78,7 @@ function ReplyComposer({ showId, parentCommentId, onPosted, onCancel, user }) {
       const res = await fetch(`${API_BASE}/show/${showId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ text: text.trim(), parent_comment_id: parentCommentId }),
+        body: JSON.stringify({ text: text.trim(), parent_comment_id: parentCommentId, show_title: showTitle }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Failed to post reply.'); return }
@@ -149,7 +149,7 @@ function ReplyCard({ reply }) {
 }
 
 // ── Top-level comment card ─────────────────────────────────────────────────────
-function CommentCard({ comment, showId, isAuthenticated, user, token, idToken, onReplyPosted, onDelete }) {
+function CommentCard({ comment, showId, isAuthenticated, user, token, idToken, onReplyPosted, onDelete, showTitle }) {
   const [showReplyBox, setShowReplyBox] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -253,6 +253,7 @@ function CommentCard({ comment, showId, isAuthenticated, user, token, idToken, o
           onPosted={handleReplyPosted}
           onCancel={() => setShowReplyBox(false)}
           user={user}
+          showTitle={showTitle}
         />
       )}
     </div>
@@ -344,7 +345,7 @@ function CommentComposer({ showId, onPosted, user }) {
 }
 
 // ── Main export ────────────────────────────────────────────────────────────────
-export function CommentSection({ showId }) {
+export function CommentSection({ showId, showTitle }) {
   const { isAuthenticated, user } = useAuth()
   const [comments, setComments]       = useState([])
   const [loading, setLoading]         = useState(true)
@@ -424,6 +425,7 @@ export function CommentSection({ showId }) {
               user={user}
               onReplyPosted={handleReplyPosted}
               onDelete={handleDeleteComment}
+              showTitle={showTitle}
             />
           ))}
           {nextToken && (

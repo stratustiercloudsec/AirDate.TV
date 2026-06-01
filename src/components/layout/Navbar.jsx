@@ -167,7 +167,7 @@ export function Navbar() {
                       </div>
                     ) : (
                       previewRows.map((row, idx) => {
-                        const { notifCreatedAt, read, _show: show } = row
+                        const { notifCreatedAt, read, _show: show, type: notifType } = row
                         const isUnread = !read
 
                         const dateStr = notifCreatedAt
@@ -182,61 +182,90 @@ export function Navbar() {
 
                         const showId = show?.tmdb_id ?? show?.show_id ?? show?.id
 
+                        // Per-type config
+                        const TYPE_CFG = {
+                          premiere_alert: { label: 'Premiere Alert',   icon: 'fa-tv',            color: 'text-cyan-400',   bg: 'bg-cyan-500/10',   dot: 'bg-cyan-400',   unreadBg: 'bg-cyan-500/5'   },
+                          comment_reply:  { label: 'Reply',             icon: 'fa-reply',         color: 'text-purple-400', bg: 'bg-purple-500/10', dot: 'bg-purple-400', unreadBg: 'bg-purple-500/5' },
+                          reply:          { label: 'Reply',             icon: 'fa-reply',         color: 'text-purple-400', bg: 'bg-purple-500/10', dot: 'bg-purple-400', unreadBg: 'bg-purple-500/5' },
+                          persona_update: { label: 'Persona Updated',  icon: 'fa-masks-theater', color: 'text-violet-400', bg: 'bg-violet-500/10', dot: 'bg-violet-400', unreadBg: 'bg-violet-500/5' },
+                          show_expiry:    { label: 'Watchlist Update', icon: 'fa-calendar-xmark', color: 'text-amber-400',  bg: 'bg-amber-500/10',  dot: 'bg-amber-400',  unreadBg: 'bg-amber-500/5'  },
+                        }
+                        const cfg = TYPE_CFG[notifType] || TYPE_CFG.premiere_alert
+                        const isPremiere = !notifType || notifType === 'premiere_alert'
+                        const isReply    = notifType === 'comment_reply' || notifType === 'reply'
+                        const isPersona  = notifType === 'persona_update'
+                        const isExpiry   = notifType === 'show_expiry'
+
                         return (
                           <div
                             key={`${notifCreatedAt}-${show?.title ?? ''}-${idx}`}
                             onClick={() => {
                               if (isUnread) markRead(notifCreatedAt)
                               setBellOpen(false)
-                              if (showId) {
-                                navigate(`/details/${showId}`)
-                              } else {
-                                navigate('/notifications')
-                              }
+                              if (isPersona)       navigate('/pulse')
+                              else if (showId)     navigate(`/details/${showId}`)
+                              else                 navigate('/notifications')
                             }}
-                            className={`px-4 py-3 cursor-pointer transition-colors hover:bg-white/5 ${isUnread ? 'bg-cyan-500/5' : ''}`}
+                            className={`px-4 py-3 cursor-pointer transition-colors hover:bg-white/5 ${isUnread ? cfg.unreadBg : ''}`}
                           >
                             <div className="flex items-start gap-3">
 
-                              {/* Poster thumbnail */}
-                              {show?.poster ? (
-                                <img
-                                  src={show.poster}
-                                  alt=""
-                                  className="w-8 h-11 rounded-lg object-cover flex-shrink-0 mt-0.5"
-                                />
+                              {/* Icon / poster */}
+                              {isPremiere && show?.poster ? (
+                                <img src={show.poster} alt=""
+                                  className="w-8 h-11 rounded-lg object-cover flex-shrink-0 mt-0.5"/>
                               ) : (
-                                <div className="w-8 h-11 rounded-lg bg-cyan-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <i className="fa-solid fa-tv text-cyan-400 text-[10px]"/>
+                                <div className={`w-8 h-8 rounded-xl ${cfg.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                                  <i className={`fa-solid ${cfg.icon} ${cfg.color} text-[10px]`}/>
                                 </div>
                               )}
 
                               <div className="flex-1 min-w-0">
                                 {/* Row meta */}
                                 <div className="flex items-center justify-between gap-2 mb-1">
-                                  <span className="text-cyan-400 text-[9px] font-black uppercase tracking-widest">
-                                    Premiere Alert
+                                  <span className={`text-[9px] font-black uppercase tracking-widest ${cfg.color}`}>
+                                    {cfg.label}
                                   </span>
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-slate-200 text-[9px]">{dateStr}</span>
-                                    {isUnread && (
-                                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0"/>
-                                    )}
+                                    {isUnread && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`}/>}
                                   </div>
                                 </div>
 
-                                {/* Show title + day label */}
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="text-white text-xs font-bold truncate">{show?.title}</span>
-                                  <span className={`text-[9px] font-black uppercase tracking-widest flex-shrink-0
-                                    ${show?.days_until === 0 ? 'text-red-400' : 'text-amber-400'}`}>
-                                    {dayLabel}
-                                  </span>
-                                </div>
-
-                                {/* Network, if available */}
-                                {show?.network && (
+                                {/* Premiere Alert — show title + day */}
+                                {isPremiere && (
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="text-white text-xs font-bold truncate">{show?.title}</span>
+                                    <span className={`text-[9px] font-black uppercase tracking-widest flex-shrink-0
+                                      ${show?.days_until === 0 ? 'text-red-400' : 'text-amber-400'}`}>
+                                      {dayLabel}
+                                    </span>
+                                  </div>
+                                )}
+                                {isPremiere && show?.network && (
                                   <p className="text-slate-200 text-[9px] mt-0.5 truncate">{show.network}</p>
+                                )}
+
+                                {/* Comment Reply */}
+                                {isReply && (
+                                  <p className="text-white text-xs font-bold truncate">
+                                    <span className="text-purple-300">{show?.replier || 'Someone'}</span> replied to your comment
+                                    {show?.show_title && <span className="text-slate-400 font-normal"> on {show.show_title}</span>}
+                                  </p>
+                                )}
+
+                                {/* Persona Updated */}
+                                {isPersona && (
+                                  <p className="text-white text-xs font-bold truncate">
+                                    {show?.persona_label || 'Your persona has been refreshed'}
+                                  </p>
+                                )}
+
+                                {/* Show Expiry */}
+                                {isExpiry && (
+                                  <p className="text-white text-xs font-bold truncate">
+                                    {show?.show_title || show?.title || 'A show'} removed from watchlist
+                                  </p>
                                 )}
                               </div>
                             </div>
