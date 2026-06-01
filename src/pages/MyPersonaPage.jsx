@@ -7,6 +7,7 @@ import { useWatchlist }        from '@/context/WatchlistContext'
 import { API_BASE }            from '@/config/aws'
 import { usePoster }           from '@/utils/poster'
 import { Footer }              from '@/components/layout/Footer'
+import { ShareWatchlistModal }  from '@/components/ShareWatchlistModal'
 
 const ALERT_DAYS    = [0, 1, 3, 7]
 const ALERT_LABELS  = {
@@ -259,6 +260,8 @@ export function MyPersonaPage() {
   const [deleteModal,     setDeleteModal]   = useState(false)
   const [deleteConfirm,   setDeleteConfirm] = useState('')
   const [deleteLoading,   setDeleteLoading] = useState(false)
+  const [shareModal,      setShareModal]    = useState(false)
+  const [shareOpen,      setShareOpen]     = useState(false)
 
   // Persona state
   const [persona,        setPersona]       = useState(null)
@@ -517,6 +520,12 @@ export function MyPersonaPage() {
                 <Link to="/account" className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800/60 hover:bg-slate-800 border border-white/10 rounded-xl text-slate-200 hover:text-white font-bold transition-all text-xs uppercase tracking-widest">
                   <i className="fa-solid fa-circle-user"/> Edit Profile
                 </Link>
+                {watchlist.length > 0 && (
+                  <button onClick={() => setShareModal(true)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-xl text-cyan-400 font-bold transition-all text-xs uppercase tracking-widest">
+                    <i className="fa-solid fa-share-nodes"/> Share Watchlist
+                  </button>
+                )}
                 <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-red-400 font-bold transition-all text-xs uppercase tracking-widest">
                   <i className="fa-solid fa-right-from-bracket"/> Sign Out
                 </button>
@@ -554,7 +563,15 @@ export function MyPersonaPage() {
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 text-[10px] font-bold uppercase tracking-widest mb-4">
                       <i className="fa-solid fa-heart"/> Your Watchlist
                     </div>
-                    <h1 className="text-3xl sm:text-4xl font-black text-white mb-3 tracking-tight">Tracked Shows</h1>
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">Tracked Shows</h1>
+                      {watchlist.length > 0 && (
+                        <button onClick={() => setShareModal(true)}
+                          className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-xl text-cyan-400 text-xs font-black uppercase tracking-widest transition-all">
+                          <i className="fa-solid fa-share-nodes"/> Share
+                        </button>
+                      )}
+                    </div>
                     <p className="text-slate-200 text-sm max-w-xl leading-relaxed">
                       Track upcoming premieres you're anticipating. Your watchlist is synced to your account and accessible from any device.
                     </p>
@@ -840,6 +857,13 @@ export function MyPersonaPage() {
         </main>
       </div>
       <Footer/>
+      {shareOpen && (
+        <ShareWatchlistModal
+          watchlist={watchlist}
+          persona={persona}
+          onClose={() => setShareModal(false)}
+        />
+      )}
 
       {/* Modals unchanged */}
       {cancelModal && (
@@ -883,6 +907,14 @@ export function MyPersonaPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {shareModal && (
+        <ShareWatchlistModal
+          watchlist={watchlist}
+          persona={persona}
+          onClose={() => setShareModal(false)}
+        />
       )}
 
       {toast && (

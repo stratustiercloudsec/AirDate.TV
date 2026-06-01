@@ -34,6 +34,7 @@ import { FAQPage }               from '@/pages/FAQPage'
 // ── Protected pages ─────────────────────────────────────────────────────────
 import { MyPersonaPage }     from '@/pages/MyPersonaPage'
 import { NotificationsPage } from '@/pages/NotificationsPage'
+import { SharePage }         from '@/pages/SharePage'
 
 // ── Auth pages ──────────────────────────────────────────────────────────────
 import { LoginPage }          from '@/pages/auth/LoginPage'
@@ -86,7 +87,9 @@ export default function App() {
                 <Route path="/persona" element={
                   <ProtectedRoute><MyPersonaPage /></ProtectedRoute>
                 } />
-                <Route path="/notifications" element={
+                <Route path="/share/:token" element={<SharePage />} />
+              <Route path="/share/:token" element={<SharePage/>}/>
+          <Route path="/notifications" element={
                   <ProtectedRoute><NotificationsPage /></ProtectedRoute>
                 } />
 
