@@ -15,8 +15,9 @@ const NETWORK_MAP = {
   'Hulu':         [453],
   'Apple TV+':    [2552, 350, 3411, 2007],
   'Peacock':      [3353, 3076],
-  'Paramount+':   [4330, 67, 4711],
-  'Showtime':      [67],
+  'Paramount+':   [4330, 4711],
+  'BET+':         [3436],
+  'Showtime':     [67],
   'CBS':          [16],
   'NBC':          [6],
   'ABC':          [2],
@@ -24,36 +25,78 @@ const NETWORK_MAP = {
   'FX':           [88],
   'AMC':          [174],
   'STARZ':        [4406, 318, 304, 1709],
+  'MGM+':         [4, 34],
   'Tubi':         [2503],
+  'The CW':       [71],
+  'TV One':       [104],
+  'BBC America':  [81],
 }
 
 const STREAMING_NETWORK_IDS = new Set([
-  213,
-  49, 3186, 1565,
-  2739,
-  1024, 1025, 2777,
-  453,
-  2552, 350, 3411, 2007,
-  3353, 3076,
-  4330, 67, 4711,
-  2503,
-  4406, 318, 304, 1709,
+  213,                          // Netflix
+  49, 3186, 1565,               // HBO / Max
+  2739,                         // Disney+
+  1024, 1025, 2777,             // Prime Video
+  453,                          // Hulu
+  2552, 350, 3411, 2007,        // Apple TV+
+  3353, 3076,                   // Peacock
+  4330, 4711,                   // Paramount+
+  3436,                         // BET+
+  67,                           // Showtime
+  2503,                         // Tubi
+  4406, 318, 304, 1709,         // STARZ
+  4, 34,                        // MGM+/Epix
+  71,                           // The CW
+  104,                          // TV One
+  81,                           // BBC America
+  16, 6, 2, 19,                 // CBS, NBC, ABC, FOX
+  88, 174,                      // FX, AMC
 ])
 
 const STREAMING_NAME_KEYWORDS = ['netflix','apple tv','prime','hulu','disney','peacock','paramount','max','starz','tubi']
 
+// Foreign/non-English streaming platforms to exclude from results
+const EXCLUDED_NETWORK_NAMES = new Set([
+  'youku','iqiyi','iqiyi','bilibili','mango tv','tencent video','youku tudou',
+  'wavve','tving','coupang play','seezn','kbs','mbc','sbs','tvn','jtbc','ocn',
+  'ena','channel a','mbn','tv chosun','sky showtime','dstv','canal+','rtl',
+  'kanal d','show tv','fox turkey','star tv','tv8','atv',
+  'viutv','tvb','now tv','mewatch','mediacorp',
+  'globoplay','univisión','telemundo','televisa',
+  'voot','zee5','sonyliv','hotstar','sun nxt','aha','discovery+india',
+])
+
+function isEnglishNetwork(networkLabel) {
+  if (!networkLabel) return true
+  const nl = networkLabel.toLowerCase()
+  return !EXCLUDED_NETWORK_NAMES.has(nl) &&
+    !['youku','iqiyi','bilibili','mango','wavve','tving','kanal','tencent','viutv'].some(k => nl.includes(k))
+}
+
 // Curated show IDs per network — ensures high-profile returning seasons
 // are always checked regardless of TMDB discover limitations
 const CURATED_IDS = {
-  'Apple TV+':   [203744,95403,85765,97546,119051,125988,209867,125932,136311,76479,114461],
-  'Netflix':     [66732,100088,71446,76479,76669,63174,90462,203737,154385],
-  'HBO / Max':   [1399,94997,63351,37854,60735,83867,108978,202555,119051],
-  'Disney+':     [92782,114461,203085,202555,88396],
-  'Prime Video': [63639,83867,101299,110492,162854],
-  'Hulu':        [87108,97180,67915,154385],
-  'Peacock':     [100088,73586,2788],
-  'Paramount+':  [63174,60735,110492,73586],
+  'Apple TV+':   [203744,95403,85765,97546,119051,125988,209867,125932,136311,76479,114461,241609],
+  'Netflix':     [66732,100088,71446,76479,76669,63174,90462,203737,154385,262388,305357,219971],
+  'HBO / Max':   [1399,94997,63351,37854,60735,83867,108978,202555,119051,204776,228126],
+  'Disney+':     [92782,114461,203085,202555,88396,85271],
+  'Prime Video': [63639,83867,101299,110492,162854,121361,203737],
+  'Hulu':        [87108,97180,67915,154385,246472,219535,235086,228082,228126],  // Deli Boys=246472
+  'Peacock':     [100088,73586,2788,262388,228082],
+  'Paramount+':  [63174,60735,110492,73586,115529,225891,157741],
   'Showtime':    [72071,37680,65495,60622,68507,79852,84773],
+  'BET+':        [219971,214756,228082],
+  'STARZ':       [124394,72071,95350,63749,95396,285807],
+  'MGM+':        [114461,228082],
+  'AMC':         [1396,60735,1433,63351],
+  'FX':          [1399,58957,60574,87108],
+  'CBS':         [4607,70659,95557],
+  'NBC':         [73021,95603,71712,70659],
+  'ABC':         [63523,66190,2771],
+  'FOX':         [60735,1411,4742],
+  'The CW':      [71712,66190,213052],
+  'Tubi':        [203737,214756],
+  'TV One':      [228082,214756],
 }
 
 
@@ -65,7 +108,7 @@ function isStreaming(detail) {
   )
 }
 
-const NETWORKS  = ['All', ...Object.keys(NETWORK_MAP)]
+const NETWORKS  = ['All', 'Netflix', 'HBO / Max', 'Hulu', 'Disney+', 'Apple TV+', 'Prime Video', 'Peacock', 'Paramount+', 'BET+', 'STARZ', 'MGM+', 'Showtime', 'AMC', 'FX', 'CBS', 'NBC', 'ABC', 'FOX', 'The CW', 'Tubi', 'TV One', 'BBC America']
 const DOW       = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 const DOW_SHORT = ['SUN','MON','TUE','WED','THU','FRI','SAT']
 
@@ -213,7 +256,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         'first_air_date.lte': last,
         sort_by: 'popularity.desc',
         ...(networkId ? { with_networks: String(networkId) } : {}),
-        ...(langFilter ? { with_original_language: 'en' } : {}),
+        with_original_language: 'en',
       }
       const p1A = await tmdbFetch('/discover/tv', { ...discoverParamsA, page: 1 }).catch(() => ({ results: [], total_pages: 0 }))
       const totalPagesA = Math.min(p1A.total_pages || 1, 3)
@@ -240,7 +283,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         'air_date.lte': last,
         sort_by: 'popularity.desc',
         ...(networkId ? { with_networks: String(networkId) } : {}),
-        ...(langFilter ? { with_original_language: 'en' } : {}),
+        with_original_language: 'en',
       }
       const p1B = await tmdbFetch('/discover/tv', { ...discoverParamsB, page: 1 }).catch(() => ({ results: [], total_pages: 0 }))
       const totalPagesB = Math.min(p1B.total_pages || 1, 2)
@@ -390,11 +433,26 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
 
   // Static curated premieres — known returning seasons TMDB discover misses
   const STATIC_PREMIERES = [
+    // Apple TV+
     { id:203744, name:'Sugar',                         first_air_date:'2026-06-17', _networkLabel:'Apple TV+', _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
     { id:76479,  name:'For All Mankind',               first_air_date:'2026-05-06', _networkLabel:'Apple TV+', _seasonNum:5, _episodeNum:1, _isSeason:true,  genre_ids:[10765] },
+    { id:241609, name:"Your Friends & Neighbors",      first_air_date:'2026-04-11', _networkLabel:'Apple TV+', _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[35,18] },
+    // Hulu
+    { id:246472, name:'Deli Boys',                     first_air_date:'2026-05-28', _networkLabel:'Hulu',      _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[35,80] },
+    { id:87108,  name:'The Bear',                      first_air_date:'2026-07-01', _networkLabel:'Hulu',      _seasonNum:4, _episodeNum:1, _isSeason:true,  genre_ids:[18,35] },
+    // Showtime
     { id:72071,  name:'The Chi',                       first_air_date:'2026-05-22', _networkLabel:'Showtime',  _seasonNum:8, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
+    // STARZ
     { id:124394, name:'Power Book III: Raising Kanan', first_air_date:'2026-06-12', _networkLabel:'STARZ',     _seasonNum:5, _episodeNum:1, _isSeason:true,  genre_ids:[18,80] },
     { id:8840,   name:'Fightland',                     first_air_date:'2026-07-31', _networkLabel:'STARZ',     _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18] },
+    // Netflix
+    { id:154385, name:'Beef',                          first_air_date:'2026-06-01', _networkLabel:'Netflix',   _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18,35] },
+    { id:262388, name:'Man on Fire',                   first_air_date:'2026-04-30', _networkLabel:'Netflix',   _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
+    // Paramount+
+    { id:115529, name:'Tulsa King',                    first_air_date:'2026-07-01', _networkLabel:'Paramount+',_seasonNum:4, _episodeNum:1, _isSeason:true,  genre_ids:[18,80] },
+    { id:225891, name:'The Madison',                   first_air_date:'2026-03-14', _networkLabel:'Paramount+',_seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
+    // HBO/Max
+    { id:94997,  name:'House of the Dragon',           first_air_date:'2026-07-15', _networkLabel:'HBO / Max', _seasonNum:3, _episodeNum:1, _isSeason:true,  genre_ids:[18,10765] },
   ]
 
   // Filter static premieres to match current month/network
@@ -409,6 +467,9 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
     .sort((a,b) => (a.first_air_date||'').localeCompare(b.first_air_date||''))
     .filter(s => {
       if (!s.id || seen.has(`${s.id}_${s.first_air_date||''}`)) return false
+      // Filter out foreign/non-English streaming platforms
+      const netLabel = s._networkLabel || s.networks?.[0]?.name || ''
+      if (!isEnglishNetwork(netLabel)) return false
       seen.add(`${s.id}_${s.first_air_date||''}`)
       return true
     })

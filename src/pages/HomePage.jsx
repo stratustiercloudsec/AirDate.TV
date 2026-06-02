@@ -18,20 +18,42 @@ const IMAGE_BASE = 'https://image.tmdb.org'
 
 const NEXT_MONTH_NETWORK_IDS = [
   213,   // Netflix
-  2552,  // Apple TV+
+  2552, 350, 3411, // Apple TV+
   4330,  // Paramount+
-  3353,  // Peacock
-  3186,  // Max / HBO Max
-  4406,  // STARZ
+  3436,  // BET+
+  3353, 3076, // Peacock
+  3186, 49, 1565, // Max / HBO
+  4406, 318, // STARZ
   2503,  // Tubi
-  1024,  // Prime Video
+  1024, 1025, // Prime Video
   453,   // Hulu
   2739,  // Disney+
-  6,16,2,19,3436,71,49,88,174,67,528,
+  4, 34, // MGM+/Epix
+  71,    // The CW
+  104,   // TV One
+  81,    // BBC America
+  6,16,2,19,88,174,67,
 ].join('|')
 
 // Affiliate partner network IDs — each gets its own fetch to guarantee coverage
-const AFFILIATE_NETWORK_IDS = [213, 2552, 4330, 3353, 3186, 4406, 2503, 1024, 453, 2739]
+const AFFILIATE_NETWORK_IDS = [
+  213,        // Netflix
+  2552, 350,  // Apple TV+
+  4330,       // Paramount+
+  3436,       // BET+
+  3353,       // Peacock
+  3186, 49,   // Max/HBO
+  4406, 318,  // STARZ
+  2503,       // Tubi
+  1024,       // Prime Video
+  453,        // Hulu
+  2739,       // Disney+
+  4,          // MGM+/Epix
+  71,         // The CW
+  104,        // TV One
+  81,         // BBC America
+  6, 16, 2, 19, 88, 174, 67,  // Broadcast + Cable
+]
 
 const CHIPS = [
   'Premiering Today',
