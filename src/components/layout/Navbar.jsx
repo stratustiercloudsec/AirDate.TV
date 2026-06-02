@@ -7,7 +7,7 @@ import { usePushSubscription } from '@/hooks/usePushSubscription'
 
 export function Navbar() {
   const { isAuthenticated, user, signOut } = useAuth()
-  const { unreadCount, notifications, markAllRead, markRead } = useNotifications()
+  const { unreadCount, notifications, markAllRead, markRead, clearAll } = useNotifications()
   const { isSupported, isSubscribed, permissionState, subscribeToPush, unsubscribeFromPush } = usePushSubscription()
   const [pushLoading, setPushLoading] = useState(false)
 
@@ -148,14 +148,24 @@ export function Navbar() {
                   {/* Header */}
                   <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
                     <span className="text-white text-xs font-black uppercase tracking-widest">Notifications</span>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={handleMarkAllRead}
-                        className="text-cyan-400 text-[10px] font-bold hover:text-cyan-300 transition-colors uppercase tracking-widest"
-                      >
-                        Mark all read
-                      </button>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllRead}
+                          className="text-cyan-400 text-[10px] font-bold hover:text-cyan-300 transition-colors uppercase tracking-widest"
+                        >
+                          Mark read
+                        </button>
+                      )}
+                      {notifications.length > 0 && (
+                        <button
+                          onClick={e => { e.stopPropagation(); clearAll(); setBellOpen(false) }}
+                          className="text-slate-500 hover:text-red-400 text-[10px] font-bold transition-colors uppercase tracking-widest"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Notification rows — one per show */}

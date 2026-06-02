@@ -20,11 +20,19 @@ function getUserSub(user) {
 }
 
 export function NotificationProvider({ children }) {
-  const { token, user, isAuthenticated } = useAuth()
+  const { token, idToken, user, isAuthenticated } = useAuth()
   const [notifications, setNotifications] = useState([])
   const [unreadCount,   setUnreadCount]   = useState(0)
   const [loading,       setLoading]       = useState(false)
   const isFetching = useRef(false)
+
+  function getBestToken() {
+    if (idToken) return idToken
+    try {
+      const s = JSON.parse(localStorage.getItem('airdate_session') || '{}')
+      return s.IdToken || s.id_token || token || ''
+    } catch { return token || '' }
+  }
 
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchNotifications = useCallback(async () => {
@@ -34,15 +42,13 @@ export function NotificationProvider({ children }) {
     setLoading(true)
     try {
       const res = await fetch(`${API_BASE}/user/${sub}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${getBestToken()}` },
       })
       if (!res.ok) return
       const data = await res.json()
 
       // Filter out any records with no shows (data integrity guard)
-      const notifs = (data.notifications ?? data.items ?? []).filter(
-        n => n.type === 'reply' || !n.shows || n.shows.length > 0
-      )
+      const notifs = (data.notifications ?? data.items ?? [])
       setNotifications(notifs)
       setUnreadCount(data.unread_count ?? notifs.filter(n => !n.read).length)
     } catch {
@@ -66,13 +72,18 @@ export function NotificationProvider({ children }) {
   const markAllRead = useCallback(async () => {
     const sub = getUserSub(user)
     if (!token || !sub) return
+    // Optimistic update immediately
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     setUnreadCount(0)
-    fetch(`${API_BASE}/user/${sub}/notifications/read-all`, {
-      method:  'PUT',
-      headers: { Authorization: `Bearer ${token}` },
-    }).catch(() => {})
-  }, [token, user?.sub, user?.userId, user?.username])
+    try {
+      await fetch(`${API_BASE}/user/${sub}/notifications/read-all`, {
+        method:  'PUT',
+        headers: { Authorization: `Bearer ${getBestToken()}` },
+      })
+      // Re-fetch to confirm server state — ensures badge stays cleared after re-auth
+      await fetchNotifications()
+    } catch {}
+  }, [token, user?.sub, user?.userId, user?.username, fetchNotifications])
 
   // ── Mark single read ─────────────────────────────────────────────────────
   // Lambda expects { created_at } in the request body (not notifId)
@@ -91,9 +102,23 @@ export function NotificationProvider({ children }) {
       method:  'PUT',
       headers: {
         'Content-Type':  'application/json',
-        Authorization:   `Bearer ${token}`,
+        Authorization:   `Bearer ${getBestToken()}`,
       },
       body: JSON.stringify({ created_at: createdAt }),
+    }).catch(() => {})
+  }, [token, user?.sub, user?.userId, user?.username])
+
+  // ── Clear all ────────────────────────────────────────────────────────────
+  const clearAll = useCallback(async () => {
+    const sub = getUserSub(user)
+    if (!token || !sub) return
+    // Optimistic clear immediately
+    setNotifications([])
+    setUnreadCount(0)
+    // DELETE from DynamoDB — persists across sessions
+    fetch(`${API_BASE}/user/${sub}/notifications`, {
+      method:  'DELETE',
+      headers: { Authorization: `Bearer ${getBestToken()}` },
     }).catch(() => {})
   }, [token, user?.sub, user?.userId, user?.username])
 
@@ -105,6 +130,7 @@ export function NotificationProvider({ children }) {
       fetchNotifications,
       markAllRead,
       markRead,
+      clearAll,
     }}>
       {children}
     </NotificationContext.Provider>
