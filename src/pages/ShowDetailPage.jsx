@@ -170,11 +170,18 @@ function ShareModal({ url, title, show, posterUrl, onClose }) {
   const ogEncoded   = encodeURIComponent(ogUrl)
   const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(ogUrl)}`
 
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+  const smsText  = encodeURIComponent(`🎬 ${title}${network?' on '+network:''}${premiere?' — premieres '+premiere:''} | Track it: ${url}`)
+  const smsHref  = isMobile
+    ? (/iPhone|iPad|iPod/i.test(navigator.userAgent) ? `sms:&body=${smsText}` : `sms:?body=${smsText}`)
+    : null
+
   const options = [
     { icon:'fa-brands fa-x-twitter', label:'X (Twitter)', bg:'bg-black',     href:`https://twitter.com/intent/tweet?url=${encoded}&text=${tweetText}` },
     { icon:'fa-brands fa-facebook',  label:'Facebook',    bg:'bg-blue-600',   href:`https://www.facebook.com/sharer/sharer.php?u=${ogEncoded}` },
     { icon:'fa-brands fa-linkedin',  label:'LinkedIn',    bg:'bg-blue-700',   href:linkedInUrl },
     { icon:'fa-brands fa-whatsapp',  label:'WhatsApp',    bg:'bg-green-600',  href:`https://wa.me/?text=${encodeURIComponent('🎬 '+title+(network?' on '+network:'')+(premiere?' premiering '+premiere:'')+' — '+url)}` },
+    ...(isMobile && smsHref ? [{ icon:'fa-solid fa-comment-sms', label:'SMS', bg:'bg-emerald-600', href:smsHref, noBlank:true }] : []),
     { icon:'fa-regular fa-envelope', label:'Email',       bg:'bg-slate-600',  href:`mailto:?subject=${emailSubj}&body=${emailBody}` },
     { icon:'fa-brands fa-microsoft', label:'Outlook',     bg:'bg-blue-500',   href:`https://outlook.live.com/mail/0/deeplink/compose?subject=${emailSubj}&body=${outlookBody}` },
   ]
@@ -214,7 +221,7 @@ function ShareModal({ url, title, show, posterUrl, onClose }) {
         <p className="text-slate-200 text-[10px] font-black uppercase tracking-widest mb-3">Share using</p>
         <div className="grid grid-cols-3 gap-2">
           {options.map(o=>(
-            <a key={o.label} href={o.href} target="_blank" rel="noreferrer noopener" onClick={onClose}
+            <a key={o.label} href={o.href} target={o.noBlank ? undefined : '_blank'} rel="noreferrer noopener" onClick={onClose}
               className="flex flex-col items-center gap-2 p-3 bg-slate-800/40 hover:bg-slate-700/60 border border-white/5 hover:border-white/20 rounded-2xl transition-all group">
               <div className={`w-10 h-10 rounded-2xl ${o.bg} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
                 <i className={`${o.icon} text-white text-lg`}></i>
