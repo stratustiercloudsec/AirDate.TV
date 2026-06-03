@@ -55,6 +55,34 @@ const AFFILIATE_NETWORK_IDS = [
   6, 16, 2, 19, 88, 174, 67,  // Broadcast + Cable
 ]
 
+// Foreign/non-English network names to exclude
+const EXCLUDED_NETWORK_NAMES = new Set([
+  'youku','iqiyi','bilibili','mango tv','tencent video','youku tudou',
+  'wavve','tving','coupang play','kbs','mbc','sbs','tvn','jtbc','ocn',
+  'ena','channel a','mbn','tv chosun','sky showtime',
+  'kanal d','show tv','fox turkey','star tv','tv8','atv',
+  'viutv','tvb','now tv','mewatch','mediacorp',
+  'globoplay','univision','telemundo','televisa',
+  'voot','zee5','sonyliv','hotstar','sun nxt','aha',
+])
+function isEnglishShow(show) {
+  // original_language is always present from TMDB discover/trending results
+  const lang = show.original_language || ''
+  if (lang && lang !== 'en') return false
+  // After enrichment, also check network name
+  const net = (show.network || '').toLowerCase()
+  if (net && EXCLUDED_NETWORK_NAMES.has(net)) return false
+  if (net && ['youku','iqiyi','bilibili','wavve','tving','tencent','viutv','hotstar'].some(k => net.includes(k))) return false
+  return true
+}
+// Only include shows that premiered in 2015 or later (blocks legacy catalog bleed)
+function isRecentShow(show) {
+  const d = show.first_air_date || show.premiereDate || ''
+  if (!d) return true
+  const year = parseInt(d.slice(0,4), 10)
+  return isNaN(year) || year >= 2015
+}
+
 const CHIPS = [
   'Premiering Today',
   'Taylor Sheridan',
@@ -536,22 +564,40 @@ export function HomePage() {
 
     setLoadTrend(true)
     tmdbTrending('week').then(async d => {
-      const shows = (d.results||[]).slice(0,10).map(mapTMDB)
-      setTrending(dedupById(await enrichWithNetwork(shows)))
+      // Trending = what's hot this week — English only, no age restriction
+      const shows = (d.results||[]).map(mapTMDB).filter(s => !s.original_language || s.original_language === 'en')
+      const enriched = await enrichWithNetwork(shows)
+      setTrending(dedupById(enriched.filter(isEnglishShow)).slice(0,10))
     }).catch(()=>{}).finally(()=>setLoadTrend(false))
 
     setLoadTop10(true)
-    tmdbPopular(1).then(async d => {
-      const shows = (d.results||[]).slice(0,10).map(mapTMDB)
-      setTop10(dedupById(await enrichWithNetwork(shows)))
+    Promise.all([tmdbPopular(1), tmdbPopular(2), tmdbPopular(3)]).then(async ([d1, d2, d3]) => {
+      const all = [...(d1.results||[]), ...(d2.results||[]), ...(d3.results||[])]
+      // Top 10 = most popular shows — English only, no age restriction
+      const shows = all.map(mapTMDB).filter(s => !s.original_language || s.original_language === 'en')
+      const enriched = await enrichWithNetwork(shows)
+      setTop10(dedupById(enriched.filter(isEnglishShow)).slice(0,10))
     }).catch(()=>{}).finally(()=>setLoadTop10(false))
 
     setLoadWeek(true)
-    tmdbDiscover({ sort_by:'popularity.desc', 'first_air_date.gte':startOfWeek(), 'first_air_date.lte':endOfWeek(), page:1 })
-      .then(async d => {
-        const shows = (d.results||[]).slice(0,20).map(mapTMDB)
-        setThisWeek(dedupById(await enrichWithNetwork(shows)))
-      }).catch(()=>{}).finally(()=>setLoadWeek(false))
+    const weekStart = startOfWeek()
+    const weekEnd   = endOfWeek()
+    tmdbDiscover({
+      sort_by: 'popularity.desc',
+      'first_air_date.gte': weekStart,
+      'first_air_date.lte': weekEnd,
+      with_original_language: 'en',
+      page: 1,
+    }).then(async d => {
+      // Strict filter: only shows whose SERIES premiere date falls in this week
+      const shows = (d.results||[])
+        .filter(s => s.first_air_date && s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
+        .map(mapTMDB)
+        .filter(s => !s.original_language || s.original_language === 'en')
+        .filter(isRecentShow)
+      const enriched = await enrichWithNetwork(shows)
+      setThisWeek(dedupById(enriched.filter(isEnglishShow)))
+    }).catch(()=>{}).finally(()=>setLoadWeek(false))
 
     setLoadMonth(true)
     const lastDay = new Date(nmYear, nmMonth, 0).getDate()
@@ -563,6 +609,7 @@ export function HomePage() {
           'air_date.gte': gte,
           'air_date.lte': lte,
           sort_by: 'popularity.desc',
+          with_original_language: 'en',
         }
         // Broad combined fetch — pages 1 & 2 (40 results)
         const [broadP1, broadP2] = await Promise.all([
@@ -586,20 +633,30 @@ export function HomePage() {
           ...perNetworkResults.flatMap(d => d.results || []),
           ...(onTheAirResults.results || []),
           ...(onTheAirP2.results || []),
-        ].filter(s => s.first_air_date && s.first_air_date >= gte && s.first_air_date <= lte)
+        ].filter(s => {
+          if (!s.first_air_date) return false
+          // Must be in target month
+          if (s.first_air_date < gte || s.first_air_date > lte) return false
+          // Block legacy catalog (pre-2015 original air date)
+          const year = parseInt((s.first_air_date||'').slice(0,4), 10)
+          if (!isNaN(year) && year < 2015) return false
+          // Block non-English originals
+          if (s.original_language && s.original_language !== 'en') return false
+          return true
+        })
 
         const mapped   = dedupById(allRaw.map(mapTMDB))
         const enriched = await enrichWithNetwork(mapped)
-        setNextMonth(dedupById(enriched).slice(0, 40))
+        setNextMonth(dedupById(enriched.filter(isEnglishShow)).slice(0, 40))
       } catch (e) { console.error('nextMonth fetch failed', e) }
       finally { setLoadMonth(false) }
     })()
 
     setLoadTonight(true)
     const todayStr = new Date().toLocaleDateString('en-CA')
-    tmdbDiscover({ sort_by:'popularity.desc', 'first_air_date.gte':todayStr, 'first_air_date.lte':todayStr, page:1 })
+    tmdbDiscover({ sort_by:'popularity.desc', 'first_air_date.gte':todayStr, 'first_air_date.lte':todayStr, with_original_language:'en', page:1 })
       .then(async d => {
-        const shows = (d.results || []).map(mapTMDB)
+        const shows = (d.results || []).map(mapTMDB).filter(isEnglishShow).filter(isRecentShow)
         setPremieringTonight(dedupById(await enrichWithNetwork(shows)))
       }).catch(() => setPremieringTonight([]))
       .finally(() => setLoadTonight(false))
