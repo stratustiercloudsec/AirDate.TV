@@ -97,12 +97,12 @@ export function Navbar() {
         {/* Logo */}
         <Link to="/" className="flex-shrink-0 transition-opacity hover:opacity-80">
           <img
-            src="/assets/images/adtv-logo.png"
+            src="/assets/images/adtv-logo_tagline.png"
             alt="AirDate"
-            className="h-14 w-auto object-contain"
+            className="h-20 w-auto object-contain"
           />
           <p className="text-slate-200 text-[10px] font-medium leading-tight hidden sm:block">
-            Track TV Premieres Before They Trend.
+           {/* Track TV Premieres Before They Trend. */}
           </p>
         </Link>
 

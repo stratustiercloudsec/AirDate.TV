@@ -793,31 +793,42 @@ export function HomePage() {
         </header>
 
         {isAuthenticated && watchlist.length > 0 && (
-          <section className="mb-10">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2 bg-pink-500/10 rounded-lg"><i className="fa-solid fa-heart text-pink-500"></i></div>
-              <h2 className="text-lg font-bold text-white tracking-tight">The Pulse: Your Watchlist</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {watchlist.map(show => (
-                <div key={show.id} onClick={() => window.location.href=detailUrl(show)} className="flex items-center gap-4 bg-slate-800/40 border border-white/5 rounded-2xl p-4 hover:border-cyan-500/20 transition-all cursor-pointer">
-                  <img {...usePoster(show.poster_path, show.name, 92)} alt={show.name} className="w-12 h-16 object-cover rounded-xl flex-shrink-0"/>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-white truncate">{show.name}</h3>
-                    <p className="text-[10px] text-slate-200 font-bold uppercase tracking-widest mt-0.5">{(()=>{
-                      const d=show.first_air_date
-                      if(!d)return 'TBA'
-                      try{const dt=new Date(d.includes('T')?d:d+'T12:00:00');return isNaN(dt.getTime())?'TBA':dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-                      catch{return 'TBA'}
-                    })()}</p>
-                  </div>
-                  <button onClick={e=>{e.stopPropagation();handleTrack(show)}} className="text-slate-200 hover:text-red-400 transition-colors flex-shrink-0">
-                    <i className="fa-solid fa-xmark"></i>
-                  </button>
+          <div className="mb-8">
+            <a href="/persona"
+              className="flex items-center justify-between gap-4 px-5 py-4 bg-slate-800/40 hover:bg-slate-800/70 border border-pink-500/20 hover:border-pink-500/50 rounded-2xl transition-all group">
+              <div className="flex items-center gap-4">
+                {/* Mini poster stack */}
+                <div className="flex -space-x-2.5">
+                  {watchlist.slice(0,4).map((show,i) => (
+                    <div key={show.id}
+                      className="w-9 h-9 rounded-full border-2 border-slate-950 overflow-hidden bg-slate-700 flex-shrink-0"
+                      style={{zIndex: 4-i}}>
+                      <img {...usePoster(show.poster_path||show.poster, show.name, 92)}
+                        alt={show.name} className="w-full h-full object-cover"/>
+                    </div>
+                  ))}
+                  {watchlist.length > 4 && (
+                    <div className="w-9 h-9 rounded-full border-2 border-slate-950 bg-slate-700 flex items-center justify-center flex-shrink-0 text-[9px] font-black text-slate-300"
+                      style={{zIndex:0}}>
+                      +{watchlist.length - 4}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </section>
+                <div>
+                  <p className="text-white text-sm font-black leading-tight">
+                    <span className="text-pink-400">{watchlist.length}</span> show{watchlist.length !== 1 ? 's' : ''} in your Watchlist
+                  </p>
+                  <p className="text-slate-200 text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                    The Pulse · My Persona
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-slate-200 group-hover:text-pink-400 transition-colors flex-shrink-0">
+                <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">View Watchlist</span>
+                <i className="fa-solid fa-chevron-right text-xs"/>
+              </div>
+            </a>
+          </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-10">

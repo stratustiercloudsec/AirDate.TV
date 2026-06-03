@@ -1,5 +1,5 @@
 // src/pages/PremieresCalendarPage.jsx
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
 import { usePoster }    from '@/utils/poster'
@@ -791,6 +791,7 @@ export function PremieresCalendarPage() {
   const { isAuthenticated } = useAuth()
   const { toggleWatchlist, isTracked, atLimit } = useWatchlist()
 
+  const filterScrollRef = useRef(null)
   const [view,        setView]        = useState('list')
   const [network,     setNetwork]     = useState('All')
   const [premieres,   setPremieres]   = useState([])
@@ -912,17 +913,28 @@ export function PremieresCalendarPage() {
           </span>
         </div>
 
-        {/* Network filter */}
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2"
-          style={{scrollbarWidth:'none', WebkitOverflowScrolling:'touch', msOverflowStyle:'none'}}>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-200 flex-shrink-0">Filter:</span>
-          {NETWORKS.map(n=>(
-            <button key={n} onClick={()=>setNetwork(n)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest border transition-all
-                ${network===n?'bg-cyan-500/10 border-cyan-500/35 text-cyan-400':'text-slate-200 border-white/10 hover:text-white'}`}>
-              {n}
-            </button>
-          ))}
+        {/* Network filter — scrollable carousel with arrow controls */}
+        <div className="flex items-center gap-2 mb-6">
+          <button onClick={()=>filterScrollRef.current?.scrollBy({left:-220,behavior:'smooth'})}
+            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800/60 border border-white/10 hover:border-cyan-500/30 hover:text-cyan-400 text-slate-200 transition-all">
+            <i className="fa-solid fa-chevron-left text-[10px]"/>
+          </button>
+          <div ref={filterScrollRef}
+            className="flex items-center gap-2 overflow-x-auto flex-1"
+            style={{scrollbarWidth:'none', WebkitOverflowScrolling:'touch', msOverflowStyle:'none'}}>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-200 flex-shrink-0">Filter:</span>
+            {NETWORKS.map(n=>(
+              <button key={n} onClick={()=>setNetwork(n)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest border transition-all
+                  ${network===n?'bg-cyan-500/10 border-cyan-500/35 text-cyan-400':'text-slate-200 border-white/10 hover:text-white'}`}>
+                {n}
+              </button>
+            ))}
+          </div>
+          <button onClick={()=>filterScrollRef.current?.scrollBy({left:220,behavior:'smooth'})}
+            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800/60 border border-white/10 hover:border-cyan-500/30 hover:text-cyan-400 text-slate-200 transition-all">
+            <i className="fa-solid fa-chevron-right text-[10px]"/>
+          </button>
         </div>
 
         {/* ── LIST VIEW ── */}
