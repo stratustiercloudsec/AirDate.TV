@@ -35,9 +35,10 @@ export function Footer() {
           </div>
         </div>
         <div className="flex flex-wrap gap-x-8 gap-y-2 justify-center md:justify-end text-slate-200">
-          <Link to="/trending"  className="hover:text-cyan-400 transition-colors">Trending</Link>
-          <Link to="/premieres" className="hover:text-cyan-400 transition-colors">Premieres</Link>
-          <Link to="/scoop"     className="hover:text-cyan-400 transition-colors">The Scoop</Link>
+          <Link to="/trending"   className="hover:text-cyan-400 transition-colors">Trending</Link>
+          <Link to="/premieres"  className="hover:text-cyan-400 transition-colors">Premieres</Link>
+          <Link to="/scoop"      className="hover:text-cyan-400 transition-colors">The Scoop</Link>
+          <Link to="/subscribe"  className="hover:text-cyan-400 transition-colors">Subscribe</Link>
           {isAuthenticated && <Link to="/persona" className="hover:text-cyan-400 transition-colors">My Persona</Link>}
         </div>
       </div>

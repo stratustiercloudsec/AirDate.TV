@@ -113,9 +113,7 @@ export function Navbar() {
           <NavLink to="/trailers"  icon="fa-brands fa-youtube" label="Trailers"/>
           <NavLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
           <NavLink to="/scoop"     icon="fa-fire"           label="The Scoop"/>
-          {isAuthenticated && (
-            <NavLink to="/persona"   icon="fa-heart"          label="My Persona"/>
-          )}
+          <NavLink to="/subscribe" icon="fa-envelope"       label="Subscribe"/>
           <NavLink to="/about"     icon="fa-circle-info"    label="About"/>
         </div>
 
@@ -381,6 +379,7 @@ export function Navbar() {
                   <DropdownLink to="/account"       icon="fa-circle-user"  iconColor="text-cyan-400"  label="My Account"/>
                   <DropdownLink to="/persona"          icon="fa-heart"        iconColor="text-rose-400"  label="My Persona"/>
                   <DropdownLink to="/notifications"  icon="fa-bell"         iconColor="text-amber-400" label="Notifications"/>
+                  <DropdownLink to="/subscribe"      icon="fa-envelope"     iconColor="text-cyan-400"  label="Subscribe"/>
                 </div>
                 {(user?.tier !== 'pro' && user?.tier !== 'premium') && (
                   <div className="border-t border-white/5 py-1">
@@ -430,9 +429,7 @@ export function Navbar() {
             <MobileLink to="/trailers"  icon="fa-brands fa-youtube" label="Trailers"/>
             <MobileLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
             <MobileLink to="/scoop"     icon="fa-fire"           label="The Scoop"/>
-            {isAuthenticated && (
-              <MobileLink to="/persona"   icon="fa-heart"          label="My Persona"/>
-            )}
+            <MobileLink to="/subscribe" icon="fa-envelope"       label="Subscribe"/>
             <MobileLink to="/about"     icon="fa-circle-info"    label="About"/>
 
             <div className="border-t border-white/5 mt-2 pt-2">
