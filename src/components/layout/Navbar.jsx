@@ -210,7 +210,7 @@ export function Navbar() {
                             onClick={() => {
                               if (isUnread) markRead(notifCreatedAt)
                               setBellOpen(false)
-                              if (isPersona)       navigate('/pulse')
+                              if (isPersona)       navigate('/persona')
                               else if (showId)     navigate(`/details/${showId}`)
                               else                 navigate('/notifications')
                             }}

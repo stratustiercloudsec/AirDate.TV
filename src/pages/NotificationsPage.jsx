@@ -173,7 +173,7 @@ export function NotificationsPage() {
                     onClick={() => {
                       if (isUnread) markOneRead(n.created_at)
                       const showId = (isReply || isExpiry) ? n.show_id : n.shows?.[0]?.id
-                      if (isPersona)       navigate('/pulse')
+                      if (isPersona)       navigate('/persona')
                       else if (showId)     navigate(`/details/${showId}`)
                     }}>
                     <div className="flex items-start gap-4">
