@@ -5,7 +5,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider }         from '@/context/AuthContext'
 import { WatchlistProvider }    from '@/context/WatchlistContext'
 import { NotificationProvider } from '@/context/NotificationContext'
-import { TrailersPage } from '@/pages/TrailersPage'
 
 // Layout
 import { Navbar } from '@/components/layout/Navbar'
@@ -14,12 +13,14 @@ import { Navbar } from '@/components/layout/Navbar'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 // ── Public pages ────────────────────────────────────────────────────────────
-import { HomePage }              from '@/pages/HomePage'
+import { HomePage }              from '@/pages/HomePage'          // ← new landing page
+import { SearchPage }            from '@/pages/SearchPage'        // ← old homepage (search/browse)
 import { TrendingPage }          from '@/pages/TrendingPage'
 import { PremieresCalendarPage } from '@/pages/PremieresCalendarPage'
+import { TrailersPage }          from '@/pages/TrailersPage'
 import { ScoopPage }             from '@/pages/ScoopPage'
 import { ScoopStoryPage }        from '@/pages/ScoopStoryPage'
-import { ScoopArchivePage }       from '@/pages/ScoopArchivePage'
+import { ScoopArchivePage }      from '@/pages/ScoopArchivePage'
 import { ShowDetailPage }        from '@/pages/ShowDetailPage'
 import { ContactPage }           from '@/pages/ContactPage'
 import { VisionPage }            from '@/pages/VisionPage'
@@ -35,7 +36,7 @@ import { FAQPage }               from '@/pages/FAQPage'
 import { MyPersonaPage }     from '@/pages/MyPersonaPage'
 import { NotificationsPage } from '@/pages/NotificationsPage'
 import { SharePage }         from '@/pages/SharePage'
-import { SubscribePage }    from '@/pages/SubscribePage'
+import { SubscribePage }     from '@/pages/SubscribePage'
 
 // ── Auth pages ──────────────────────────────────────────────────────────────
 import { LoginPage }          from '@/pages/auth/LoginPage'
@@ -56,8 +57,8 @@ export default function App() {
               <Routes>
 
                 {/* ── Public routes ───────────────────────────────────── */}
-                <Route path="/"                element={<HomePage />} />
-                <Route path="/trailers"       element={<TrailersPage />} />
+                <Route path="/"                element={<HomePage />} />           {/* ← new landing page */}
+                <Route path="/search"          element={<SearchPage />} />         {/* ← old homepage */}
                 <Route path="/trending"        element={<TrendingPage />} />
                 <Route path="/premieres"       element={<PremieresCalendarPage />} />
                 <Route path="/trailers"        element={<TrailersPage />} />
@@ -72,9 +73,9 @@ export default function App() {
                 <Route path="/upgrade"         element={<UpdatePage />} />
                 <Route path="/upgrade-success" element={<UpdateSuccessPage />} />
                 <Route path="/about"           element={<AboutPage />} />
-                <Route path="/faq"           element={<FAQPage />} />
+                <Route path="/faq"             element={<FAQPage />} />
 
-                {/* ── Auth routes (no Navbar wrapper needed — pages are self-contained) */}
+                {/* ── Auth routes ─────────────────────────────────────── */}
                 <Route path="/auth/login"           element={<LoginPage />} />
                 <Route path="/auth/signup"          element={<SignUpPage />} />
                 <Route path="/auth/verify"          element={<VerifyEmailPage />} />
@@ -88,12 +89,11 @@ export default function App() {
                 <Route path="/persona" element={
                   <ProtectedRoute><MyPersonaPage /></ProtectedRoute>
                 } />
-                <Route path="/share/:token" element={<SharePage />} />
-                <Route path="/subscribe"      element={<SubscribePage />} />
-              <Route path="/share/:token" element={<SharePage/>}/>
-          <Route path="/notifications" element={
+                <Route path="/notifications" element={
                   <ProtectedRoute><NotificationsPage /></ProtectedRoute>
                 } />
+                <Route path="/share/:token" element={<SharePage />} />
+                <Route path="/subscribe"    element={<SubscribePage />} />
 
                 {/* ── 404 ──────────────────────────────────────────────── */}
                 <Route path="/404" element={<NotFoundPage />} />

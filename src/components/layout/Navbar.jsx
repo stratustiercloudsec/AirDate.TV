@@ -108,7 +108,7 @@ export function Navbar() {
 
         {/* Desktop nav links */}
         <div className="hidden md:flex items-center gap-1">
-          <NavLink to="/"          icon="fa-binoculars"          label="Search"/>
+          <NavLink to="/search"          icon="fa-binoculars"  label="Search"/>
           <NavLink to="/premieres" icon="fa-calendar"       label="Premieres"/>
           <NavLink to="/trailers"  icon="fa-brands fa-youtube" label="Trailers"/>
           <NavLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
