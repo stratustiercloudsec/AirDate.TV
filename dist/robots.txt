@@ -1,0 +1,18 @@
+# robots.txt — AirDate.tv (dev / staging)
+# https://dev.airdate.tv
+# Generated: June 2026 | Stratustier Innovation Labs
+
+# ── Staging environment: block all crawlers ────────────────────────────────
+# dev.airdate.tv is a staging environment and should NOT be indexed.
+# All crawlers are disallowed to prevent duplicate content penalties
+# and to protect pre-launch features from being indexed before June 11 launch.
+
+User-agent: *
+Disallow: /
+
+# ── Production robots.txt (airdate.tv) lives separately ───────────────────
+# The production site at https://airdate.tv uses a separate robots.txt
+# that allows crawling of all public routes listed in sitemap.xml.
+
+# Sitemap reference (production)
+# Sitemap: https://airdate.tv/sitemap.xml

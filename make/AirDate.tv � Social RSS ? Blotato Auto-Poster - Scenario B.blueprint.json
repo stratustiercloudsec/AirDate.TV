@@ -1,0 +1,2661 @@
+{
+    "name": "AirDate.tv — Social RSS → Blotato Auto-Poster - Scenario B",
+    "flow": [
+        {
+            "id": 59,
+            "module": "google-sheets:filterRowsAdvanced",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": 9268968
+            },
+            "mapper": {
+                "tq": "select * where D = \"Ready to Post\" AND (E <= now() OR E is null)",
+                "from": "drive",
+                "limit": "1",
+                "select": "list",
+                "sheetId": 1059049493,
+                "spreadsheetId": "/1t3im7vrlBz6W_TmOU-EO2Z0nHEGTojbf/1Lie6lIfIKfbR_gvgwEqVT9W4vq3jspKQPNT5heCwvWQ"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 750,
+                    "name": "AirDate — Ready to Post Rows"
+                },
+                "restore": {
+                    "expect": {
+                        "from": {
+                            "label": "My Drive"
+                        },
+                        "select": {
+                            "label": "Search by path"
+                        },
+                        "sheetId": {
+                            "label": "AirDate.tv — RSS Auto-Feed"
+                        },
+                        "spreadsheetId": {
+                            "path": [
+                                "Social Media Management",
+                                "Blotato Template - AirDateTV Social Media Automation"
+                            ]
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "google"
+                            },
+                            "label": "My Google connection (airdate.social@gmail.com)"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "select",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "list",
+                                "fromAll",
+                                "map"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tq",
+                        "type": "text",
+                        "label": "Query",
+                        "required": true
+                    },
+                    {
+                        "name": "limit",
+                        "type": "uinteger",
+                        "label": "Limit"
+                    },
+                    {
+                        "name": "from",
+                        "type": "select",
+                        "label": "Drive",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "drive",
+                                "share",
+                                "team"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "spreadsheetId",
+                        "type": "file",
+                        "label": "Spreadsheet Name",
+                        "required": true
+                    },
+                    {
+                        "name": "sheetId",
+                        "type": "select",
+                        "label": "Sheet ID",
+                        "required": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "__IMTLENGTH__",
+                        "type": "uinteger",
+                        "label": "Total number of bundles"
+                    },
+                    {
+                        "name": "__IMTINDEX__",
+                        "type": "uinteger",
+                        "label": "Bundle order position"
+                    },
+                    {
+                        "name": "0",
+                        "type": "text",
+                        "label": " (A)"
+                    },
+                    {
+                        "name": "1",
+                        "type": "text",
+                        "label": " (B)"
+                    },
+                    {
+                        "name": "2",
+                        "type": "text",
+                        "label": " (C)"
+                    },
+                    {
+                        "name": "3",
+                        "type": "text",
+                        "label": " (D)"
+                    },
+                    {
+                        "name": "4",
+                        "type": "text",
+                        "label": " (E)"
+                    },
+                    {
+                        "name": "5",
+                        "type": "text",
+                        "label": " (F)"
+                    },
+                    {
+                        "name": "6",
+                        "type": "text",
+                        "label": " (G)"
+                    },
+                    {
+                        "name": "7",
+                        "type": "text",
+                        "label": " (H)"
+                    },
+                    {
+                        "name": "8",
+                        "type": "text",
+                        "label": " (I)"
+                    },
+                    {
+                        "name": "9",
+                        "type": "text",
+                        "label": " (J)"
+                    },
+                    {
+                        "name": "10",
+                        "type": "text",
+                        "label": " (K)"
+                    },
+                    {
+                        "name": "11",
+                        "type": "text",
+                        "label": " (L)"
+                    },
+                    {
+                        "name": "12",
+                        "type": "text",
+                        "label": " (M)"
+                    },
+                    {
+                        "name": "13",
+                        "type": "text",
+                        "label": " (N)"
+                    },
+                    {
+                        "name": "14",
+                        "type": "text",
+                        "label": " (O)"
+                    },
+                    {
+                        "name": "15",
+                        "type": "text",
+                        "label": " (P)"
+                    },
+                    {
+                        "name": "16",
+                        "type": "text",
+                        "label": " (Q)"
+                    },
+                    {
+                        "name": "17",
+                        "type": "text",
+                        "label": " (R)"
+                    },
+                    {
+                        "name": "18",
+                        "type": "text",
+                        "label": " (S)"
+                    },
+                    {
+                        "name": "19",
+                        "type": "text",
+                        "label": " (T)"
+                    },
+                    {
+                        "name": "20",
+                        "type": "text",
+                        "label": " (U)"
+                    },
+                    {
+                        "name": "21",
+                        "type": "text",
+                        "label": " (V)"
+                    },
+                    {
+                        "name": "22",
+                        "type": "text",
+                        "label": " (W)"
+                    },
+                    {
+                        "name": "23",
+                        "type": "text",
+                        "label": " (X)"
+                    },
+                    {
+                        "name": "24",
+                        "type": "text",
+                        "label": " (Y)"
+                    },
+                    {
+                        "name": "25",
+                        "type": "text",
+                        "label": " (Z)"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 83,
+            "module": "blotato:media",
+            "version": 1,
+            "parameters": {
+                "__IMTCONN__": 9269007
+            },
+            "mapper": {
+                "url": "{{59.`1`}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 750,
+                    "name": "Upload Image to Blotato"
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "blotato"
+                            },
+                            "label": "My Blotato connection (c3cbe399-ae09-4d6c-b4ba-f36c0144523b)"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:blotato",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "url",
+                        "type": "url",
+                        "label": "URL",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 67,
+            "module": "builtin:BasicRouter",
+            "version": 1,
+            "mapper": null,
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 750
+                }
+            },
+            "routes": [
+                {
+                    "flow": [
+                        {
+                            "id": 78,
+                            "module": "blotato:Post",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 9269007
+                            },
+                            "mapper": {
+                                "text": "{{59.`2`}}",
+                                "isDraft": false,
+                                "platform": "tiktok",
+                                "mediaUrls": [
+                                    "{{83.url}}"
+                                ],
+                                "isYourBrand": false,
+                                "autoAddMusic": false,
+                                "disabledDuet": false,
+                                "privacyLevel": "PUBLIC_TO_EVERYONE",
+                                "isAiGenerated": false,
+                                "disabledStitch": false,
+                                "tiktokAccountId": "45222",
+                                "useNextFreeSlot": false,
+                                "disabledComments": false,
+                                "isBrandedContent": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 0,
+                                    "name": "TikTok [BLOTATO]"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "isDraft": {
+                                            "mode": "chose"
+                                        },
+                                        "platform": {
+                                            "mode": "chose",
+                                            "label": "Tiktok",
+                                            "nested": [
+                                                {
+                                                    "name": "tiktokAccountId",
+                                                    "type": "select",
+                                                    "label": "TikTok Account",
+                                                    "nested": [
+                                                        {
+                                                            "help": "Who can view your TikTok video",
+                                                            "name": "privacyLevel",
+                                                            "type": "select",
+                                                            "label": "Privacy Level",
+                                                            "default": "PUBLIC_TO_EVERYONE",
+                                                            "options": [
+                                                                {
+                                                                    "label": "Public to Everyone",
+                                                                    "value": "PUBLIC_TO_EVERYONE"
+                                                                },
+                                                                {
+                                                                    "label": "Mutual Follow Friends",
+                                                                    "value": "MUTUAL_FOLLOW_FRIENDS"
+                                                                },
+                                                                {
+                                                                    "label": "Follower of Creator",
+                                                                    "value": "FOLLOWER_OF_CREATOR"
+                                                                },
+                                                                {
+                                                                    "label": "Self Only",
+                                                                    "value": "SELF_ONLY"
+                                                                }
+                                                            ],
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Post a DRAFT video/slideshow. It will go to your Tiktok Inbox > System Notifications. Finalize your post options in the Tiktok app.",
+                                                            "name": "isDraft",
+                                                            "type": "boolean",
+                                                            "label": "Post as Draft",
+                                                            "default": false,
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Whether this post is mostly AI generated",
+                                                            "name": "isAiGenerated",
+                                                            "type": "boolean",
+                                                            "label": "AI Generated",
+                                                            "default": false,
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Title for photo slideshows only. Ignored for videos.",
+                                                            "name": "tiktokTitle",
+                                                            "type": "text",
+                                                            "label": "Slideshow Title",
+                                                            "advanced": true,
+                                                            "required": false,
+                                                            "validate": {
+                                                                "max": 90
+                                                            }
+                                                        },
+                                                        {
+                                                            "help": "Add background music to slideshows automatically",
+                                                            "name": "autoAddMusic",
+                                                            "type": "boolean",
+                                                            "label": "Add Music to Slideshow",
+                                                            "default": false,
+                                                            "advanced": true,
+                                                            "required": false
+                                                        },
+                                                        {
+                                                            "help": "Turn off comments for this post",
+                                                            "name": "disabledComments",
+                                                            "type": "boolean",
+                                                            "label": "Disable Comments",
+                                                            "default": false,
+                                                            "advanced": true,
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Prevent others from creating duets with your post",
+                                                            "name": "disabledDuet",
+                                                            "type": "boolean",
+                                                            "label": "Disable Duet",
+                                                            "default": false,
+                                                            "advanced": true,
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Prevent others from using your post in their stitches",
+                                                            "name": "disabledStitch",
+                                                            "type": "boolean",
+                                                            "label": "Disable Stitch",
+                                                            "default": false,
+                                                            "advanced": true,
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Is this a paid partnership or sponsored content?",
+                                                            "name": "isBrandedContent",
+                                                            "type": "boolean",
+                                                            "label": "Branded Content",
+                                                            "default": false,
+                                                            "advanced": true,
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Are you promoting your own brand?",
+                                                            "name": "isYourBrand",
+                                                            "type": "boolean",
+                                                            "label": "Your Brand",
+                                                            "default": false,
+                                                            "advanced": true,
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Only applies to Tiktok slideshows with multiple images. The index of the image to use as thumbnail cover (starts at 0).",
+                                                            "name": "imageCoverIndex",
+                                                            "type": "number",
+                                                            "label": "Slideshow Cover Image",
+                                                            "default": 0,
+                                                            "advanced": true,
+                                                            "required": false,
+                                                            "validate": {
+                                                                "min": 0
+                                                            }
+                                                        },
+                                                        {
+                                                            "help": "Only applies to Tiktok videos. Location in milliseconds of video to be used as thumbnail cover. Must be whole number (1000 for 1 second). If not provided, the frame at 0 milliseconds will be used.",
+                                                            "name": "videoCoverTimestamp",
+                                                            "type": "number",
+                                                            "label": "Video Cover Timestamp (ms)",
+                                                            "advanced": true,
+                                                            "required": false,
+                                                            "validate": {
+                                                                "min": 0
+                                                            }
+                                                        }
+                                                    ],
+                                                    "options": {
+                                                        "store": "rpc://blotato/1/getAccounts",
+                                                        "platform": "tiktok"
+                                                    },
+                                                    "required": true
+                                                }
+                                            ]
+                                        },
+                                        "mediaUrls": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        },
+                                        "isYourBrand": {
+                                            "mode": "chose"
+                                        },
+                                        "autoAddMusic": {
+                                            "mode": "chose"
+                                        },
+                                        "disabledDuet": {
+                                            "mode": "chose"
+                                        },
+                                        "privacyLevel": {
+                                            "mode": "chose",
+                                            "label": "Public to Everyone"
+                                        },
+                                        "isAiGenerated": {
+                                            "mode": "chose"
+                                        },
+                                        "disabledStitch": {
+                                            "mode": "chose"
+                                        },
+                                        "tiktokAccountId": {
+                                            "mode": "chose",
+                                            "label": "airdatetv (tiktok)",
+                                            "nested": [
+                                                {
+                                                    "help": "Who can view your TikTok video",
+                                                    "name": "privacyLevel",
+                                                    "type": "select",
+                                                    "label": "Privacy Level",
+                                                    "default": "PUBLIC_TO_EVERYONE",
+                                                    "options": [
+                                                        {
+                                                            "label": "Public to Everyone",
+                                                            "value": "PUBLIC_TO_EVERYONE"
+                                                        },
+                                                        {
+                                                            "label": "Mutual Follow Friends",
+                                                            "value": "MUTUAL_FOLLOW_FRIENDS"
+                                                        },
+                                                        {
+                                                            "label": "Follower of Creator",
+                                                            "value": "FOLLOWER_OF_CREATOR"
+                                                        },
+                                                        {
+                                                            "label": "Self Only",
+                                                            "value": "SELF_ONLY"
+                                                        }
+                                                    ],
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Post a DRAFT video/slideshow. It will go to your Tiktok Inbox > System Notifications. Finalize your post options in the Tiktok app.",
+                                                    "name": "isDraft",
+                                                    "type": "boolean",
+                                                    "label": "Post as Draft",
+                                                    "default": false,
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Whether this post is mostly AI generated",
+                                                    "name": "isAiGenerated",
+                                                    "type": "boolean",
+                                                    "label": "AI Generated",
+                                                    "default": false,
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Title for photo slideshows only. Ignored for videos.",
+                                                    "name": "tiktokTitle",
+                                                    "type": "text",
+                                                    "label": "Slideshow Title",
+                                                    "advanced": true,
+                                                    "required": false,
+                                                    "validate": {
+                                                        "max": 90
+                                                    }
+                                                },
+                                                {
+                                                    "help": "Add background music to slideshows automatically",
+                                                    "name": "autoAddMusic",
+                                                    "type": "boolean",
+                                                    "label": "Add Music to Slideshow",
+                                                    "default": false,
+                                                    "advanced": true,
+                                                    "required": false
+                                                },
+                                                {
+                                                    "help": "Turn off comments for this post",
+                                                    "name": "disabledComments",
+                                                    "type": "boolean",
+                                                    "label": "Disable Comments",
+                                                    "default": false,
+                                                    "advanced": true,
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Prevent others from creating duets with your post",
+                                                    "name": "disabledDuet",
+                                                    "type": "boolean",
+                                                    "label": "Disable Duet",
+                                                    "default": false,
+                                                    "advanced": true,
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Prevent others from using your post in their stitches",
+                                                    "name": "disabledStitch",
+                                                    "type": "boolean",
+                                                    "label": "Disable Stitch",
+                                                    "default": false,
+                                                    "advanced": true,
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Is this a paid partnership or sponsored content?",
+                                                    "name": "isBrandedContent",
+                                                    "type": "boolean",
+                                                    "label": "Branded Content",
+                                                    "default": false,
+                                                    "advanced": true,
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Are you promoting your own brand?",
+                                                    "name": "isYourBrand",
+                                                    "type": "boolean",
+                                                    "label": "Your Brand",
+                                                    "default": false,
+                                                    "advanced": true,
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Only applies to Tiktok slideshows with multiple images. The index of the image to use as thumbnail cover (starts at 0).",
+                                                    "name": "imageCoverIndex",
+                                                    "type": "number",
+                                                    "label": "Slideshow Cover Image",
+                                                    "default": 0,
+                                                    "advanced": true,
+                                                    "required": false,
+                                                    "validate": {
+                                                        "min": 0
+                                                    }
+                                                },
+                                                {
+                                                    "help": "Only applies to Tiktok videos. Location in milliseconds of video to be used as thumbnail cover. Must be whole number (1000 for 1 second). If not provided, the frame at 0 milliseconds will be used.",
+                                                    "name": "videoCoverTimestamp",
+                                                    "type": "number",
+                                                    "label": "Video Cover Timestamp (ms)",
+                                                    "advanced": true,
+                                                    "required": false,
+                                                    "validate": {
+                                                        "min": 0
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "useNextFreeSlot": {
+                                            "mode": "chose"
+                                        },
+                                        "disabledComments": {
+                                            "mode": "chose"
+                                        },
+                                        "isBrandedContent": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "blotato"
+                                            },
+                                            "label": "My Blotato connection (c3cbe399-ae09-4d6c-b4ba-f36c0144523b)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:blotato",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "platform",
+                                        "type": "select",
+                                        "label": "Platform",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "facebook",
+                                                "instagram",
+                                                "linkedin",
+                                                "youtube",
+                                                "pinterest",
+                                                "tiktok",
+                                                "twitter",
+                                                "threads",
+                                                "bluesky"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "text",
+                                        "type": "text",
+                                        "label": "Text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "mediaUrls",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Media URL"
+                                        },
+                                        "type": "array",
+                                        "label": "Media URLs"
+                                    },
+                                    {
+                                        "name": "useNextFreeSlot",
+                                        "type": "boolean",
+                                        "label": "Schedule Next Free Slot",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "scheduledTime",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Scheduled Time"
+                                    },
+                                    {
+                                        "name": "tiktokAccountId",
+                                        "type": "select",
+                                        "label": "TikTok Account",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "privacyLevel",
+                                        "type": "select",
+                                        "label": "Privacy Level",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "PUBLIC_TO_EVERYONE",
+                                                "MUTUAL_FOLLOW_FRIENDS",
+                                                "FOLLOWER_OF_CREATOR",
+                                                "SELF_ONLY"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "isDraft",
+                                        "type": "boolean",
+                                        "label": "Post as Draft",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "isAiGenerated",
+                                        "type": "boolean",
+                                        "label": "AI Generated",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "tiktokTitle",
+                                        "type": "text",
+                                        "label": "Slideshow Title",
+                                        "validate": {
+                                            "max": 90
+                                        }
+                                    },
+                                    {
+                                        "name": "autoAddMusic",
+                                        "type": "boolean",
+                                        "label": "Add Music to Slideshow"
+                                    },
+                                    {
+                                        "name": "disabledComments",
+                                        "type": "boolean",
+                                        "label": "Disable Comments",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "disabledDuet",
+                                        "type": "boolean",
+                                        "label": "Disable Duet",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "disabledStitch",
+                                        "type": "boolean",
+                                        "label": "Disable Stitch",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "isBrandedContent",
+                                        "type": "boolean",
+                                        "label": "Branded Content",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "isYourBrand",
+                                        "type": "boolean",
+                                        "label": "Your Brand",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "imageCoverIndex",
+                                        "type": "number",
+                                        "label": "Slideshow Cover Image",
+                                        "validate": {
+                                            "min": 0
+                                        }
+                                    },
+                                    {
+                                        "name": "videoCoverTimestamp",
+                                        "type": "number",
+                                        "label": "Video Cover Timestamp (ms)",
+                                        "validate": {
+                                            "min": 0
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 75,
+                            "module": "blotato:Post",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 9269007
+                            },
+                            "mapper": {
+                                "text": "{{59.`2`}}",
+                                "platform": "instagram",
+                                "mediaUrls": [
+                                    "{{83.url}}"
+                                ],
+                                "useNextFreeSlot": false,
+                                "instagramAccountId": "50977"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 200,
+                                    "name": "Instagram [BLOTATO]"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "platform": {
+                                            "mode": "chose",
+                                            "label": "Instagram",
+                                            "nested": [
+                                                {
+                                                    "name": "instagramAccountId",
+                                                    "type": "select",
+                                                    "label": "Instagram Account",
+                                                    "nested": [
+                                                        {
+                                                            "help": "Empty = Regular feed (images/carousels); Reel = Video only; Story = 24-hour posts (photos/videos)",
+                                                            "name": "instagramMediaType",
+                                                            "type": "select",
+                                                            "label": "Post Type (Optional)",
+                                                            "default": "empty",
+                                                            "options": [
+                                                                {
+                                                                    "label": "Reel",
+                                                                    "value": "reel"
+                                                                },
+                                                                {
+                                                                    "label": "Story",
+                                                                    "value": "story"
+                                                                }
+                                                            ],
+                                                            "required": false
+                                                        },
+                                                        {
+                                                            "help": "URL of cover image for Reels only. Must be publicly accessible URL. Max 8MB.",
+                                                            "name": "instagramCoverImageUrl",
+                                                            "type": "url",
+                                                            "label": "Cover Image URL (Optional)",
+                                                            "required": false
+                                                        },
+                                                        {
+                                                            "help": "Comma-separated list of up to 3 Instagram usernames to add as collaborators. Example: username1, username2, username3",
+                                                            "name": "instagramCollaborators",
+                                                            "type": "text",
+                                                            "label": "Collaborators (Optional)",
+                                                            "default": "",
+                                                            "advanced": true,
+                                                            "required": false
+                                                        },
+                                                        {
+                                                            "help": "Alternative text for accessibility. Only supported on single images or carousel images (max 1000 characters).",
+                                                            "name": "instagramAltText",
+                                                            "type": "text",
+                                                            "label": "Alt Text (Optional)",
+                                                            "required": false
+                                                        },
+                                                        {
+                                                            "help": "For Reels only. Name of custom audio in your Reel. You can only rename once, either while creating a reel or after from the audio page.",
+                                                            "name": "instagramAudioName",
+                                                            "type": "text",
+                                                            "label": "Audio Name (Optional)",
+                                                            "default": "",
+                                                            "advanced": true,
+                                                            "required": false
+                                                        }
+                                                    ],
+                                                    "options": {
+                                                        "store": "rpc://blotato/1/getAccounts",
+                                                        "platform": "instagram"
+                                                    },
+                                                    "required": true
+                                                }
+                                            ]
+                                        },
+                                        "mediaUrls": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        },
+                                        "useNextFreeSlot": {
+                                            "mode": "chose"
+                                        },
+                                        "instagramAccountId": {
+                                            "mode": "chose",
+                                            "label": "airdatetv (instagram)",
+                                            "nested": [
+                                                {
+                                                    "help": "Empty = Regular feed (images/carousels); Reel = Video only; Story = 24-hour posts (photos/videos)",
+                                                    "name": "instagramMediaType",
+                                                    "type": "select",
+                                                    "label": "Post Type (Optional)",
+                                                    "default": "empty",
+                                                    "options": [
+                                                        {
+                                                            "label": "Reel",
+                                                            "value": "reel"
+                                                        },
+                                                        {
+                                                            "label": "Story",
+                                                            "value": "story"
+                                                        }
+                                                    ],
+                                                    "required": false
+                                                },
+                                                {
+                                                    "help": "URL of cover image for Reels only. Must be publicly accessible URL. Max 8MB.",
+                                                    "name": "instagramCoverImageUrl",
+                                                    "type": "url",
+                                                    "label": "Cover Image URL (Optional)",
+                                                    "required": false
+                                                },
+                                                {
+                                                    "help": "Comma-separated list of up to 3 Instagram usernames to add as collaborators. Example: username1, username2, username3",
+                                                    "name": "instagramCollaborators",
+                                                    "type": "text",
+                                                    "label": "Collaborators (Optional)",
+                                                    "default": "",
+                                                    "advanced": true,
+                                                    "required": false
+                                                },
+                                                {
+                                                    "help": "Alternative text for accessibility. Only supported on single images or carousel images (max 1000 characters).",
+                                                    "name": "instagramAltText",
+                                                    "type": "text",
+                                                    "label": "Alt Text (Optional)",
+                                                    "required": false
+                                                },
+                                                {
+                                                    "help": "For Reels only. Name of custom audio in your Reel. You can only rename once, either while creating a reel or after from the audio page.",
+                                                    "name": "instagramAudioName",
+                                                    "type": "text",
+                                                    "label": "Audio Name (Optional)",
+                                                    "default": "",
+                                                    "advanced": true,
+                                                    "required": false
+                                                }
+                                            ]
+                                        },
+                                        "instagramMediaType": {
+                                            "mode": "chose",
+                                            "empty": true
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "blotato"
+                                            },
+                                            "label": "My Blotato connection (c3cbe399-ae09-4d6c-b4ba-f36c0144523b)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:blotato",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "platform",
+                                        "type": "select",
+                                        "label": "Platform",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "facebook",
+                                                "instagram",
+                                                "linkedin",
+                                                "youtube",
+                                                "pinterest",
+                                                "tiktok",
+                                                "twitter",
+                                                "threads",
+                                                "bluesky"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "text",
+                                        "type": "text",
+                                        "label": "Text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "mediaUrls",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Media URL"
+                                        },
+                                        "type": "array",
+                                        "label": "Media URLs"
+                                    },
+                                    {
+                                        "name": "useNextFreeSlot",
+                                        "type": "boolean",
+                                        "label": "Schedule Next Free Slot",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "scheduledTime",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Scheduled Time"
+                                    },
+                                    {
+                                        "name": "instagramAccountId",
+                                        "type": "select",
+                                        "label": "Instagram Account",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "instagramMediaType",
+                                        "type": "select",
+                                        "label": "Post Type (Optional)",
+                                        "validate": {
+                                            "enum": [
+                                                "reel",
+                                                "story"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "instagramCoverImageUrl",
+                                        "type": "url",
+                                        "label": "Cover Image URL (Optional)"
+                                    },
+                                    {
+                                        "name": "instagramCollaborators",
+                                        "type": "text",
+                                        "label": "Collaborators (Optional)"
+                                    },
+                                    {
+                                        "name": "instagramAltText",
+                                        "type": "text",
+                                        "label": "Alt Text (Optional)"
+                                    },
+                                    {
+                                        "name": "instagramAudioName",
+                                        "type": "text",
+                                        "label": "Audio Name (Optional)"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 77,
+                            "module": "blotato:Post",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 9269007
+                            },
+                            "mapper": {
+                                "text": "{{59.`2`}}",
+                                "platform": "linkedin",
+                                "mediaUrls": [
+                                    "{{83.url}}"
+                                ],
+                                "linkedinPageId": "123334396",
+                                "useNextFreeSlot": false,
+                                "linkedinAccountId": "23753"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 400,
+                                    "name": "LinkedIn [BLOTATO]"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "platform": {
+                                            "mode": "chose",
+                                            "label": "Linkedin",
+                                            "nested": [
+                                                {
+                                                    "name": "linkedinAccountId",
+                                                    "type": "select",
+                                                    "label": "Linkedin Account",
+                                                    "nested": [
+                                                        {
+                                                            "help": "Post to Linkedin Page - leave empty to post to your profile",
+                                                            "name": "linkedinPageId",
+                                                            "type": "select",
+                                                            "label": "Linkedin Page (Optional)",
+                                                            "options": "rpc://blotato/1/getLinkedinSubaccounts",
+                                                            "required": false
+                                                        }
+                                                    ],
+                                                    "options": {
+                                                        "store": "rpc://blotato/1/getAccounts",
+                                                        "platform": "linkedin"
+                                                    },
+                                                    "required": true
+                                                }
+                                            ]
+                                        },
+                                        "mediaUrls": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        },
+                                        "linkedinPageId": {
+                                            "mode": "chose",
+                                            "label": "AirDate TV"
+                                        },
+                                        "useNextFreeSlot": {
+                                            "mode": "chose"
+                                        },
+                                        "linkedinAccountId": {
+                                            "mode": "chose",
+                                            "label": "Kenyon Johnston (linkedin)",
+                                            "nested": [
+                                                {
+                                                    "help": "Post to Linkedin Page - leave empty to post to your profile",
+                                                    "name": "linkedinPageId",
+                                                    "type": "select",
+                                                    "label": "Linkedin Page (Optional)",
+                                                    "options": "rpc://blotato/1/getLinkedinSubaccounts",
+                                                    "required": false
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "blotato"
+                                            },
+                                            "label": "My Blotato connection (c3cbe399-ae09-4d6c-b4ba-f36c0144523b)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:blotato",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "platform",
+                                        "type": "select",
+                                        "label": "Platform",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "facebook",
+                                                "instagram",
+                                                "linkedin",
+                                                "youtube",
+                                                "pinterest",
+                                                "tiktok",
+                                                "twitter",
+                                                "threads",
+                                                "bluesky"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "text",
+                                        "type": "text",
+                                        "label": "Text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "mediaUrls",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Media URL"
+                                        },
+                                        "type": "array",
+                                        "label": "Media URLs"
+                                    },
+                                    {
+                                        "name": "useNextFreeSlot",
+                                        "type": "boolean",
+                                        "label": "Schedule Next Free Slot",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "scheduledTime",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Scheduled Time"
+                                    },
+                                    {
+                                        "name": "linkedinAccountId",
+                                        "type": "select",
+                                        "label": "Linkedin Account",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "linkedinPageId",
+                                        "type": "select",
+                                        "label": "Linkedin Page (Optional)"
+                                    },
+                                    {
+                                        "name": "platform",
+                                        "type": "select",
+                                        "label": "Platform",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "facebook",
+                                                "instagram",
+                                                "linkedin",
+                                                "youtube",
+                                                "pinterest",
+                                                "tiktok",
+                                                "twitter",
+                                                "threads",
+                                                "bluesky"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "text",
+                                        "type": "text",
+                                        "label": "Text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "mediaUrls",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Media URL"
+                                        },
+                                        "type": "array",
+                                        "label": "Media URLs"
+                                    },
+                                    {
+                                        "name": "useNextFreeSlot",
+                                        "type": "boolean",
+                                        "label": "Schedule Next Free Slot",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "scheduledTime",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Scheduled Time"
+                                    },
+                                    {
+                                        "name": "linkedinAccountId",
+                                        "type": "select",
+                                        "label": "Linkedin Account",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "linkedinPageId",
+                                        "type": "select",
+                                        "label": "Linkedin Page (Optional)"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 76,
+                            "module": "blotato:Post",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 9269007
+                            },
+                            "mapper": {
+                                "text": "{{59.`2`}}",
+                                "platform": "facebook",
+                                "mediaUrls": [
+                                    "{{83.url}}"
+                                ],
+                                "facebookPageId": "1159149097277668",
+                                "useNextFreeSlot": false,
+                                "facebookAccountId": "35078"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 600,
+                                    "name": "Facebook [BLOTATO]"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "platform": {
+                                            "mode": "chose",
+                                            "label": "Facebook",
+                                            "nested": [
+                                                {
+                                                    "name": "facebookAccountId",
+                                                    "type": "select",
+                                                    "label": "Facebook Account",
+                                                    "nested": [
+                                                        {
+                                                            "name": "facebookPageId",
+                                                            "type": "select",
+                                                            "label": "Facebook Page",
+                                                            "options": "rpc://blotato/1/getFacebookSubaccounts",
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Upload video as Reel or regular Video. Only applies to video.",
+                                                            "name": "facebookMediaType",
+                                                            "type": "select",
+                                                            "label": "Video Type (Optional)",
+                                                            "options": [
+                                                                {
+                                                                    "label": "Video",
+                                                                    "value": "video"
+                                                                },
+                                                                {
+                                                                    "label": "Reel",
+                                                                    "value": "reel"
+                                                                }
+                                                            ],
+                                                            "required": false
+                                                        },
+                                                        {
+                                                            "help": "URL to attach as a link preview to your post.",
+                                                            "name": "facebookLink",
+                                                            "type": "url",
+                                                            "label": "Link Preview (Optional)",
+                                                            "required": false
+                                                        }
+                                                    ],
+                                                    "options": {
+                                                        "store": "rpc://blotato/1/getAccounts",
+                                                        "platform": "facebook"
+                                                    },
+                                                    "required": true
+                                                }
+                                            ]
+                                        },
+                                        "mediaUrls": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        },
+                                        "facebookPageId": {
+                                            "mode": "chose",
+                                            "label": "AirDate TV"
+                                        },
+                                        "useNextFreeSlot": {
+                                            "mode": "chose"
+                                        },
+                                        "facebookAccountId": {
+                                            "mode": "chose",
+                                            "label": "Kenyon M. Johnston (facebook)",
+                                            "nested": [
+                                                {
+                                                    "name": "facebookPageId",
+                                                    "type": "select",
+                                                    "label": "Facebook Page",
+                                                    "options": "rpc://blotato/1/getFacebookSubaccounts",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Upload video as Reel or regular Video. Only applies to video.",
+                                                    "name": "facebookMediaType",
+                                                    "type": "select",
+                                                    "label": "Video Type (Optional)",
+                                                    "options": [
+                                                        {
+                                                            "label": "Video",
+                                                            "value": "video"
+                                                        },
+                                                        {
+                                                            "label": "Reel",
+                                                            "value": "reel"
+                                                        }
+                                                    ],
+                                                    "required": false
+                                                },
+                                                {
+                                                    "help": "URL to attach as a link preview to your post.",
+                                                    "name": "facebookLink",
+                                                    "type": "url",
+                                                    "label": "Link Preview (Optional)",
+                                                    "required": false
+                                                }
+                                            ]
+                                        },
+                                        "facebookMediaType": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "blotato"
+                                            },
+                                            "label": "My Blotato connection (c3cbe399-ae09-4d6c-b4ba-f36c0144523b)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:blotato",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "platform",
+                                        "type": "select",
+                                        "label": "Platform",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "facebook",
+                                                "instagram",
+                                                "linkedin",
+                                                "youtube",
+                                                "pinterest",
+                                                "tiktok",
+                                                "twitter",
+                                                "threads",
+                                                "bluesky"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "text",
+                                        "type": "text",
+                                        "label": "Text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "mediaUrls",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Media URL"
+                                        },
+                                        "type": "array",
+                                        "label": "Media URLs"
+                                    },
+                                    {
+                                        "name": "useNextFreeSlot",
+                                        "type": "boolean",
+                                        "label": "Schedule Next Free Slot",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "scheduledTime",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Scheduled Time"
+                                    },
+                                    {
+                                        "name": "facebookAccountId",
+                                        "type": "select",
+                                        "label": "Facebook Account",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "facebookPageId",
+                                        "type": "select",
+                                        "label": "Facebook Page",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "facebookMediaType",
+                                        "type": "select",
+                                        "label": "Video Type (Optional)",
+                                        "validate": {
+                                            "enum": [
+                                                "video",
+                                                "reel"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "facebookLink",
+                                        "type": "url",
+                                        "label": "Link Preview (Optional)"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 92,
+                            "module": "blotato:Post",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 9269007
+                            },
+                            "mapper": {
+                                "text": "{{59.`2`}}",
+                                "platform": "youtube",
+                                "mediaUrls": [
+                                    "{{83.url}}"
+                                ],
+                                "youtubeTitle": "{{59.`0`}}",
+                                "useNextFreeSlot": false,
+                                "youtubeAccountId": "38958",
+                                "youtubeMadeForKids": false,
+                                "youtubePrivacyStatus": "public",
+                                "youtubeContainsSyntheticMedia": false,
+                                "youtubeShouldNotifySubscribers": true
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1184,
+                                    "y": 855,
+                                    "name": "YouTube [BLOTATO]"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "platform": {
+                                            "mode": "chose",
+                                            "label": "Youtube",
+                                            "nested": [
+                                                {
+                                                    "name": "youtubeAccountId",
+                                                    "type": "select",
+                                                    "label": "Youtube Channel",
+                                                    "nested": [
+                                                        {
+                                                            "help": "Title for your video",
+                                                            "name": "youtubeTitle",
+                                                            "type": "text",
+                                                            "label": "Video Title",
+                                                            "required": true,
+                                                            "validate": {
+                                                                "max": 100
+                                                            }
+                                                        },
+                                                        {
+                                                            "help": "Who can view your video",
+                                                            "name": "youtubePrivacyStatus",
+                                                            "type": "select",
+                                                            "label": "Privacy Status",
+                                                            "default": "public",
+                                                            "options": [
+                                                                {
+                                                                    "label": "Public",
+                                                                    "value": "public"
+                                                                },
+                                                                {
+                                                                    "label": "Private",
+                                                                    "value": "private"
+                                                                },
+                                                                {
+                                                                    "label": "Unlisted",
+                                                                    "value": "unlisted"
+                                                                }
+                                                            ],
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Send notification to subscribers when video is published",
+                                                            "name": "youtubeShouldNotifySubscribers",
+                                                            "type": "boolean",
+                                                            "label": "Notify Subscribers",
+                                                            "default": true,
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Contains altered content, such as AI images, AI videos, or AI avatars",
+                                                            "name": "youtubeContainsSyntheticMedia",
+                                                            "type": "boolean",
+                                                            "label": "Contains Synthetic Media",
+                                                            "default": false,
+                                                            "required": true
+                                                        },
+                                                        {
+                                                            "help": "Is this video made for children? Affects available features and ads",
+                                                            "name": "youtubeMadeForKids",
+                                                            "type": "boolean",
+                                                            "label": "Made for Kids (Optional)",
+                                                            "default": false,
+                                                            "advanced": true,
+                                                            "required": true
+                                                        }
+                                                    ],
+                                                    "options": {
+                                                        "store": "rpc://blotato/1/getAccounts",
+                                                        "platform": "youtube"
+                                                    },
+                                                    "required": true
+                                                }
+                                            ]
+                                        },
+                                        "mediaUrls": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        },
+                                        "useNextFreeSlot": {
+                                            "mode": "chose"
+                                        },
+                                        "youtubeAccountId": {
+                                            "mode": "chose",
+                                            "label": "AirdateTV Founder (Airdate.TV_Premieres) (youtube)",
+                                            "nested": [
+                                                {
+                                                    "help": "Title for your video",
+                                                    "name": "youtubeTitle",
+                                                    "type": "text",
+                                                    "label": "Video Title",
+                                                    "required": true,
+                                                    "validate": {
+                                                        "max": 100
+                                                    }
+                                                },
+                                                {
+                                                    "help": "Who can view your video",
+                                                    "name": "youtubePrivacyStatus",
+                                                    "type": "select",
+                                                    "label": "Privacy Status",
+                                                    "default": "public",
+                                                    "options": [
+                                                        {
+                                                            "label": "Public",
+                                                            "value": "public"
+                                                        },
+                                                        {
+                                                            "label": "Private",
+                                                            "value": "private"
+                                                        },
+                                                        {
+                                                            "label": "Unlisted",
+                                                            "value": "unlisted"
+                                                        }
+                                                    ],
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Send notification to subscribers when video is published",
+                                                    "name": "youtubeShouldNotifySubscribers",
+                                                    "type": "boolean",
+                                                    "label": "Notify Subscribers",
+                                                    "default": true,
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Contains altered content, such as AI images, AI videos, or AI avatars",
+                                                    "name": "youtubeContainsSyntheticMedia",
+                                                    "type": "boolean",
+                                                    "label": "Contains Synthetic Media",
+                                                    "default": false,
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Is this video made for children? Affects available features and ads",
+                                                    "name": "youtubeMadeForKids",
+                                                    "type": "boolean",
+                                                    "label": "Made for Kids (Optional)",
+                                                    "default": false,
+                                                    "advanced": true,
+                                                    "required": true
+                                                }
+                                            ]
+                                        },
+                                        "youtubeMadeForKids": {
+                                            "mode": "chose"
+                                        },
+                                        "youtubePrivacyStatus": {
+                                            "mode": "chose",
+                                            "label": "Public"
+                                        },
+                                        "youtubeContainsSyntheticMedia": {
+                                            "mode": "chose"
+                                        },
+                                        "youtubeShouldNotifySubscribers": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "blotato"
+                                            },
+                                            "label": "My Blotato connection (c3cbe399-ae09-4d6c-b4ba-f36c0144523b)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:blotato",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "platform",
+                                        "type": "select",
+                                        "label": "Platform",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "facebook",
+                                                "instagram",
+                                                "linkedin",
+                                                "youtube",
+                                                "pinterest",
+                                                "tiktok",
+                                                "twitter",
+                                                "threads",
+                                                "bluesky"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "text",
+                                        "type": "text",
+                                        "label": "Text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "mediaUrls",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Media URL"
+                                        },
+                                        "type": "array",
+                                        "label": "Media URLs"
+                                    },
+                                    {
+                                        "name": "useNextFreeSlot",
+                                        "type": "boolean",
+                                        "label": "Schedule Next Free Slot",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "scheduledTime",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Scheduled Time"
+                                    },
+                                    {
+                                        "name": "youtubeAccountId",
+                                        "type": "select",
+                                        "label": "Youtube Channel",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "youtubeTitle",
+                                        "type": "text",
+                                        "label": "Video Title",
+                                        "required": true,
+                                        "validate": {
+                                            "max": 100
+                                        }
+                                    },
+                                    {
+                                        "name": "youtubePrivacyStatus",
+                                        "type": "select",
+                                        "label": "Privacy Status",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "public",
+                                                "private",
+                                                "unlisted"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "youtubeShouldNotifySubscribers",
+                                        "type": "boolean",
+                                        "label": "Notify Subscribers",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "youtubeContainsSyntheticMedia",
+                                        "type": "boolean",
+                                        "label": "Contains Synthetic Media",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "youtubeMadeForKids",
+                                        "type": "boolean",
+                                        "label": "Made for Kids (Optional)",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 95,
+                            "module": "google-sheets:updateRow",
+                            "version": 2,
+                            "parameters": {
+                                "__IMTCONN__": 9268983
+                            },
+                            "mapper": {
+                                "from": "drive",
+                                "mode": "select",
+                                "values": {
+                                    "0": "{{59.`0`}}",
+                                    "1": "{{59.`1`}}",
+                                    "2": "{{59.`2`}}",
+                                    "3": "Posted",
+                                    "4": "{{formatDate(now; \"MM/DD/YYYY HH:mm:ss\")}}",
+                                    "5": "{{59.`5`}}"
+                                },
+                                "sheetId": "AirDate.tv — RSS Auto-Feed",
+                                "rowNumber": "{{59.__IMTINDEX__ + 2}}",
+                                "spreadsheetId": "/1t3im7vrlBz6W_TmOU-EO2Z0nHEGTojbf/1Lie6lIfIKfbR_gvgwEqVT9W4vq3jspKQPNT5heCwvWQ",
+                                "includesHeaders": true,
+                                "useColumnHeaders": false,
+                                "valueInputOption": "USER_ENTERED"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 750,
+                                    "name": "Mark Row as Posted"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "from": {
+                                            "label": "My Drive"
+                                        },
+                                        "mode": {
+                                            "label": "Search by path"
+                                        },
+                                        "sheetId": {
+                                            "label": "AirDate.tv — RSS Auto-Feed"
+                                        },
+                                        "spreadsheetId": {
+                                            "path": [
+                                                "Social Media Management",
+                                                "Blotato Template - AirDateTV Social Media Automation"
+                                            ]
+                                        },
+                                        "includesHeaders": {
+                                            "label": "Yes"
+                                        },
+                                        "useColumnHeaders": {
+                                            "label": "No",
+                                            "nested": [
+                                                {
+                                                    "name": "values",
+                                                    "spec": [
+                                                        {
+                                                            "name": "0",
+                                                            "type": "text",
+                                                            "label": "Title (A)"
+                                                        },
+                                                        {
+                                                            "name": "1",
+                                                            "type": "text",
+                                                            "label": "Media URL (google drive) (B)"
+                                                        },
+                                                        {
+                                                            "name": "2",
+                                                            "type": "text",
+                                                            "label": "Caption (C)"
+                                                        },
+                                                        {
+                                                            "name": "3",
+                                                            "type": "text",
+                                                            "label": "Status (D)"
+                                                        },
+                                                        {
+                                                            "name": "4",
+                                                            "type": "text",
+                                                            "label": "Posted Date (E)"
+                                                        },
+                                                        {
+                                                            "name": "5",
+                                                            "type": "text",
+                                                            "label": "Future Dates (F)"
+                                                        },
+                                                        {
+                                                            "name": "6",
+                                                            "type": "text",
+                                                            "label": "(G)"
+                                                        },
+                                                        {
+                                                            "name": "7",
+                                                            "type": "text",
+                                                            "label": "(H)"
+                                                        },
+                                                        {
+                                                            "name": "8",
+                                                            "type": "text",
+                                                            "label": "(I)"
+                                                        },
+                                                        {
+                                                            "name": "9",
+                                                            "type": "text",
+                                                            "label": "(J)"
+                                                        },
+                                                        {
+                                                            "name": "10",
+                                                            "type": "text",
+                                                            "label": "(K)"
+                                                        },
+                                                        {
+                                                            "name": "11",
+                                                            "type": "text",
+                                                            "label": "(L)"
+                                                        },
+                                                        {
+                                                            "name": "12",
+                                                            "type": "text",
+                                                            "label": "(M)"
+                                                        },
+                                                        {
+                                                            "name": "13",
+                                                            "type": "text",
+                                                            "label": "(N)"
+                                                        },
+                                                        {
+                                                            "name": "14",
+                                                            "type": "text",
+                                                            "label": "(O)"
+                                                        },
+                                                        {
+                                                            "name": "15",
+                                                            "type": "text",
+                                                            "label": "(P)"
+                                                        },
+                                                        {
+                                                            "name": "16",
+                                                            "type": "text",
+                                                            "label": "(Q)"
+                                                        },
+                                                        {
+                                                            "name": "17",
+                                                            "type": "text",
+                                                            "label": "(R)"
+                                                        },
+                                                        {
+                                                            "name": "18",
+                                                            "type": "text",
+                                                            "label": "(S)"
+                                                        },
+                                                        {
+                                                            "name": "19",
+                                                            "type": "text",
+                                                            "label": "(T)"
+                                                        },
+                                                        {
+                                                            "name": "20",
+                                                            "type": "text",
+                                                            "label": "(U)"
+                                                        },
+                                                        {
+                                                            "name": "21",
+                                                            "type": "text",
+                                                            "label": "(V)"
+                                                        },
+                                                        {
+                                                            "name": "22",
+                                                            "type": "text",
+                                                            "label": "(W)"
+                                                        },
+                                                        {
+                                                            "name": "23",
+                                                            "type": "text",
+                                                            "label": "(X)"
+                                                        },
+                                                        {
+                                                            "name": "24",
+                                                            "type": "text",
+                                                            "label": "(Y)"
+                                                        },
+                                                        {
+                                                            "name": "25",
+                                                            "type": "text",
+                                                            "label": "(Z)"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Values in columns",
+                                                    "metadata": [
+                                                        [
+                                                            [
+                                                                "Title",
+                                                                "Media URL (google drive)",
+                                                                "Caption",
+                                                                "Status",
+                                                                "Posted Date",
+                                                                "Future Dates"
+                                                            ]
+                                                        ]
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "valueInputOption": {
+                                            "mode": "chose",
+                                            "label": "User entered"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "google"
+                                            },
+                                            "label": "My Google connection (airdate.social@gmail.com)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:google",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "mode",
+                                        "type": "select",
+                                        "label": "Search Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "select",
+                                                "fromAll",
+                                                "map"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "valueInputOption",
+                                        "type": "select",
+                                        "label": "Value input option",
+                                        "validate": {
+                                            "enum": [
+                                                "USER_ENTERED",
+                                                "RAW"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "from",
+                                        "type": "select",
+                                        "label": "Drive",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "drive",
+                                                "share",
+                                                "team"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "spreadsheetId",
+                                        "type": "file",
+                                        "label": "Spreadsheet Name",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "sheetId",
+                                        "type": "select",
+                                        "label": "Sheet Name",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "rowNumber",
+                                        "type": "uinteger",
+                                        "label": "Row number",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "includesHeaders",
+                                        "type": "select",
+                                        "label": "Table contains headers",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                true,
+                                                false
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "useColumnHeaders",
+                                        "type": "select",
+                                        "label": "Use column headers as IDs of the columns",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                true,
+                                                false
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "values",
+                                        "spec": [
+                                            {
+                                                "name": "0",
+                                                "type": "text",
+                                                "label": "Title (A)"
+                                            },
+                                            {
+                                                "name": "1",
+                                                "type": "text",
+                                                "label": "Media URL (google drive) (B)"
+                                            },
+                                            {
+                                                "name": "2",
+                                                "type": "text",
+                                                "label": "Caption (C)"
+                                            },
+                                            {
+                                                "name": "3",
+                                                "type": "text",
+                                                "label": "Status (D)"
+                                            },
+                                            {
+                                                "name": "4",
+                                                "type": "text",
+                                                "label": "Posted Date (E)"
+                                            },
+                                            {
+                                                "name": "5",
+                                                "type": "text",
+                                                "label": "Future Dates (F)"
+                                            },
+                                            {
+                                                "name": "6",
+                                                "type": "text",
+                                                "label": "(G)"
+                                            },
+                                            {
+                                                "name": "7",
+                                                "type": "text",
+                                                "label": "(H)"
+                                            },
+                                            {
+                                                "name": "8",
+                                                "type": "text",
+                                                "label": "(I)"
+                                            },
+                                            {
+                                                "name": "9",
+                                                "type": "text",
+                                                "label": "(J)"
+                                            },
+                                            {
+                                                "name": "10",
+                                                "type": "text",
+                                                "label": "(K)"
+                                            },
+                                            {
+                                                "name": "11",
+                                                "type": "text",
+                                                "label": "(L)"
+                                            },
+                                            {
+                                                "name": "12",
+                                                "type": "text",
+                                                "label": "(M)"
+                                            },
+                                            {
+                                                "name": "13",
+                                                "type": "text",
+                                                "label": "(N)"
+                                            },
+                                            {
+                                                "name": "14",
+                                                "type": "text",
+                                                "label": "(O)"
+                                            },
+                                            {
+                                                "name": "15",
+                                                "type": "text",
+                                                "label": "(P)"
+                                            },
+                                            {
+                                                "name": "16",
+                                                "type": "text",
+                                                "label": "(Q)"
+                                            },
+                                            {
+                                                "name": "17",
+                                                "type": "text",
+                                                "label": "(R)"
+                                            },
+                                            {
+                                                "name": "18",
+                                                "type": "text",
+                                                "label": "(S)"
+                                            },
+                                            {
+                                                "name": "19",
+                                                "type": "text",
+                                                "label": "(T)"
+                                            },
+                                            {
+                                                "name": "20",
+                                                "type": "text",
+                                                "label": "(U)"
+                                            },
+                                            {
+                                                "name": "21",
+                                                "type": "text",
+                                                "label": "(V)"
+                                            },
+                                            {
+                                                "name": "22",
+                                                "type": "text",
+                                                "label": "(W)"
+                                            },
+                                            {
+                                                "name": "23",
+                                                "type": "text",
+                                                "label": "(X)"
+                                            },
+                                            {
+                                                "name": "24",
+                                                "type": "text",
+                                                "label": "(Y)"
+                                            },
+                                            {
+                                                "name": "25",
+                                                "type": "text",
+                                                "label": "(Z)"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Values in columns",
+                                        "metadata": [
+                                            [
+                                                [
+                                                    "Title",
+                                                    "Media URL (google drive)",
+                                                    "Caption",
+                                                    "Status",
+                                                    "Posted Date",
+                                                    "Future Dates"
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 96,
+                            "module": "blotato:Post",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 9269007
+                            },
+                            "mapper": {
+                                "text": "{{59.`2`}}",
+                                "platform": "twitter",
+                                "useNextFreeSlot": false,
+                                "twitterAccountId": "19713"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1143,
+                                    "y": 1084,
+                                    "name": "Twitter [BLOTATO]"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "platform": {
+                                            "mode": "chose",
+                                            "label": "Twitter",
+                                            "nested": [
+                                                {
+                                                    "name": "twitterAccountId",
+                                                    "type": "select",
+                                                    "label": "Twitter Account",
+                                                    "nested": [
+                                                        {
+                                                            "help": "Additional posts in long-form thread. The first post in thread comes from the main `text` field below. Correct format: [{'text': 'Post 1', 'mediaUrls': []}, {'text': 'Post 2', 'mediaUrls': []}]",
+                                                            "name": "additionalPosts",
+                                                            "spec": {
+                                                                "spec": [
+                                                                    {
+                                                                        "help": "Text for this post in your thread",
+                                                                        "name": "text",
+                                                                        "type": "text",
+                                                                        "label": "Text",
+                                                                        "required": true,
+                                                                        "multiline": true
+                                                                    },
+                                                                    {
+                                                                        "help": "Optional - attach up to 4 images or 1 video with post",
+                                                                        "name": "mediaUrls",
+                                                                        "spec": {
+                                                                            "type": "url",
+                                                                            "label": "URL"
+                                                                        },
+                                                                        "type": "array",
+                                                                        "label": "Media URLs",
+                                                                        "required": false
+                                                                    }
+                                                                ],
+                                                                "type": "collection",
+                                                                "label": "Post "
+                                                            },
+                                                            "type": "array",
+                                                            "label": "Thread Posts",
+                                                            "advanced": true,
+                                                            "required": false
+                                                        }
+                                                    ],
+                                                    "options": {
+                                                        "store": "rpc://blotato/1/getAccounts",
+                                                        "platform": "twitter"
+                                                    },
+                                                    "required": true
+                                                }
+                                            ]
+                                        },
+                                        "mediaUrls": {
+                                            "mode": "chose"
+                                        },
+                                        "additionalPosts": {
+                                            "mode": "chose"
+                                        },
+                                        "useNextFreeSlot": {
+                                            "mode": "chose"
+                                        },
+                                        "twitterAccountId": {
+                                            "mode": "chose",
+                                            "label": "AirdatetvF42317 (twitter)",
+                                            "nested": [
+                                                {
+                                                    "help": "Additional posts in long-form thread. The first post in thread comes from the main `text` field below. Correct format: [{'text': 'Post 1', 'mediaUrls': []}, {'text': 'Post 2', 'mediaUrls': []}]",
+                                                    "name": "additionalPosts",
+                                                    "spec": {
+                                                        "name": "value",
+                                                        "spec": [
+                                                            {
+                                                                "help": "Text for this post in your thread",
+                                                                "name": "text",
+                                                                "type": "text",
+                                                                "label": "Text",
+                                                                "required": true,
+                                                                "multiline": true
+                                                            },
+                                                            {
+                                                                "help": "Optional - attach up to 4 images or 1 video with post",
+                                                                "name": "mediaUrls",
+                                                                "spec": {
+                                                                    "type": "url",
+                                                                    "label": "URL"
+                                                                },
+                                                                "type": "array",
+                                                                "label": "Media URLs",
+                                                                "required": false
+                                                            }
+                                                        ],
+                                                        "type": "collection",
+                                                        "label": "Post "
+                                                    },
+                                                    "type": "array",
+                                                    "label": "Thread Posts",
+                                                    "advanced": true,
+                                                    "required": false
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "blotato"
+                                            },
+                                            "label": "My Blotato connection (c3cbe399-ae09-4d6c-b4ba-f36c0144523b)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:blotato",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "platform",
+                                        "type": "select",
+                                        "label": "Platform",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "facebook",
+                                                "instagram",
+                                                "linkedin",
+                                                "youtube",
+                                                "pinterest",
+                                                "tiktok",
+                                                "twitter",
+                                                "threads",
+                                                "bluesky"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "text",
+                                        "type": "text",
+                                        "label": "Text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "mediaUrls",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Media URL"
+                                        },
+                                        "type": "array",
+                                        "label": "Media URLs"
+                                    },
+                                    {
+                                        "name": "useNextFreeSlot",
+                                        "type": "boolean",
+                                        "label": "Schedule Next Free Slot",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "scheduledTime",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Scheduled Time"
+                                    },
+                                    {
+                                        "name": "twitterAccountId",
+                                        "type": "select",
+                                        "label": "Twitter Account",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "additionalPosts",
+                                        "spec": {
+                                            "name": "value",
+                                            "spec": [
+                                                {
+                                                    "name": "text",
+                                                    "type": "text",
+                                                    "label": "Text",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "name": "mediaUrls",
+                                                    "spec": {
+                                                        "type": "url",
+                                                        "label": "URL"
+                                                    },
+                                                    "type": "array",
+                                                    "label": "Media URLs"
+                                                }
+                                            ],
+                                            "type": "collection",
+                                            "label": "Post "
+                                        },
+                                        "type": "array",
+                                        "label": "Thread Posts"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": true,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us2.make.com",
+        "notes": [
+            {
+                "moduleIds": [
+                    92
+                ],
+                "content": "<p>Select your YouTube account.</p><p></p><p>Posts as Community Post for images. For Shorts, upload a vertical video under 60 seconds.</p><p></p><p><strong>🔴 IMPORTANT:</strong> New YouTube accounts are limited to a few API posts per day — this is lifted automatically as you post consistently.</p><p></p><p><strong>👉 <a href=\"https://help.blotato.com/api\" target=\"_blank\">Blotato API Docs</a></strong></p>",
+                "isFilterNote": false,
+                "metadata": {
+                    "color": "#9138FE"
+                }
+            },
+            {
+                "moduleIds": [
+                    76
+                ],
+                "content": "<p>Select your Facebook account.</p><p></p><p><strong>👉 <a href=\"https://help.blotato.com/api\" target=\"_blank\">Blotato API Docs</a></strong></p>",
+                "isFilterNote": false,
+                "metadata": {
+                    "color": "#9138FE"
+                }
+            },
+            {
+                "moduleIds": [
+                    77
+                ],
+                "content": "<p>Select your LinkedIn account.</p><p></p><p><strong>👉 <a href=\"https://help.blotato.com/api\" target=\"_blank\">Blotato API Docs</a></strong></p>",
+                "isFilterNote": false,
+                "metadata": {
+                    "color": "#9138FE"
+                }
+            },
+            {
+                "moduleIds": [
+                    75
+                ],
+                "content": "<p>Select your Instagram account.</p><p></p><p>Posts as Feed image by default. Change instagramPostType to 'reel' for video content.</p><p></p><p><strong>👉 <a href=\"https://help.blotato.com/api\" target=\"_blank\">Blotato API Docs</a></strong></p>",
+                "isFilterNote": false,
+                "metadata": {
+                    "color": "#9138FE"
+                }
+            },
+            {
+                "moduleIds": [
+                    78
+                ],
+                "content": "<p>Select your TikTok account in the TikTok Account field.</p><p></p><p><strong>🔴 IMPORTANT:</strong> Your TikTok account must be warmed up before using Blotato.</p><p></p><p><strong>👉 <a href=\"https://help.blotato.com/api\" target=\"_blank\">Blotato API Docs</a></strong></p>",
+                "isFilterNote": false,
+                "metadata": {
+                    "color": "#9138FE"
+                }
+            },
+            {
+                "moduleIds": [
+                    95
+                ],
+                "content": "<p><strong>Auto write-back</strong></p><p></p><p>After posting to all platforms, this module updates the row Status to 'Posted' and stamps the Posted Date column.</p><p></p><p>No more manual tracking.</p>",
+                "isFilterNote": false,
+                "metadata": {
+                    "color": "#00C851"
+                }
+            },
+            {
+                "moduleIds": [
+                    83
+                ],
+                "content": "<p>Select your Blotato account.</p><p></p><p><strong>👉 <a href=\"https://help.blotato.com/api\" target=\"_blank\">Blotato API Docs</a></strong></p><p>✅ <strong><a href=\"https://my.blotato.com/api-dashboard\" target=\"_blank\">Troubleshoot Errors</a></strong></p><p>📷 <strong><a href=\"https://help.blotato.com/api/media\" target=\"_blank\">Media Requirements</a></strong></p>",
+                "isFilterNote": false,
+                "metadata": {
+                    "color": "#9138FE"
+                }
+            },
+            {
+                "moduleIds": [
+                    59
+                ],
+                "content": "<p><strong>AirDate.tv — Blotato Auto-Poster</strong></p><p></p><p>Reads rows where Status = 'Ready to Post' from the AirDate Blotato sheet.</p><p></p><p>Sheet ID: 1Lie6lIfIKfbR_gvgwEqVT9W4vq3jspKQPNT5heCwvWQ</p><p></p><p>Connect with: airdate.social@gmail.com</p><p></p><p>Make sure your Google Drive folder is set to PUBLIC (Anyone with link can view).</p>",
+                "isFilterNote": false,
+                "metadata": {
+                    "color": "#9138FE"
+                }
+            }
+        ]
+    }
+}
