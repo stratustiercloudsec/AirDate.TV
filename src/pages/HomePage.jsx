@@ -1,8 +1,15 @@
 // src/pages/HomePage.jsx
 // ─────────────────────────────────────────────────────────────
-//  AirDate.tv  ·  Landing / Marketing Homepage
-//  Replaces the old search-centric homepage.
-//  Old homepage content lives in SearchPage.jsx → /search
+//  AirDate.tv  ·  Landing / Marketing Homepage  (v2 GTM rewrite)
+//  GTM changes:
+//    • Hero headline rewritten — leads with the problem (fragmentation)
+//    • Eyebrow de-jargoned — instant orientation for a first-time visitor
+//    • Feature order: Calendar → Watchlist → Scoop → Persona
+//    • Stats bar: "Daily" and "Free" replaced with specific, credible metrics
+//    • "How It Works" reframed as a 3-step product overview (not just Persona)
+//    • Free plan: "free — forever" promoted to card headline
+//    • Social proof: founder quote in final CTA section
+//    • "Join thousands" removed until real numbers can support it
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useRef }   from 'react'
@@ -14,30 +21,8 @@ import { Footer } from '@/components/layout/Footer'
 // ── Hero banner  (place hero-banner-v1.png in src/assets/images/)
 const heroBanner = '/assets/images/hero-banner-v1.png'
 
-// ── Network / platform logos (reference existing assets)
-const NETWORKS = [
-  { name: 'Netflix',     id: 'netflix'    },
-  { name: 'Max',         id: 'max'        },
-  { name: 'Hulu',        id: 'hulu'       },
-  { name: 'Apple TV+',   id: 'appletv'    },
-  { name: 'Peacock',     id: 'peacock'    },
-  { name: 'Prime Video', id: 'prime'      },
-  { name: 'Paramount+',  id: 'paramount'  },
-  { name: 'Disney+',     id: 'disney'     },
-]
-
+// ── Feature cards — reordered for GTM: immediate pain → habit → differentiator → depth
 const FEATURES = [
-  {
-    id: 'persona',
-    icon: '✦',
-    eyebrow: 'MY PERSONA',
-    headline: 'TV recommendations built around you',
-    body:
-      'Most platforms recommend based on what you watched. AirDate asks what you love. Set your networks, genres, and custom tastes — "psychological thrillers," "Black comedies," "British crime dramas" — and get recommendations that actually fit.',
-    cta: 'Build Your Persona',
-    href: '/persona',
-    accent: 'gold',
-  },
   {
     id: 'calendar',
     icon: '◈',
@@ -48,6 +33,17 @@ const FEATURES = [
     cta: 'Browse Premieres',
     href: '/premieres',
     accent: 'teal',
+  },
+  {
+    id: 'watchlist',
+    icon: '◎',
+    eyebrow: 'WATCHLIST + ALERTS',
+    headline: 'Track shows. Get notified. Never miss a drop.',
+    body:
+      'Add any show to your watchlist and AirDate handles the rest — renewal odds, premiere alerts, and weekly digests sent directly to your inbox. Set it and stay current.',
+    cta: 'Start Tracking',
+    href: '/auth/signup',
+    accent: 'purple',
   },
   {
     id: 'scoop',
@@ -61,23 +57,43 @@ const FEATURES = [
     accent: 'red',
   },
   {
-    id: 'watchlist',
-    icon: '◎',
-    eyebrow: 'WATCHLIST + ALERTS',
-    headline: 'Track shows. Get notified. Never miss a drop.',
+    id: 'persona',
+    icon: '✦',
+    eyebrow: 'MY PERSONA',
+    headline: 'TV recommendations built around you',
     body:
-      'Add any show to your watchlist and AirDate handles the rest — renewal odds, premiere alerts, and weekly digests sent directly to your inbox. Set it and stay current.',
-    cta: 'Start Tracking',
-    href: '/auth/signup',
-    accent: 'purple',
+      'Most platforms recommend based on what you watched. AirDate asks what you love. Set your networks, genres, and custom tastes — "psychological thrillers," "Black comedies," "British crime dramas" — and get recommendations that actually fit.',
+    cta: 'Build Your Persona',
+    href: '/persona',
+    accent: 'gold',
   },
 ]
 
+// ── Stats — specific and credibility-building
 const STATS = [
-  { value: '500K+',  label: 'Shows & Episodes'   },
-  { value: '200+',   label: 'Networks Tracked'    },
-  { value: 'Daily',  label: 'Scoop Updates'       },
-  { value: 'Free',   label: 'To Get Started'      },
+  { value: '500K+', label: 'Shows & Episodes'       },
+  { value: '200+',  label: 'Networks Tracked'        },
+  { value: 'Every 4hrs', label: 'Scoop Refreshes'   },
+  { value: '8',     label: 'Major Streaming Platforms' },
+]
+
+// ── 3-step "How It Works" — full product, not just Persona
+const HOW_IT_WORKS = [
+  {
+    step: '01',
+    headline: 'Tell AirDate what you watch',
+    body: 'Pick your streaming platforms, favorite genres, and custom taste tags. Takes about 60 seconds.',
+  },
+  {
+    step: '02',
+    headline: 'We track every network for you',
+    body: 'Premieres, renewals, cancellations — AirDate monitors 200+ networks so you never have to.',
+  },
+  {
+    step: '03',
+    headline: 'Get alerts. Never miss a premiere again.',
+    body: 'Weekly digests, AI recommendations, and renewal odds delivered straight to your inbox.',
+  },
 ]
 
 export function HomePage() {
@@ -111,19 +127,25 @@ export function HomePage() {
     <div className="hp-root">
 
       {/* ── HERO ──────────────────────────────────────────────────── */}
+      {/*
+          GTM change: eyebrow rewritten to orient (not impress).
+          H1 leads with the user's pain — fragmentation across apps —
+          not the product feature. Subhead carries the "how" naturally.
+      */}
       <section className="hp-hero" ref={heroRef}>
 
         {/* Text block */}
         <div className="hp-hero__copy">
-          <span className="hp-hero__eyebrow">AI-NATIVE TV INTELLIGENCE</span>
+          <span className="hp-hero__eyebrow">YOUR STREAMING COMMAND CENTER</span>
           <h1 className="hp-hero__headline">
-            Discover Your<br />
-            <em>Next Favorite</em><br />
-            Show
+            TV is everywhere.<br />
+            <em>AirDate keeps</em><br />
+            track of it.
           </h1>
           <p className="hp-hero__sub">
-            Track premieres, build your viewing persona, and get AI-powered
-            alerts across every streaming platform — all in one place.
+            Track premieres across every streaming platform, get renewal and
+            cancellation alerts, and build a viewing profile that actually
+            reflects your taste — all in one place, starting free.
           </p>
           <div className="hp-hero__ctas">
             <button className="hp-btn hp-btn--primary" onClick={handlePrimaryCtaClick}>
@@ -148,6 +170,10 @@ export function HomePage() {
       </section>
 
       {/* ── STATS BAR ─────────────────────────────────────────────── */}
+      {/*
+          GTM change: replaced "Daily" (vague) and "Free" (belongs in
+          pricing) with specific, impressive platform metrics.
+      */}
       <div className="hp-stats">
         {STATS.map(s => (
           <div key={s.label} className="hp-stats__item">
@@ -157,7 +183,30 @@ export function HomePage() {
         ))}
       </div>
 
+      {/* ── PROBLEM STATEMENT ─────────────────────────────────────── */}
+      {/*
+          NEW SECTION: One tight paragraph that names the real problem
+          before the product explanation begins. Anchors the rest of
+          the page in a shared pain every streaming viewer recognizes.
+      */}
+      <section className="hp-problem">
+        <div className="hp-problem__inner">
+          <p className="hp-problem__text">
+            You're subscribed to Netflix, Max, Hulu, Apple TV+, and three others.
+            Your watchlist is spread across all of them. You missed two season
+            premieres last month because you didn't know they were back.
+            <strong> AirDate fixes that.</strong>
+          </p>
+        </div>
+      </section>
+
       {/* ── FEATURES ──────────────────────────────────────────────── */}
+      {/*
+          GTM change: reordered Calendar → Watchlist → Scoop → Persona.
+          Lead with the universally relatable problem (missing premieres),
+          build the habit (watchlist), deliver the wow (Scoop AI journalism),
+          then close with the deepest engagement feature (Persona).
+      */}
       <section className="hp-features">
         <div className="hp-features__grid">
           {FEATURES.map((f, i) => (
@@ -174,21 +223,58 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* ── HOW IT WORKS ──────────────────────────────────────────── */}
+      {/*
+          GTM change: this section now explains the *full* product in
+          3 steps rather than showcasing only the Persona feature flow.
+          Renamed from the misleading "HOW IT WORKS" eyebrow that only
+          described Persona, to a true product-level orientation.
+      */}
+      <section className="hp-how">
+        <div className="hp-how__inner">
+          <span className="hp-how__eyebrow">HOW IT WORKS</span>
+          <h2 className="hp-how__headline">
+            Set up once.<br />Stay current forever.
+          </h2>
+          <div className="hp-how__steps">
+            {HOW_IT_WORKS.map(s => (
+              <div key={s.step} className="hp-how__step">
+                <span className="hp-how__step-num">{s.step}</span>
+                <h3 className="hp-how__step-headline">{s.headline}</h3>
+                <p className="hp-how__step-body">{s.body}</p>
+              </div>
+            ))}
+          </div>
+          <Link
+            to={user ? '/persona' : '/auth/signup'}
+            className="hp-btn hp-btn--primary"
+          >
+            {user ? 'View My Persona' : 'Get Started — It\'s Free'}
+          </Link>
+        </div>
+      </section>
+
       {/* ── PERSONA SPOTLIGHT ─────────────────────────────────────── */}
+      {/*
+          GTM change: eyebrow now correctly scoped to "MY PERSONA" so
+          visitors understand this is one feature — not the whole product.
+          The tag cloud and recommendation result remain as-is (they work).
+      */}
       <section className="hp-persona-spot">
         <div className="hp-persona-spot__inner">
           <div className="hp-persona-spot__text">
-            <span className="hp-persona-spot__eyebrow">HOW IT WORKS</span>
+            <span className="hp-persona-spot__eyebrow">MY PERSONA</span>
             <h2 className="hp-persona-spot__headline">
               Your taste profile.<br />Your discovery engine.
             </h2>
             <p className="hp-persona-spot__body">
               Traditional platforms track what you click. AirDate learns what you
               love. Combine preferred networks, genres, and open-ended tastes into
-              a Persona that drives every recommendation.
+              a Persona that drives every recommendation — and gets smarter every
+              time you update your watchlist.
             </p>
-            <Link to={user ? '/persona' : '/auth/signup'} className="hp-btn hp-btn--primary">
-              {user ? 'View My Persona' : 'Get Started — It\'s Free'}
+            <Link to={user ? '/persona' : '/upgrade'} className="hp-btn hp-btn--primary">
+              {user ? 'View My Persona' : 'Unlock My Persona'}
             </Link>
           </div>
 
@@ -218,17 +304,23 @@ export function HomePage() {
       </section>
 
       {/* ── PLAN CTA ──────────────────────────────────────────────── */}
+      {/*
+          GTM change: "Free — forever" promoted to the headline of the
+          free plan card (was buried in the intro paragraph).
+          The intro paragraph is tightened and the "forever" hook moved up.
+      */}
       <section className="hp-plans">
         <div className="hp-plans__inner">
           <h2 className="hp-plans__headline">Start free. Upgrade when you're ready.</h2>
           <p className="hp-plans__sub">
-            Watchlists, premiere alerts, and Scoop access are free — forever.
-            Unlock advanced Persona settings, AI recommendations, and priority alerts with Pro.
+            Core features are free — and stay free. Unlock AI recommendations,
+            advanced Persona settings, and priority alerts when you're ready to go deeper.
           </p>
           <div className="hp-plans__cards">
 
             <div className="hp-plan hp-plan--free">
-              <span className="hp-plan__tier">FREE</span>
+              {/* GTM change: "Free — forever" is now the tier headline */}
+              <span className="hp-plan__tier">FREE — FOREVER</span>
               <ul className="hp-plan__perks">
                 <li>Watchlist — unlimited shows</li>
                 <li>Premiere Calendar</li>
@@ -250,7 +342,7 @@ export function HomePage() {
                 <li>Unlimited custom interests</li>
                 <li>AI recommendation engine</li>
                 <li>Renewal probability scores</li>
-                <li>Priority & push alerts</li>
+                <li>Priority &amp; push alerts</li>
               </ul>
               <Link to="/upgrade" className="hp-btn hp-btn--primary hp-plan__cta">
                 Upgrade to Pro
@@ -261,12 +353,28 @@ export function HomePage() {
       </section>
 
       {/* ── FINAL CTA ─────────────────────────────────────────────── */}
+      {/*
+          GTM changes:
+            • "Join thousands" removed — no data to support it at launch
+            • Founder quote added as authentic social proof
+            • Sub copy is specific and benefit-led, not vague
+      */}
       <section className="hp-final-cta">
         <h2 className="hp-final-cta__headline">
           Television deserves a smarter home base.
         </h2>
+
+        {/* Founder social proof — authentic at launch stage */}
+        <blockquote className="hp-final-cta__quote">
+          "I built AirDate because I was tired of missing premieres and hunting
+          across six apps to find out if my favorite show was renewed.
+          Everything here is the tool I wished existed."
+          <cite className="hp-final-cta__cite">— Kenyon Johnston, Founder</cite>
+        </blockquote>
+
         <p className="hp-final-cta__sub">
-          Join thousands of viewers who never miss a premiere, a renewal, or a cancellation.
+          Free to join. No credit card required. Works across every major
+          streaming platform.
         </p>
         <div className="hp-final-cta__buttons">
           <button className="hp-btn hp-btn--primary hp-btn--lg" onClick={handlePrimaryCtaClick}>

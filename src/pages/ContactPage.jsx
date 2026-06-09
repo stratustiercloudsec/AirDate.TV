@@ -37,7 +37,7 @@ export function ContactPage() {
       })
       setSuccess(true)
     } catch {
-      setError('Something went wrong. Email us directly at support@airdate.tv')
+      setError('Something went wrong. Email us directly at operations@airdate.tv')
     } finally {
       setSub(false)
     }
@@ -75,14 +75,14 @@ export function ContactPage() {
           <div className="lg:col-span-2 space-y-10">
 
             {/* Single contact card */}
-            <a href="mailto:support@airdate.tv"
+            <a href="mailto:operations@airdate.tv"
               className="flex items-center gap-4 p-5 bg-slate-900/50 border border-cyan-500/20 rounded-2xl hover:bg-slate-900/80 transition-all group">
               <div className="w-11 h-11 bg-cyan-500/10 border border-cyan-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
                 <i className="fa-solid fa-envelope text-cyan-400 text-base"></i>
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200 mb-0.5">Email Us</p>
-                <p className="text-sm font-bold text-cyan-400 group-hover:underline truncate">support@airdate.tv</p>
+                <p className="text-sm font-bold text-cyan-400 group-hover:underline truncate">operations@airdate.tv</p>
               </div>
               <i className="fa-solid fa-arrow-up-right text-slate-600 text-[10px] ml-auto group-hover:text-slate-200 transition-colors"></i>
             </a>
