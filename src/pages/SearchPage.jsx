@@ -582,6 +582,16 @@ export function SearchPage() {
     setLoadWeek(true)
     const weekStart = startOfWeek()
     const weekEnd   = endOfWeek()
+    // Curated returning seasons — guaranteed to appear in thisWeek
+    // TMDB discover only finds new series; returning seasons need explicit injection
+    const WEEK_CURATED = [
+      { id:124394, name:'Power Book III: Raising Kanan', first_air_date:'2026-06-12', _networkLabel:'STARZ',      original_language:'en' },
+      { id:322803, name:'Outlast: The Jungle',           first_air_date:'2026-06-10', _networkLabel:'Netflix',    original_language:'en' },
+      { id:322426, name:'Norway: The Dark Horse',        first_air_date:'2026-06-09', _networkLabel:'Netflix',    original_language:'en' },
+      { id:312493, name:'Viral Hit',                     first_air_date:'2026-06-11', _networkLabel:'Netflix',    original_language:'en' },
+      { id:252257, name:"AMERICA'S SWEETHEARTS: Dallas Cowboys Cheerleaders Season 3", first_air_date:'2026-06-15', _networkLabel:'Netflix', original_language:'en' },
+    ].filter(s => s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
+
     tmdbDiscover({
       sort_by: 'popularity.desc',
       'first_air_date.gte': weekStart,
@@ -596,7 +606,23 @@ export function SearchPage() {
         .filter(s => !s.original_language || s.original_language === 'en')
         .filter(isRecentShow)
       const enriched = await enrichWithNetwork(shows)
-      setThisWeek(dedupById(enriched.filter(isEnglishShow)))
+      const tmdbResults = dedupById(enriched.filter(isEnglishShow))
+      // Enrich curated shows to fetch posters + network details from TMDB
+      const curatedEnriched = await enrichWithNetwork(WEEK_CURATED)
+      // Merge curated + TMDB, deduplicate, sort by network weight then date
+      const NETWORK_WEIGHT = {
+        'netflix':100,'hbo / max':100,'max':100,'apple tv+':95,'hulu':95,
+        'disney+':95,'prime video':90,'peacock':88,'paramount+':85,'starz':85,
+        'showtime':85,'mgm+':80,'fx':80,'amc':78,'bet+':75,'cbs':70,
+        'nbc':70,'abc':70,'fox':68,'the cw':65,'tubi':60,'bbc america':55,
+      }
+      const nw = s => NETWORK_WEIGHT[(s._networkLabel||'').toLowerCase()] ?? 10
+      const merged = dedupById([...curatedEnriched, ...tmdbResults])
+        .sort((a,b) => {
+          const dc = (a.first_air_date||'').localeCompare(b.first_air_date||'')
+          return dc !== 0 ? dc : nw(b) - nw(a)
+        })
+      setThisWeek(merged)
     }).catch(()=>{}).finally(()=>setLoadWeek(false))
 
     setLoadMonth(true)

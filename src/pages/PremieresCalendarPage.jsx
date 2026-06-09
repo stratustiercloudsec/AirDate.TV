@@ -66,6 +66,23 @@ const EXCLUDED_NETWORK_NAMES = new Set([
   'voot','zee5','sonyliv','hotstar','sun nxt','aha','discovery+india',
 ])
 
+// Network priority weights — higher = shown first within same date
+const NETWORK_WEIGHT = {
+  'netflix':     100, 'hbo / max': 100, 'max': 100, 'hbo': 100,
+  'apple tv+':    95, 'hulu':       95, 'disney+':   95,
+  'prime video':  90, 'amazon':     90, 'peacock':   88,
+  'paramount+':   85, 'starz':      85, 'showtime':  85,
+  'mgm+':         80, 'fx':         80, 'amc':       78,
+  'bet+':         75, 'tv one':     75, 'bravo':     72,
+  'cbs':          70, 'nbc':        70, 'abc':       70,
+  'fox':          68, 'the cw':     65, 'tubi':      60,
+  'bbc america':  55,
+}
+function networkWeight(label) {
+  if (!label) return 0
+  return NETWORK_WEIGHT[label.toLowerCase()] ?? 10
+}
+
 function isEnglishNetwork(networkLabel) {
   if (!networkLabel) return true
   const nl = networkLabel.toLowerCase()
@@ -464,7 +481,13 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
 
   const seen = new Set()
   return [...tmdbPerNetwork.flat(), ...lambdaShows, ...staticFiltered]
-    .sort((a,b) => (a.first_air_date||'').localeCompare(b.first_air_date||''))
+    .sort((a,b) => {
+      const dateCmp = (a.first_air_date||'').localeCompare(b.first_air_date||'')
+      if (dateCmp !== 0) return dateCmp
+      const netA = a._networkLabel || a.networks?.[0]?.name || ''
+      const netB = b._networkLabel || b.networks?.[0]?.name || ''
+      return networkWeight(netB) - networkWeight(netA)
+    })
     .filter(s => {
       if (!s.id || seen.has(`${s.id}_${s.first_air_date||''}`)) return false
       // Filter out foreign/non-English streaming platforms
