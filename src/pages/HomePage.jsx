@@ -1,6 +1,6 @@
 // src/pages/HomePage.jsx
 // ─────────────────────────────────────────────────────────────
-//  AirDate.tv  ·  Landing / Marketing Homepage  (v2 GTM rewrite)
+//  AirDate.TV.tv  ·  Landing / Marketing Homepage  (v2 GTM rewrite)
 //  GTM changes:
 //    • Hero headline rewritten — leads with the problem (fragmentation)
 //    • Eyebrow de-jargoned — instant orientation for a first-time visitor
@@ -39,7 +39,7 @@ const FEATURES = [
     icon: '◎',
     eyebrow: 'WATCHLIST + ALERTS',
     headline: 'Track shows. Get notified. Never miss a drop.',
-    body: 'Add any show to your watchlist and AirDate handles the rest — renewal odds, premiere alerts, and weekly digests sent directly to your inbox. Set it and stay current.',
+    body: 'Add any show to your watchlist and AirDate.TV handles the rest — renewal odds, premiere alerts, and weekly digests sent directly to your inbox. Set it and stay current.',
     cta: 'Start Tracking',
     href: '/auth/signup',
     accent: 'purple',
@@ -49,7 +49,7 @@ const FEATURES = [
     icon: '◉',
     eyebrow: 'THE SCOOP',
     headline: 'Renewal & cancellation intel, powered by AI',
-    body: "AirDate's autonomous journalism pipeline scans trade sources every four hours and synthesizes the latest renewal, cancellation, and casting news. Real stories. Real sources. No fluff.",
+    body: "AirDate.TV.TV's autonomous journalism pipeline scans trade sources every four hours and synthesizes the latest renewal, cancellation, and casting news. Real stories. Real sources. No fluff.",
     cta: 'Read The Scoop',
     href: '/scoop',
     accent: 'red',
@@ -59,7 +59,7 @@ const FEATURES = [
     icon: '✦',
     eyebrow: 'MY PERSONA',
     headline: 'TV recommendations built around you',
-    body: 'Most platforms recommend based on what you watched. AirDate asks what you love. Set your networks, genres, and custom tastes — "psychological thrillers," "Black comedies," "British crime dramas" — and get recommendations that actually fit.',
+    body: 'Most platforms recommend based on what you watched. AirDate.TV asks what you love. Set your networks, genres, and custom tastes — "psychological thrillers," "Black comedies," "British crime dramas" — and get recommendations that actually fit.',
     cta: 'Build Your Persona',
     href: '/persona',
     accent: 'gold',
@@ -76,13 +76,13 @@ const STATS = [
 const HOW_IT_WORKS = [
   {
     step: '01',
-    headline: 'Tell AirDate what you watch',
+    headline: 'Tell AirDate.TV what you watch',
     body: 'Pick your streaming platforms, favorite genres, and custom taste tags. Takes about 60 seconds.',
   },
   {
     step: '02',
     headline: 'We track every network for you',
-    body: 'Premieres, renewals, cancellations — AirDate monitors 200+ networks so you never have to.',
+    body: 'Premieres, renewals, cancellations — AirDate.TV monitors 200+ networks so you never have to.',
   },
   {
     step: '03',
@@ -120,7 +120,7 @@ export function HomePage() {
           <span className="hp-hero__eyebrow">YOUR STREAMING COMMAND CENTER</span>
           <h1 className="hp-hero__headline">
             TV is everywhere.<br />
-            <em>AirDate keeps</em><br />
+            <em>AirDate.TV keeps</em><br />
             track of it.
           </h1>
           <p className="hp-hero__sub">
@@ -176,7 +176,7 @@ export function HomePage() {
             You're subscribed to Netflix, Max, Hulu, Apple TV+, and three others.
             Your watchlist is spread across all of them. You missed two season
             premieres last month because you didn't know they were back.
-            <strong> AirDate fixes that.</strong>
+            <strong> AirDate.TV fixes that.</strong>
           </p>
         </div>
       </section>
@@ -229,7 +229,7 @@ export function HomePage() {
               Your taste profile.<br />Your discovery engine.
             </h2>
             <p className="hp-persona-spot__body">
-              Traditional platforms track what you click. AirDate learns what you
+              Traditional platforms track what you click. AirDate.TV learns what you
               love. Combine preferred networks, genres, and open-ended tastes into
               a Persona that drives every recommendation — and gets smarter every
               time you update your watchlist.
@@ -313,7 +313,7 @@ export function HomePage() {
           Television deserves a smarter home base.
         </h2>
         <blockquote className="hp-final-cta__quote">
-          "I built AirDate because I was tired of missing premieres and hunting
+          "I built AirDate.TV because I was tired of missing premieres and hunting
           across six apps to find out if my favorite show was renewed.
           Everything here is the tool I wished existed."
           <cite className="hp-final-cta__cite">— Kenyon Johnston, Founder</cite>
@@ -324,7 +324,7 @@ export function HomePage() {
         </p>
         <div className="hp-final-cta__buttons">
           <button className="hp-btn hp-btn--primary hp-btn--lg" onClick={handlePrimaryCtaClick}>
-            {user ? 'Go to My Persona' : 'Join AirDate — Free'}
+            {user ? 'Go to My Persona' : 'Join AirDate.TV — Free'}
           </button>
           <Link to="/scoop" className="hp-btn hp-btn--ghost hp-btn--lg">
             Read The Scoop

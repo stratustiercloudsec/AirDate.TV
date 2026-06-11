@@ -5,6 +5,12 @@ import { useAuth, buildGoogleAuthUrl } from '@/context/AuthContext'
 
 function friendlyError(err) {
   const code = err?.code || err?.__type || ''
+  if ((err?.message || '').toLowerCase().includes('disabled')) {
+    return 'Your account has been disabled. Please contact support at support@airdate.tv.'
+  }
+  if ((err?.message || '').toLowerCase().includes('disabled')) {
+    return 'Your account has been disabled. Please contact support at support@airdate.tv.'
+  }
   const map  = {
     NotAuthorizedException:        'Incorrect email or password.',
     UserNotFoundException:          'No account found with that email.',
@@ -66,7 +72,7 @@ export function LoginPage() {
         navigate('/auth/new-password', { state: { email, session: result.session } })
         return
       }
-      navigate(from, { replace: true })
+      navigate(from === '/' ? '/persona' : from, { replace: true })
     } catch (err) {
       if ((err?.code || err?.__type) === 'UserNotConfirmedException') {
         navigate('/auth/verify', { state: { email: email.trim().toLowerCase() } })
