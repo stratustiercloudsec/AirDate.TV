@@ -504,43 +504,6 @@ export function AboutPage() {
             <strong className="text-white">Stratustier Innovation Labs</strong>, a technology company
             building intelligent, scalable platforms at the intersection of media, entertainment, and AI.
           </p>
-          <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-6">
-            <p className="text-cyan-400 text-xs font-bold uppercase tracking-widest mb-3">Founder</p>
-            <div className="flex flex-col sm:flex-row gap-5">
-              <div className="flex-1">
-                <h3 className="text-white font-black text-base mb-1">Kenyon Johnston</h3>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">
-                  Founder &amp; Product Lead
-                </p>
-                <p className="text-slate-300 text-sm leading-relaxed mb-3">
-                  Product leader with 10+ years building AI-powered, cloud-native platforms
-                  at scale — including streaming systems supporting{' '}
-                  <strong className="text-white">90M+ users at Warner Bros. Discovery</strong>,
-                  where he owned content access and playback eligibility across their entire
-                  global streaming platform.
-                </p>
-                <p className="text-slate-300 text-sm leading-relaxed">
-                  AirDate.tv is the convergence of three professional threads: enterprise AI
-                  engineering depth, streaming platform domain expertise, and a film and
-                  storytelling background that shapes how the product thinks about audiences.
-                </p>
-              </div>
-              <div className="flex-shrink-0 sm:w-52">
-                <div className="space-y-2">
-                  {[
-                    { co: 'Warner Bros. Discovery', role: 'Technical PM — Streaming Platforms' },
-                    { co: 'Acquia', role: 'Product Owner — Cloud Platform' },
-                    { co: 'IBM', role: 'Product Owner — AI Security' },
-                  ].map(item => (
-                    <div key={item.co} className="bg-slate-900/60 rounded-xl px-3 py-2.5">
-                      <p className="text-white text-xs font-bold leading-tight">{item.co}</p>
-                      <p className="text-slate-400 text-[11px] leading-tight mt-0.5">{item.role}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
         </section>
 
         {/* ── CTA ── */}

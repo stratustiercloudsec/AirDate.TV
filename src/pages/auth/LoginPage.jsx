@@ -6,10 +6,10 @@ import { useAuth, buildGoogleAuthUrl } from '@/context/AuthContext'
 function friendlyError(err) {
   const code = err?.code || err?.__type || ''
   if ((err?.message || '').toLowerCase().includes('disabled')) {
-    return 'Your account has been disabled. Please contact support at support@airdate.tv.'
+    return 'Your account has been disabled. Please contact support at operations@airdate.tv.'
   }
   if ((err?.message || '').toLowerCase().includes('disabled')) {
-    return 'Your account has been disabled. Please contact support at support@airdate.tv.'
+    return 'Your account has been disabled. Please contact support at operations@airdate.tv.'
   }
   const map  = {
     NotAuthorizedException:        'Incorrect email or password.',
