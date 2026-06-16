@@ -592,37 +592,48 @@ export function SearchPage() {
       { id:322426, name:'Norway: The Dark Horse',        first_air_date:'2026-06-09', _networkLabel:'Netflix',    original_language:'en' },
       { id:312493, name:'Viral Hit',                     first_air_date:'2026-06-11', _networkLabel:'Netflix',    original_language:'en' },
       { id:252257, name:"AMERICA'S SWEETHEARTS: Dallas Cowboys Cheerleaders Season 3", first_air_date:'2026-06-15', _networkLabel:'Netflix', original_language:'en' },
+      { id:203744, name:'Sugar Season 2', first_air_date:'2026-06-18', _networkLabel:'Apple TV+', original_language:'en' },
     ].filter(s => s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
 
-    tmdbDiscover({
-      sort_by: 'popularity.desc',
-      'first_air_date.gte': weekStart,
-      'first_air_date.lte': weekEnd,
-      with_original_language: 'en',
-      page: 1,
-    }).then(async d => {
-      // Strict filter: only shows whose SERIES premiere date falls in this week
-      const shows = (d.results||[])
-        .filter(s => s.first_air_date && s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
-        .map(mapTMDB)
+    // Multi-network parallel sweep for this week — ensures major streaming shows surface
+    // regardless of global popularity ranking
+    const NETWORK_WEIGHT = {
+      'netflix':100,'hbo / max':100,'max':100,'apple tv+':95,'hulu':95,
+      'disney+':95,'prime video':90,'peacock':88,'paramount+':85,'starz':85,
+      'showtime':85,'mgm+':80,'fx':80,'amc':78,'bet+':75,'cbs':70,
+      'nbc':70,'abc':70,'fox':68,'the cw':65,'tubi':60,'bbc america':55,
+    }
+    const nw = s => NETWORK_WEIGHT[(s._networkLabel||s.network||'').toLowerCase()] ?? 10
+
+    Promise.all(
+      AFFILIATE_NETWORK_IDS.map(nid =>
+        tmdbDiscover({
+          sort_by: 'popularity.desc',
+          'first_air_date.gte': weekStart,
+          'first_air_date.lte': weekEnd,
+          with_networks: String(nid),
+          page: 1,
+        }).catch(() => ({ results: [] }))
+      )
+    ).then(async responses => {
+      const allShows = responses.flatMap(d =>
+        (d.results||[])
+          .filter(s => s.first_air_date && s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
+          .map(mapTMDB)
+      )
+      const unique = dedupById(allShows)
         .filter(s => !s.original_language || s.original_language === 'en')
         .filter(isRecentShow)
-      const enriched = await enrichWithNetwork(shows)
+      const enriched = await enrichWithNetwork(unique)
       const tmdbResults = dedupById(enriched.filter(isEnglishShow))
       // Enrich curated shows to fetch posters + network details from TMDB
       const curatedEnriched = await enrichWithNetwork(WEEK_CURATED)
       // Merge curated + TMDB, deduplicate, sort by network weight then date
-      const NETWORK_WEIGHT = {
-        'netflix':100,'hbo / max':100,'max':100,'apple tv+':95,'hulu':95,
-        'disney+':95,'prime video':90,'peacock':88,'paramount+':85,'starz':85,
-        'showtime':85,'mgm+':80,'fx':80,'amc':78,'bet+':75,'cbs':70,
-        'nbc':70,'abc':70,'fox':68,'the cw':65,'tubi':60,'bbc america':55,
-      }
-      const nw = s => NETWORK_WEIGHT[(s._networkLabel||'').toLowerCase()] ?? 10
       const merged = dedupById([...curatedEnriched, ...tmdbResults])
         .sort((a,b) => {
+          const nwDiff = nw(b) - nw(a)
           const dc = (a.first_air_date||'').localeCompare(b.first_air_date||'')
-          return dc !== 0 ? dc : nw(b) - nw(a)
+          return dc !== 0 ? dc : nwDiff
         })
       setThisWeek(merged)
     }).catch(()=>{}).finally(()=>setLoadWeek(false))

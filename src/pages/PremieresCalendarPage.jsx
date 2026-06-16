@@ -94,13 +94,13 @@ function isEnglishNetwork(networkLabel) {
 // are always checked regardless of TMDB discover limitations
 const CURATED_IDS = {
   'Apple TV+':   [203744,95403,85765,97546,119051,125988,209867,125932,136311,76479,114461,241609],
-  'Netflix':     [66732,100088,71446,76479,76669,63174,90462,203737,154385,262388,305357,219971],
+  'Netflix':     [66732,100088,71446,76479,76669,63174,90462,203737,154385,262388,305357,219971,227139],
   'HBO / Max':   [1399,94997,63351,37854,60735,83867,108978,202555,119051,204776,228126],
   'Disney+':     [92782,114461,203085,202555,88396,85271],
   'Prime Video': [63639,83867,101299,110492,162854,121361,203737],
   'Hulu':        [87108,97180,67915,154385,246472,219535,235086,228082,228126],  // Deli Boys=246472
   'Peacock':     [100088,73586,2788,262388,228082],
-  'Paramount+':  [63174,60735,110492,73586,115529,225891,157741],
+  'Paramount+':  [63174,60735,110492,73586,153312,225891,157741],
   'Showtime':    [72071,37680,65495,60622,68507,79852,84773],
   'BET+':        [219971,214756,228082],
   'STARZ':       [124394,72071,95350,63749,95396,285807],
@@ -111,7 +111,7 @@ const CURATED_IDS = {
   'NBC':         [73021,95603,71712,70659],
   'ABC':         [63523,66190,2771],
   'FOX':         [60735,1411,4742],
-  'The CW':      [71712,66190,213052],
+  'The CW':      [71712,66190,213052,82428],
   'Tubi':        [203737,214756],
   'TV One':      [228082,214756],
 }
@@ -197,7 +197,6 @@ async function batchFetchDetails(ids) {
       Promise.all(
         chunk.map(id =>
           tmdbShow(id)
-            .then(r=>r.json())
             .then(d=>{ results[id]=d })
             .catch(()=>{})
         )
@@ -466,7 +465,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
     { id:154385, name:'Beef',                          first_air_date:'2026-06-01', _networkLabel:'Netflix',   _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18,35] },
     { id:262388, name:'Man on Fire',                   first_air_date:'2026-04-30', _networkLabel:'Netflix',   _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
     // Paramount+
-    { id:115529, name:'Tulsa King',                    first_air_date:'2026-07-01', _networkLabel:'Paramount+',_seasonNum:4, _episodeNum:1, _isSeason:true,  genre_ids:[18,80] },
+    { id:153312, name:'Tulsa King',                    first_air_date:'2026-07-01', _networkLabel:'Paramount+',_seasonNum:4, _episodeNum:1, _isSeason:true,  genre_ids:[18,80] },
     { id:225891, name:'The Madison',                   first_air_date:'2026-03-14', _networkLabel:'Paramount+',_seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
     // HBO/Max
     { id:94997,  name:'House of the Dragon',           first_air_date:'2026-07-15', _networkLabel:'HBO / Max', _seasonNum:3, _episodeNum:1, _isSeason:true,  genre_ids:[18,10765] },
