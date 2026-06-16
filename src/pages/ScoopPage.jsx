@@ -302,7 +302,6 @@ export function ScoopPage() {
                 AI-Synthesized Intelligence
               </span>
             </div>
-            // AFTER
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-2">
               The Scoop
             </h1>
