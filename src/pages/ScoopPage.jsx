@@ -11,6 +11,7 @@ import { SCOOP_MANIFEST_URL } from '../config/aws'
 const MANIFEST_URL = SCOOP_MANIFEST_URL
 
 const CATS = {
+  industry_news: { label:'Industry News',      icon:'newspaper',      color:'#facc15' },
   premieres:     { label:'Premiere Dates',     icon:'calendar-star',  color:'#22d3ee' },
   renewals:      { label:'Renewals',           icon:'rotate',         color:'#4ade80' },
   cancellations: { label:'Cancellations',      icon:'ban',            color:'#f87171' },
