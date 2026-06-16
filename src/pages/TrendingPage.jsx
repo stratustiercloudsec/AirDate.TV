@@ -98,7 +98,7 @@ function SkeletonCard() {
 // ─── ShowCard — heart icon + rating badge (mirrors HomePage pattern) ──────────
 function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = 'normal', ratingsMap = {}, networksMap = {} }) {
   const tracked    = isTracked(show.id)
-  const posterImg  = usePoster(show.poster_path, show.name, 342)
+  const posterImg  = usePoster(show.poster_path || show.poster, show.name, 342)
   const rating     = show.content_rating || ratingsMap[show.id] || ''
   const network    = show.network || networksMap[show.id] || ''
 
@@ -159,7 +159,7 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = '
 
 function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthenticated }) {
   const tracked   = isTracked(show.id)
-  const posterImg = usePoster(show.poster_path, show.name, 185)
+  const posterImg = usePoster(show.poster_path || show.poster, show.name, 185)
   const voteStr   = show.vote_count > 0 ? `${show.vote_count.toLocaleString()} votes` : 'Upcoming'
   return (
     <div className="flex items-center gap-4 bg-slate-800/40 border border-white/5 rounded-2xl p-4 hover:border-cyan-500/20 transition-all cursor-pointer"

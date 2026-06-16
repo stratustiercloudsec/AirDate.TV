@@ -16,7 +16,7 @@ export function createDefaultPoster(name) {
 
 export function usePoster(posterPathOrUrl, name = '', width = 342) {
   const w = [92,154,185,342,500,780].includes(width) ? width : 342
-  let src = '/assets/images/no-poster.png'
+  let src = createDefaultPoster(name)
   if (posterPathOrUrl) {
     if (posterPathOrUrl.startsWith('http')) {
       src = posterPathOrUrl  // already a full URL (e.g. from Lambda response)

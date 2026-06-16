@@ -133,6 +133,8 @@ async function enrichWithNetwork(shows) {
       ...s,
       network:        s.network || detail?.networks?.[0]?.name || '',
       content_rating: usRating,
+      poster_path:    s.poster_path || detail?.poster_path || null,
+      backdrop_path:  s.backdrop_path || detail?.backdrop_path || null,
     }
   })
 }
