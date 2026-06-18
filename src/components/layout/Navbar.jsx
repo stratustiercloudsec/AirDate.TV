@@ -424,7 +424,7 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden border-t border-white/5 bg-slate-950/95">
           <div className="px-6 py-4 flex flex-col gap-1">
-            <MobileLink to="/"          icon="fa-binoculars"          label="Search"/>
+            <MobileLink to="/search"    icon="fa-binoculars"     label="Search"/>
             <MobileLink to="/premieres" icon="fa-calendar"       label="Premieres"/>
             <MobileLink to="/trailers"  icon="fa-brands fa-youtube" label="Trailers"/>
             <MobileLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
