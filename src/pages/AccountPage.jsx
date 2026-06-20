@@ -1,6 +1,6 @@
 // src/pages/AccountPage.jsx
-// v3.0 — Profile, Subscription, Password, Session, Downgrade, Guest, Danger Zone
-import { useState } from 'react'
+// v3.1 — Profile, Subscription, Cancellation Status, Password, Session, Downgrade, Guest, Danger Zone
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { API_BASE } from '@/config/aws'
@@ -63,10 +63,41 @@ export function AccountPage() {
   const [guestError,    setGuestError]    = useState('')
   const [portalLoading, setPortalLoading] = useState(false)
   const [portalError,   setPortalError]   = useState('')
+  const [userData,      setUserData]      = useState(null)
 
   const passedRules  = PW_RULES.filter(r => r.test(newPw)).length
   const isGoogleUser = user?.provider === 'Google'
   const isPro        = user?.tier === 'pro' || user?.tier === 'premium'
+
+  // Pull the full user record so we can read cancellation state (cancel_at_period_end,
+  // subscription_period_end) that the token/AuthContext alone doesn't carry.
+  function refreshUserData() {
+    if (!token || !user?.sub) return
+    fetch(`${API_BASE}/user/${user.sub}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d) setUserData(d.Item ?? d) })
+      .catch(() => {})
+  }
+
+  useEffect(() => { refreshUserData() }, [token, user?.sub])
+
+  // Stripe billing portal opens in the same tab via window.location.href, so this fires
+  // when the user navigates back (e.g. after cancelling) — refetch to pick up the change.
+  useEffect(() => {
+    function onFocus() { refreshUserData() }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [token, user?.sub])
+
+  const cancelAtPeriodEnd  = !!userData?.cancel_at_period_end
+  const periodEndDate      = userData?.subscription_period_end
+    ? new Date(userData.subscription_period_end * 1000)
+    : null
+  const periodEndFormatted = periodEndDate
+    ? periodEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : null
 
   async function openBillingPortal() {
     setPortalLoading(true); setPortalError('')
@@ -162,8 +193,12 @@ export function AccountPage() {
             <p className="text-slate-200 text-sm mt-1 truncate">{user?.email}</p>
           </div>
           <span className={`self-start sm:self-auto flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest border
-            ${isPro ? 'bg-amber-500/10 border-amber-500/25 text-amber-400' : 'bg-slate-800 border-white/10 text-slate-200'}`}>
-            {isPro ? '★ Pro' : 'Free Plan'}
+            ${isPro
+              ? (cancelAtPeriodEnd
+                  ? 'bg-orange-500/10 border-orange-500/25 text-orange-400'
+                  : 'bg-amber-500/10 border-amber-500/25 text-amber-400')
+              : 'bg-slate-800 border-white/10 text-slate-200'}`}>
+            {isPro ? (cancelAtPeriodEnd ? '★ Pro · Cancelling' : '★ Pro') : 'Free Plan'}
           </span>
         </div>
 
@@ -219,6 +254,22 @@ export function AccountPage() {
               </div>
             )}
           </div>
+
+          {isPro && cancelAtPeriodEnd && (
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-orange-500/10 border border-orange-500/25 rounded-2xl px-4 py-3.5">
+              <div className="flex items-start gap-3">
+                <i className="fa-solid fa-triangle-exclamation text-orange-400 text-sm mt-0.5 flex-shrink-0"/>
+                <p className="text-orange-200 text-xs leading-relaxed">
+                  Your subscription is set to cancel{periodEndFormatted ? <> on <span className="font-bold text-orange-100">{periodEndFormatted}</span></> : ''}.
+                  You'll keep Pro access until then — no further charges after that date.
+                </p>
+              </div>
+              <button onClick={openBillingPortal} disabled={portalLoading}
+                className="w-full sm:w-auto flex-shrink-0 px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-200 font-black text-[11px] uppercase tracking-widest rounded-xl transition-all">
+                Keep My Subscription
+              </button>
+            </div>
+          )}
         </Section>
 
         {/* Password */}
@@ -285,17 +336,25 @@ export function AccountPage() {
 
         {/* Downgrade — Pro only */}
         {isPro && (
-          <Section title="Downgrade to Free" subtitle="Cancel your Pro subscription and return to the free plan. Your account and watchlist are kept.">
+          <Section title="Downgrade to Free" subtitle={cancelAtPeriodEnd ? "Your cancellation is already scheduled." : "Cancel your Pro subscription and return to the free plan. Your account and watchlist are kept."}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <p className="text-white font-bold text-sm">Return to Free Plan</p>
-                <p className="text-slate-200 text-xs mt-0.5">You'll lose unlimited tracking and early alerts. Your data stays safe. Takes effect at end of billing period.</p>
+                <p className="text-white font-bold text-sm">
+                  {cancelAtPeriodEnd ? 'Cancellation Scheduled' : 'Return to Free Plan'}
+                </p>
+                <p className="text-slate-200 text-xs mt-0.5">
+                  {cancelAtPeriodEnd
+                    ? `You'll move to the Free plan${periodEndFormatted ? ` on ${periodEndFormatted}` : ' at the end of your billing period'}. Changed your mind? Manage billing to keep Pro.`
+                    : "You'll lose unlimited tracking and early alerts. Your data stays safe. Takes effect at end of billing period."}
+                </p>
               </div>
               <button onClick={openBillingPortal} disabled={portalLoading}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all flex-shrink-0 disabled:opacity-50">
                 {portalLoading
                   ? <><div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin"/>Loading...</>
-                  : <><i className="fa-solid fa-arrow-down-to-line"/>Manage / Cancel Plan</>}
+                  : cancelAtPeriodEnd
+                    ? <><i className="fa-solid fa-rotate-left"/>Manage / Reactivate</>
+                    : <><i className="fa-solid fa-arrow-down-to-line"/>Manage / Cancel Plan</>}
               </button>
             </div>
             {portalError && <p className="text-red-400 text-[10px] font-bold mt-2">{portalError}</p>}
