@@ -86,9 +86,9 @@ function isRecentShow(show) {
 const CHIPS = [
   'Premiering Today',
   'Taylor Sheridan',
-  'Documentaries 2026',
+  'True Crime Documentaries 2026',
   'Reality TV 2026',
-  'Comedy Premieres 2026',
+  'Comedy 2026',
   'HBO Max Premieres 2026',
   'Power Universe',
   'Shonda Rhimes Produced Series'

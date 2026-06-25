@@ -1,0 +1,370 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="hQeP18sOe_GeRI1iBphn" name="Page-1">
+    <mxGraphModel dx="2312" dy="1165" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="2000" pageHeight="1800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="swimlane;startSize=32;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontColor=#333333;fontSize=11;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="System Elements" vertex="1">
+          <mxGeometry height="900" width="230" x="20" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="3" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="1" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="44" as="geometry" />
+        </mxCell>
+        <mxCell id="4" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="User accesses airdate.tv via web or mobile browser" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="38" as="geometry" />
+        </mxCell>
+        <mxCell id="5" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="2" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="122" as="geometry" />
+        </mxCell>
+        <mxCell id="6" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="Route 53 resolves airdate.tv DNS and routes to API Gateway" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="7" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="3" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="8" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="API Gateway routes requests to the appropriate Lambda function" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="194" as="geometry" />
+        </mxCell>
+        <mxCell id="9" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="4" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="278" as="geometry" />
+        </mxCell>
+        <mxCell id="10" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="airdate-rag-orchestration parses queries, routes intent, filters by network &amp;amp; month, and builds show results" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="272" as="geometry" />
+        </mxCell>
+        <mxCell id="11" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="5" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="356" as="geometry" />
+        </mxCell>
+        <mxCell id="13" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="6" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="434" as="geometry" />
+        </mxCell>
+        <mxCell id="14" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="airdate-recap-agent generates AI-powered show recaps using show data from TMDB and AWS Bedrock for summarization" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="428" as="geometry" />
+        </mxCell>
+        <mxCell id="15" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="7" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="512" as="geometry" />
+        </mxCell>
+        <mxCell id="16" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="DynamoDB caches network logos (7-day TTL), fan hype scores, and recap content" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="506" as="geometry" />
+        </mxCell>
+        <mxCell id="17" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="8" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="18" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="TMDB API provides show metadata, season dates, network logos, and video keys for all three Lambda functions" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="584" as="geometry" />
+        </mxCell>
+        <mxCell id="19" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="9" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="668" as="geometry" />
+        </mxCell>
+        <mxCell id="20" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="Tavily API enriches search results with news articles and premiere announcements when results are sparse" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="662" as="geometry" />
+        </mxCell>
+        <mxCell id="21" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="10" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="789" as="geometry" />
+        </mxCell>
+        <mxCell id="22" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="YouTube API provides trailer embed IDs for the Spotlight carousel and show detail cards" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="783" as="geometry" />
+        </mxCell>
+        <mxCell id="23" parent="2" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="11" vertex="1">
+          <mxGeometry height="26" width="26" x="28" y="867" as="geometry" />
+        </mxCell>
+        <mxCell id="24" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="AWS Bedrock powers the recap agent with AI inference for natural language show summaries and season recaps" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="818" as="geometry" />
+        </mxCell>
+        <mxCell id="25" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="Service Color Key" vertex="1">
+          <mxGeometry height="18" width="190" x="20" y="939" as="geometry" />
+        </mxCell>
+        <mxCell id="26" parent="2" style="rounded=0;fillColor=#F47321;strokeColor=none;html=1;" value="" vertex="1">
+          <mxGeometry height="14" width="14" x="20" y="965" as="geometry" />
+        </mxCell>
+        <mxCell id="27" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="Compute / API Gateway / Lambda" vertex="1">
+          <mxGeometry height="18" width="180" x="38" y="964" as="geometry" />
+        </mxCell>
+        <mxCell id="28" parent="2" style="rounded=0;fillColor=#3F8624;strokeColor=none;html=1;" value="" vertex="1">
+          <mxGeometry height="14" width="14" x="20" y="991" as="geometry" />
+        </mxCell>
+        <mxCell id="29" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="Storage / Database (DynamoDB, S3)" vertex="1">
+          <mxGeometry height="18" width="180" x="38" y="990" as="geometry" />
+        </mxCell>
+        <mxCell id="30" parent="2" style="rounded=0;fillColor=#8C4FFF;strokeColor=none;html=1;" value="" vertex="1">
+          <mxGeometry height="14" width="14" x="20" y="1017" as="geometry" />
+        </mxCell>
+        <mxCell id="31" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="Networking / CDN (CloudFront, Route 53)" vertex="1">
+          <mxGeometry height="18" width="180" x="38" y="1016" as="geometry" />
+        </mxCell>
+        <mxCell id="32" parent="2" style="rounded=0;fillColor=#01A88D;strokeColor=none;html=1;" value="" vertex="1">
+          <mxGeometry height="14" width="14" x="20" y="1043" as="geometry" />
+        </mxCell>
+        <mxCell id="33" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="External APIs (TMDB, Tavily, YouTube)" vertex="1">
+          <mxGeometry height="18" width="180" x="38" y="1042" as="geometry" />
+        </mxCell>
+        <mxCell id="34" parent="2" style="rounded=0;fillColor=#232F3E;strokeColor=none;html=1;" value="" vertex="1">
+          <mxGeometry height="14" width="14" x="20" y="1069" as="geometry" />
+        </mxCell>
+        <mxCell id="35" parent="2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="AI / ML Services (AWS Bedrock)" vertex="1">
+          <mxGeometry height="18" width="180" x="38" y="1068" as="geometry" />
+        </mxCell>
+        <mxCell id="36" parent="1" style="swimlane;startSize=32;fillColor=#FFE6E6;strokeColor=#CC0000;fontColor=#CC0000;fontSize=13;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="Client Layer" vertex="1">
+          <mxGeometry height="170" width="480" x="670" y="-330" as="geometry" />
+        </mxCell>
+        <mxCell id="37" parent="36" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#131A22;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="User&#xa;Web Browser" vertex="1">
+          <mxGeometry height="90" width="140" x="40" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="38" parent="36" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#131A22;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="Mobile&#xa;Browser" vertex="1">
+          <mxGeometry height="90" width="140" x="300" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="39" parent="36" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="1" vertex="1">
+          <mxGeometry height="26" width="26" x="44" y="57" as="geometry" />
+        </mxCell>
+        <mxCell id="40" parent="1" style="swimlane;startSize=32;fillColor=#FAFAFA;strokeColor=#232F3E;fontColor=#232F3E;fontSize=11;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="AWS Cloud" vertex="1">
+          <mxGeometry height="1620" width="1490" x="-60" y="-10" as="geometry" />
+        </mxCell>
+        <mxCell id="79" parent="40" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="7" vertex="1">
+          <mxGeometry height="26" width="26" x="1004" y="312" as="geometry" />
+        </mxCell>
+        <mxCell id="41" parent="1" style="swimlane;startSize=32;fillColor=#FFF3E0;strokeColor=#F47321;fontColor=#E65C00;fontSize=12;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="API Layer" vertex="1">
+          <mxGeometry height="260" width="960" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="42" parent="41" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8C4FFF;strokeColor=#6A35CC;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="Route 53&#xa;airdate.tv" vertex="1">
+          <mxGeometry height="100" width="140" x="34" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="43" parent="41" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="2" vertex="1">
+          <mxGeometry height="26" width="26" x="34" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="44" parent="41" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47321;strokeColor=#C45207;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="API Gateway&#xa;prod (REST API)" vertex="1">
+          <mxGeometry height="100" width="155" x="380" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="45" parent="41" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="3" vertex="1">
+          <mxGeometry height="26" width="26" x="384" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="46" parent="41" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#F47321;" value="DNS Resolution →" vertex="1">
+          <mxGeometry height="18" width="180" x="185" y="128" as="geometry" />
+        </mxCell>
+        <mxCell id="47" parent="41" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#F47321;" value="GET /get-trailer  POST /get-recap  search/discover" vertex="1">
+          <mxGeometry height="18" width="390" x="545" y="62" as="geometry" />
+        </mxCell>
+        <mxCell id="48" parent="41" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#F47321;" value="← PJSON Responses" vertex="1">
+          <mxGeometry height="18" width="390" x="545" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="49" parent="1" style="swimlane;startSize=32;fillColor=#FFF3E0;strokeColor=#F47321;fontColor=#E65C00;fontSize=12;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="Lambda Functions" vertex="1">
+          <mxGeometry height="272" width="960" x="20" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="50" parent="49" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47321;strokeColor=#C45207;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-rag-orchestration&#xa;Search · Filter · Discover" vertex="1">
+          <mxGeometry height="100" width="200" x="30" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="51" parent="49" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="4" vertex="1">
+          <mxGeometry height="26" width="26" x="34" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="52" parent="49" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47321;strokeColor=#C45207;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-get-trailer&#xa;Fetch · Embed · Stream" vertex="1">
+          <mxGeometry height="100" width="190" x="355" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="53" parent="49" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="5" vertex="1">
+          <mxGeometry height="26" width="26" x="359" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="54" parent="49" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47321;strokeColor=#C45207;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-recap-agent&#xa;Summarize · AI · Generate" vertex="1">
+          <mxGeometry height="100" width="190" x="660" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="55" parent="49" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="6" vertex="1">
+          <mxGeometry height="26" width="26" x="664" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="56" parent="49" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#5A5A5A;" value="Read/Write" vertex="1">
+          <mxGeometry height="18" width="95" x="248" y="128" as="geometry" />
+        </mxCell>
+        <mxCell id="57" parent="49" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#5A5A5A;" value="Embed ID" vertex="1">
+          <mxGeometry height="18" width="85" x="559" y="128" as="geometry" />
+        </mxCell>
+        <mxCell id="12" parent="49" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#333333;" value="airdate-get-trailer fetches verified YouTube trailer IDs from TMDB and returns embed-ready video keys" vertex="1">
+          <mxGeometry height="72" width="170" x="60" y="199" as="geometry" />
+        </mxCell>
+        <mxCell id="58" parent="1" style="swimlane;startSize=32;fillColor=#E8F4E8;strokeColor=#3F8624;fontColor=#2D6319;fontSize=12;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="The Scoop – Step Functions EXPRESS (EventBridge 4h cadence)" vertex="1">
+          <mxGeometry height="240" width="960" x="20" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="59" parent="58" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=#2D6319;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="1. airdate-scoop-scraper&#xa;RSS · 7 sources" vertex="1">
+          <mxGeometry height="90" width="155" x="20" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="60" parent="58" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=#2D6319;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="2. airdate-scoop-ranker&#xa;Haiku scoring · Top 15" vertex="1">
+          <mxGeometry height="90" width="165" x="185" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="61" parent="58" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=#2D6319;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="3. airdate-scoop-synthesizer&#xa;Claude Haiku+SSM" vertex="1">
+          <mxGeometry height="90" width="170" x="360" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="62" parent="58" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=#2D6319;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="4. airdate-scoop-plagiarism-gate&#xa;Cosine sim ≥0.72" vertex="1">
+          <mxGeometry height="90" width="175" x="540" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="63" parent="58" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=#2D6319;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="5. airdate-scoop-publisher&#xa;S3 dual-write+CF inval" vertex="1">
+          <mxGeometry height="90" width="175" x="725" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="64" parent="1" style="swimlane;startSize=32;fillColor=#E6F0FF;strokeColor=#1A6BB5;fontColor=#0D4A82;fontSize=12;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="AI &amp;amp; ML Intelligence Layer (Amazon Bedrock)" vertex="1">
+          <mxGeometry height="200" width="960" x="20" y="903" as="geometry" />
+        </mxCell>
+        <mxCell id="65" parent="64" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A6BB5;strokeColor=#0D4A82;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-persona-engine&#xa;My Persona (Pro tier)" vertex="1">
+          <mxGeometry height="100" width="190" x="20" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="66" parent="64" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A6BB5;strokeColor=#0D4A82;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-renewal-inference&#xa;XGBoost · 2217 shows" vertex="1">
+          <mxGeometry height="100" width="190" x="225" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="67" parent="64" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A6BB5;strokeColor=#0D4A82;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-premiere-predictor&#xa;3-signal Regression" vertex="1">
+          <mxGeometry height="100" width="190" x="430" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="68" parent="64" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A6BB5;strokeColor=#0D4A82;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-tag-engine&#xa;Content Intelligence" vertex="1">
+          <mxGeometry height="100" width="190" x="635" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="69" parent="1" style="swimlane;startSize=32;fillColor=#FFF3E0;strokeColor=#F47321;fontColor=#E65C00;fontSize=12;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="Social &amp;amp; Comms Automation" vertex="1">
+          <mxGeometry height="160" width="460" x="20" y="1119" as="geometry" />
+        </mxCell>
+        <mxCell id="70" parent="69" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47321;strokeColor=#C45207;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-social-rss&#xa;4× daily · Make.com&#xa;Blotato → 5 platforms" vertex="1">
+          <mxGeometry height="90" width="195" x="20" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="71" parent="69" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47321;strokeColor=#C45207;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-klaviyo-weekly&#xa;Weekly digest&#xa;List XRXk4q" vertex="1">
+          <mxGeometry height="90" width="195" x="230" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="72" parent="1" style="swimlane;startSize=32;fillColor=#FFE6E6;strokeColor=#CC0000;fontColor=#CC0000;fontSize=12;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="Billing (Stripe)" vertex="1">
+          <mxGeometry height="160" width="480" x="500" y="1119" as="geometry" />
+        </mxCell>
+        <mxCell id="73" parent="72" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D13212;strokeColor=#9C250D;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-create-checkout-session&#xa;Monthly / Annual" vertex="1">
+          <mxGeometry height="90" width="195" x="20" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="74" parent="72" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D13212;strokeColor=#9C250D;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="airdate-stripe-webhook&#xa;nodejs22.x · HMAC&#xa;Cognito+DynamoDB write" vertex="1">
+          <mxGeometry height="90" width="195" x="265" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="75" parent="1" style="swimlane;startSize=32;fillColor=#F0E6FF;strokeColor=#8C4FFF;fontColor=#6A35CC;fontSize=12;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="CDN &amp;amp; Static Hosting" vertex="1">
+          <mxGeometry height="250" width="320" x="1000" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="76" parent="75" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8C4FFF;strokeColor=#6A35CC;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="CloudFront CDN&#xa;Cache Miss" vertex="1">
+          <mxGeometry height="90" width="155" x="80" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="77" parent="75" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=#2D6319;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="S3 Bucket&#xa;airdate-frontend&#xa;(Static Website)" vertex="1">
+          <mxGeometry height="90" width="155" x="80" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="78" parent="1" style="swimlane;startSize=32;fillColor=#E8F4E8;strokeColor=#3F8624;fontColor=#2D6319;fontSize=12;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="Data Layer" vertex="1">
+          <mxGeometry height="520" width="320" x="1000" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="80" parent="78" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=#2D6319;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="DynamoDB&#xa;tmdb-show-cache&#xa;7-day TTL&#xa;• Network logos&#xa;• Fan hype scores&#xa;• Recap cache" vertex="1">
+          <mxGeometry height="160" width="155" x="80" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="81" parent="78" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=#2D6319;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="S3 Buckets&#xa;airdate.tv&#xa;stage.s3.airdate.tv&#xa;airdate-social-images" vertex="1">
+          <mxGeometry height="110" width="155" x="80" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="82" parent="78" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=#2D6319;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="DynamoDB Tables&#xa;airdate-users&#xa;airdate-comments&#xa;airdate-notifications&#xa;+6 more (PITR)" vertex="1">
+          <mxGeometry height="120" width="155" x="80" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="83" parent="1" style="swimlane;startSize=32;fillColor=#E0F7FA;strokeColor=#01A88D;fontColor=#007B69;fontSize=13;fontStyle=1;dashed=0;rounded=1;arcSize=2;align=left;swimlaneLine=1;strokeWidth=2;spacingLeft=8;" value="External APIs" vertex="1">
+          <mxGeometry height="250" width="960" x="20" y="1332" as="geometry" />
+        </mxCell>
+        <mxCell id="84" parent="83" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#01A88D;strokeColor=#007B69;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="TMDB API&#xa;api.themoviedb.org&#xa;• Show metadata&#xa;• Network info&#xa;• Trailers / Videos" vertex="1">
+          <mxGeometry height="150" width="160" x="20" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="85" parent="83" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="8" vertex="1">
+          <mxGeometry height="26" width="26" x="24" y="67" as="geometry" />
+        </mxCell>
+        <mxCell id="86" parent="83" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#01A88D;strokeColor=#007B69;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="Tavily API&#xa;tavily.com&#xa;• Web search&#xa;• News enrichment" vertex="1">
+          <mxGeometry height="150" width="160" x="200" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="87" parent="83" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="9" vertex="1">
+          <mxGeometry height="26" width="26" x="204" y="67" as="geometry" />
+        </mxCell>
+        <mxCell id="88" parent="83" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#01A88D;strokeColor=#007B69;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="YouTube API&#xa;youtube.com&#xa;• Trailer embed&#xa;• Video metadata" vertex="1">
+          <mxGeometry height="150" width="160" x="380" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="89" parent="83" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="10" vertex="1">
+          <mxGeometry height="26" width="26" x="384" y="67" as="geometry" />
+        </mxCell>
+        <mxCell id="90" parent="83" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#131A22;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="AWS Bedrock&#xa;Claude Haiku 4.5&#xa;• AI recap gen&#xa;• NLP inference&#xa;• Summarization" vertex="1">
+          <mxGeometry height="150" width="160" x="560" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="91" parent="83" style="ellipse;fillColor=#1E90FF;strokeColor=#0050AA;fontColor=#FFFFFF;fontSize=11;fontStyle=1;html=1;" value="11" vertex="1">
+          <mxGeometry height="26" width="26" x="564" y="67" as="geometry" />
+        </mxCell>
+        <mxCell id="92" parent="83" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5A5A5A;strokeColor=#3D3D3D;fontColor=#FFFFFF;fontSize=9;fontStyle=1;verticalAlign=bottom;spacingBottom=4;arcSize=8;align=center;spacingTop=4;" value="Make.com&#xa;Scenarios A/B/C/D&#xa;• Blotato social&#xa;• 5 platforms" vertex="1">
+          <mxGeometry height="150" width="160" x="740" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="93" edge="1" parent="1" source="37" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#F47321;fontSize=9;fontColor=#F47321;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="42" value="API Requests">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="94" edge="1" parent="1" source="37" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#8C4FFF;fontSize=9;fontColor=#8C4FFF;html=1;dashed=1;dashPattern=8 4;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="76" value="HTTPS Cached Content">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="95" edge="1" parent="1" source="38" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#8C4FFF;fontSize=9;fontColor=#8C4FFF;html=1;dashed=1;dashPattern=8 4;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="76" value="HTTPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="96" edge="1" parent="1" source="42" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#F47321;fontSize=9;fontColor=#F47321;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="44" value="DNS Resolution">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="97" edge="1" parent="1" source="44" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#F47321;fontSize=9;fontColor=#F47321;html=1;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" target="50" value="search / discover">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="98" edge="1" parent="1" source="44" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#F47321;fontSize=9;fontColor=#F47321;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="52" value="GET /get-trailer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="99" edge="1" parent="1" source="44" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#F47321;fontSize=9;fontColor=#F47321;html=1;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;" target="54" value="POST /get-recap">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="100" edge="1" parent="1" source="50" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#5A5A5A;fontSize=9;fontColor=#5A5A5A;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="52" value="Season data">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="101" edge="1" parent="1" source="52" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#5A5A5A;fontSize=9;fontColor=#5A5A5A;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="54" value="Embed ID">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="102" edge="1" parent="1" source="54" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="80" value="Cache recap">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="103" edge="1" parent="1" source="50" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="80" value="Read/Write">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="104" edge="1" parent="1" source="50" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#01A88D;fontSize=9;fontColor=#01A88D;html=1;exitX=0.2;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;" target="84" value="Show data">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="105" edge="1" parent="1" source="50" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#01A88D;fontSize=9;fontColor=#01A88D;html=1;exitX=0.4;exitY=1;exitDx=0;exitDy=0;entryX=0.4;entryY=0;entryDx=0;entryDy=0;" target="86" value="/tv/{id}/videos">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="106" edge="1" parent="1" source="52" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#01A88D;fontSize=9;fontColor=#01A88D;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="88" value="Season data">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="107" edge="1" parent="1" source="54" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#AAAAAA;fontSize=9;fontColor=#AAAAAA;html=1;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;" target="90" value="AI Generate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="108" edge="1" parent="1" source="54" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#01A88D;fontSize=9;fontColor=#01A88D;html=1;exitX=0.6;exitY=1;exitDx=0;exitDy=0;entryX=0.6;entryY=0;entryDx=0;entryDy=0;" target="84" value="Show details">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="109" edge="1" parent="1" source="59" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="60" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="110" edge="1" parent="1" source="60" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="61" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="111" edge="1" parent="1" source="61" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="62" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="112" edge="1" parent="1" source="62" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="63" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="113" edge="1" parent="1" source="61" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#AAAAAA;fontSize=9;fontColor=#AAAAAA;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="90" value="Synthesize">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="114" edge="1" parent="1" source="63" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="81" value="Dual S3 write">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="115" edge="1" parent="1" source="65" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="82" value="Persona write">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="116" edge="1" parent="1" source="66" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="82" value="Scores">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="117" edge="1" parent="1" source="67" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="82" value="Predictions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="118" edge="1" parent="1" source="68" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#3F8624;fontSize=9;fontColor=#3F8624;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="82" value="Tags">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="119" edge="1" parent="1" source="76" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#8C4FFF;fontSize=9;fontColor=#8C4FFF;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="77" value="Cache Miss → Origin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="120" edge="1" parent="1" source="70" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#5A5A5A;fontSize=9;fontColor=#5A5A5A;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="92" value="Social posts + RSS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="121" edge="1" parent="1" source="74" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;strokeColor=#D13212;fontSize=9;fontColor=#D13212;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="82" value="tier write">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
