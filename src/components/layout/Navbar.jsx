@@ -113,8 +113,10 @@ export function Navbar() {
           <NavLink to="/trailers"  icon="fa-brands fa-youtube" label="Trailers"/>
           <NavLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
           <NavLink to="/scoop"     icon="fa-fire"           label="The Scoop"/>
-          <NavLink to="/subscribe" icon="fa-envelope"       label="Subscribe"/>
           <NavLink to="/about"     icon="fa-circle-info"    label="About"/>
+          <Link to="/subscribe" className="ml-1 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-slate-950 bg-cyan-400 hover:bg-cyan-300 transition-all flex items-center gap-1.5">
+            <i className="fa-solid fa-envelope"/>&nbsp;Subscribe
+          </Link>
         </div>
 
         {/* Right side: bell + auth */}
@@ -429,8 +431,8 @@ export function Navbar() {
             <MobileLink to="/trailers"  icon="fa-brands fa-youtube" label="Trailers"/>
             <MobileLink to="/trending"  icon="fa-arrow-trend-up" label="Trending"/>
             <MobileLink to="/scoop"     icon="fa-fire"           label="The Scoop"/>
-            <MobileLink to="/subscribe" icon="fa-envelope"       label="Subscribe"/>
             <MobileLink to="/about"     icon="fa-circle-info"    label="About"/>
+            <MobileLink to="/subscribe" icon="fa-envelope"       label="Subscribe"/>
 
             <div className="border-t border-white/5 mt-2 pt-2">
               {isAuthenticated ? (

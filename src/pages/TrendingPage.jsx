@@ -157,10 +157,11 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = '
   )
 }
 
-function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthenticated }) {
+function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthenticated, networksMap = {} }) {
   const tracked   = isTracked(show.id)
   const posterImg = usePoster(show.poster_path || show.poster, show.name, 185)
   const voteStr   = show.vote_count > 0 ? `${show.vote_count.toLocaleString()} votes` : 'Upcoming'
+  const network   = show.network || networksMap[show.id] || ''
   return (
     <div className="flex items-center gap-4 bg-slate-800/40 border border-white/5 rounded-2xl p-4 hover:border-cyan-500/20 transition-all cursor-pointer"
       onClick={() => window.location.href = `/details/${show.id}`}>
@@ -168,6 +169,9 @@ function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthentica
       <img {...posterImg} alt={show.name} className="w-16 h-24 object-cover rounded-xl flex-shrink-0"/>
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-bold text-white truncate mb-1">{show.name}</h3>
+        {network && (
+          <p className="text-[10px] text-cyan-400 font-black uppercase tracking-widest mb-0.5">{network}</p>
+        )}
         {show.first_air_date && (
           <p className="text-[10px] text-slate-200 font-bold uppercase tracking-widest">
             {new Date(show.first_air_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -381,7 +385,7 @@ export function TrendingPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {anticipated.map((s, i) => (
-                <AnticipatedCard key={s.id} show={s} rank={i + 1} {...cardProps}/>
+                <AnticipatedCard key={s.id} show={s} rank={i + 1} networksMap={weekNetworks} {...cardProps}/>
               ))}
             </div>
           )}
