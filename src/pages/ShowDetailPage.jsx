@@ -94,7 +94,7 @@ function CastGrid({ cast }) {
           <div key={c.id} className="flex-shrink-0 flex flex-col items-center gap-1.5 w-20">
             <img src={`${IMAGE_BASE}/t/p/w185${c.profile_path}`} alt={c.name}
               onError={e=>{e.currentTarget.src=createDefaultPoster(c.name)}}
-              className="w-16 h-16 rounded-2xl object-cover bg-slate-800"/>
+              className="w-25 h-25 rounded-2xl object-cover bg-slate-800"/>
             <p className="text-white text-[10px] font-bold text-center leading-tight line-clamp-2">{c.name}</p>
             {c.character&&<p className="text-slate-200 text-[9px] text-center line-clamp-1">{c.character}</p>}
           </div>

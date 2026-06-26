@@ -225,6 +225,7 @@ export function TrendingPage() {
   const [risingRatings,  setRisingRatings]  = useState({})
   const [networkRatings, setNetworkRatings] = useState({})
   const [genreRatings,   setGenreRatings]   = useState({})
+  const [anticipatedNetworks, setAnticipatedNetworks] = useState({})
   const [weekNetworks,    setWeekNetworks]    = useState({})
   const [risingNetworks,  setRisingNetworks]  = useState({})
   const [networkNetworks, setNetworkNetworks] = useState({})
@@ -270,7 +271,11 @@ export function TrendingPage() {
     // Most Anticipated
     setLoad('anticipated', true)
     tmdb(`/discover/tv?sort_by=popularity.desc&first_air_date.gte=${todayISO()}&with_original_language=en`)
-      .then(r => setAnticipated(r.slice(0, 12)))
+      .then(r => {
+        const sliced = r.slice(0, 12)
+        setAnticipated(sliced)
+        fetchNetworksMap(sliced).then(setAnticipatedNetworks).catch(() => {})
+      })
       .catch(() => {})
       .finally(() => setLoad('anticipated', false))
   }, [])
@@ -385,7 +390,7 @@ export function TrendingPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {anticipated.map((s, i) => (
-                <AnticipatedCard key={s.id} show={s} rank={i + 1} networksMap={weekNetworks} {...cardProps}/>
+                <AnticipatedCard key={s.id} show={s} rank={i + 1} networksMap={anticipatedNetworks} {...cardProps}/>
               ))}
             </div>
           )}
