@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider }         from '@/context/AuthContext'
 import { WatchlistProvider }    from '@/context/WatchlistContext'
 import { NotificationProvider } from '@/context/NotificationContext'
+import { CuratedProvider }     from '@/context/CuratedContext'
 
 // Layout
 import { Navbar } from '@/components/layout/Navbar'
@@ -52,6 +53,7 @@ export default function App() {
       <AuthProvider>
         <WatchlistProvider>
           <NotificationProvider>
+      <CuratedProvider>
             <Navbar />
             <main>
               <Routes>
@@ -101,7 +103,8 @@ export default function App() {
 
               </Routes>
             </main>
-          </NotificationProvider>
+          </CuratedProvider>
+      </NotificationProvider>
         </WatchlistProvider>
       </AuthProvider>
     </BrowserRouter>

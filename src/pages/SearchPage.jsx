@@ -8,6 +8,7 @@ import { useWatchlist } from '@/context/WatchlistContext'
 import { API_BASE }     from '@/config/aws'
 import { usePoster }    from '@/utils/poster'
 import { tmdbFetch, tmdbShow, tmdbContentRatings, tmdbSearchTV, tmdbTrending, tmdbPopular, tmdbDiscover, tmdbOnTheAir, fetchCuratedPremieres } from '../utils/tmdb'
+import { useCurated } from '@/context/CuratedContext'
 import { Footer }       from '@/components/layout/Footer'
 import { SCOOP_MANIFEST_URL } from '@/config/aws'
 import RecommendedForYou from '../components/RecommendedForYou'
@@ -557,6 +558,7 @@ export function SearchPage() {
   const [trending,          setTrending]      = useState([])
   const [top10,             setTop10]         = useState([])
   const [thisWeek,          setThisWeek]      = useState([])
+  const curatedShows = useCurated()
   const [nextMonth,         setNextMonth]     = useState([])
   const [leaderboard,       setLeaderboard]   = useState([])
   const [loadTrend,         setLoadTrend]     = useState(true)
@@ -593,24 +595,10 @@ export function SearchPage() {
     setLoadWeek(true)
     const weekStart = startOfWeek()
     const weekEnd   = endOfWeek()
-    // Curated returning seasons — guaranteed to appear in thisWeek
-    // TMDB discover only finds new series; returning seasons need explicit injection
-    const WEEK_CURATED = [
-      // Week of Jun 29 – Jul 5, 2026
-      { id:227139, name:'Survival of the Thickest',      first_air_date:'2026-07-02', _networkLabel:'Netflix',    original_language:'en' },
-      { id:94997,  name:'House of the Dragon',           first_air_date:'2026-07-15', _networkLabel:'HBO / Max',  original_language:'en' },
-      { id:278624, name:'Lucky',                         first_air_date:'2026-07-14', _networkLabel:'Apple TV+',  original_language:'en' },
-      { id:117581, name:'Ginny & Georgia',               first_air_date:'2026-07-16', _networkLabel:'Netflix',    original_language:'en' },
-      { id:305357, name:'A Different World',             first_air_date:'2026-09-24', _networkLabel:'Netflix',    original_language:'en' },
-      { id:241882, name:'Ride or Die',                   first_air_date:'2026-07-15', _networkLabel:'Prime Video', original_language:'en' },
-      { id:286709, name:'The Westies',                   first_air_date:'2026-07-12', _networkLabel:'MGM+',        original_language:'en' },
-      { id:82428,  name:'All American',                  first_air_date:'2026-07-13', _networkLabel:'The CW',      original_language:'en' },
-      { id:283151, name:'Five Star Weekend',             first_air_date:'2026-07-16', _networkLabel:'Peacock',     original_language:'en' },
-      { id:113962, name:'Lioness',                       first_air_date:'2026-08-01', _networkLabel:'Paramount+',  original_language:'en' },
-      { id:95350,  name:'Lanterns',                      first_air_date:'2026-08-16', _networkLabel:'HBO / Max',   original_language:'en' },
-      { id:124394, name:'Power Book III: Raising Kanan', first_air_date:'2026-06-12', _networkLabel:'STARZ',      original_language:'en' },
-      { id:72071,  name:'The Chi',                       first_air_date:'2026-05-22', _networkLabel:'Paramount+', original_language:'en' },
-    ].filter(s => s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
+    // Curated shows from API — filtered to current week
+    const WEEK_CURATED = curatedShows
+      .filter(s => s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
+      .map(s => ({ ...s, _networkLabel: s.network, original_language: 'en' }))
 
     // Multi-network parallel sweep for this week — ensures major streaming shows surface
     // regardless of global popularity ranking
