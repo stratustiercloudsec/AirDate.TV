@@ -5,8 +5,7 @@ import { useWatchlist } from '@/context/WatchlistContext'
 import { usePoster }    from '@/utils/poster'
 import { Footer }       from '@/components/layout/Footer'
 import { API_BASE }     from '@/config/aws'
-import { tmdbFetch, tmdbShow, tmdbDiscover, tmdbSeason , fetchCuratedPremieres } from '../utils/tmdb'
-import { useCurated } from '@/context/CuratedContext'
+import { tmdbFetch, tmdbShow, tmdbDiscover, tmdbSeason } from '../utils/tmdb'
 
 const NETWORK_MAP = {
   'Netflix':      [213],
@@ -448,17 +447,45 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
     }),
   ])
 
-  // API-powered curated premieres — replaces hardcoded STATIC_PREMIERES
-  // fetchCuratedPremieres() is called at component level and passed in via props or state
-  const apiCurated = useCurated()
-  const staticFiltered = apiCurated
-    .filter(s => {
-      const d = s.first_air_date || ''
-      const inRange = d >= first && d <= last
-      const netMatch = !selectedNetworkLabel || selectedNetworkLabel === 'All' || s.network === selectedNetworkLabel
-      return inRange && netMatch
-    })
-    .map(s => ({ ...s, _networkLabel: s.network }))
+  // Static curated premieres — known returning seasons TMDB discover misses
+  const STATIC_PREMIERES = [
+    // Apple TV+
+    { id:203744, name:'Sugar',                         first_air_date:'2026-06-17', _networkLabel:'Apple TV+', _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
+    { id:76479,  name:'For All Mankind',               first_air_date:'2026-05-06', _networkLabel:'Apple TV+', _seasonNum:5, _episodeNum:1, _isSeason:true,  genre_ids:[10765] },
+    { id:241609, name:"Your Friends & Neighbors",      first_air_date:'2026-04-11', _networkLabel:'Apple TV+', _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[35,18] },
+    // Hulu
+    { id:246472, name:'Deli Boys',                     first_air_date:'2026-05-28', _networkLabel:'Hulu',      _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[35,80] },
+    // Showtime
+    { id:72071,  name:'The Chi',                       first_air_date:'2026-05-22', _networkLabel:'Showtime',  _seasonNum:8, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
+    // STARZ
+    { id:124394, name:'Power Book III: Raising Kanan', first_air_date:'2026-06-12', _networkLabel:'STARZ',     _seasonNum:5, _episodeNum:1, _isSeason:true,  genre_ids:[18,80] },
+    { id:8840,   name:'Fightland',                     first_air_date:'2026-07-31', _networkLabel:'STARZ',     _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18] },
+    // Netflix
+    { id:154385, name:'Beef',                          first_air_date:'2026-06-01', _networkLabel:'Netflix',   _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18,35] },
+    { id:262388, name:'Man on Fire',                   first_air_date:'2026-04-30', _networkLabel:'Netflix',   _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
+    // Paramount+
+    { id:225891, name:'The Madison',                   first_air_date:'2026-03-14', _networkLabel:'Paramount+',_seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
+    // Netflix (continued)
+    { id:227139, name:'Survival of the Thickest',     first_air_date:'2026-07-02', _networkLabel:'Netflix',   _seasonNum:3, _episodeNum:1, _isSeason:true,  genre_ids:[35,18] },
+    { id:278624, name:'Lucky',                        first_air_date:'2026-07-14', _networkLabel:'Apple TV+', _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
+    { id:117581, name:'Ginny & Georgia',              first_air_date:'2026-07-16', _networkLabel:'Netflix',   _seasonNum:4, _episodeNum:1, _isSeason:true,  genre_ids:[35,18] },
+    { id:305357, name:'A Different World',            first_air_date:'2026-09-24', _networkLabel:'Netflix',   _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[35,18] },
+    { id:241882, name:'Ride or Die',                   first_air_date:'2026-07-15', _networkLabel:'Prime Video',_seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,28] },
+    { id:286709, name:'The Westies',                   first_air_date:'2026-07-12', _networkLabel:'MGM+',      _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
+    { id:82428,  name:'All American',                  first_air_date:'2026-07-13', _networkLabel:'The CW',    _seasonNum:8, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
+    { id:283151, name:'Five Star Weekend',             first_air_date:'2026-07-16', _networkLabel:'Peacock',   _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[10764] },
+    { id:113962, name:'Lioness',                       first_air_date:'2026-08-01', _networkLabel:'Paramount+',_seasonNum:3, _episodeNum:1, _isSeason:true,  genre_ids:[18,28] },
+    { id:95350,  name:'Lanterns',                      first_air_date:'2026-08-16', _networkLabel:'HBO / Max', _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,10765] },
+    // HBO/Max
+    { id:94997,  name:'House of the Dragon',           first_air_date:'2026-07-15', _networkLabel:'HBO / Max', _seasonNum:3, _episodeNum:1, _isSeason:true,  genre_ids:[18,10765] },
+  ]
+
+  // Filter static premieres to match current month/network
+  const staticFiltered = STATIC_PREMIERES.filter(s => {
+    const inRange = s.first_air_date >= first && s.first_air_date <= last
+    const netMatch = !selectedNetworkLabel || selectedNetworkLabel === 'All' || s._networkLabel === selectedNetworkLabel
+    return inRange && netMatch
+  })
 
   const seen = new Set()
   return [...tmdbPerNetwork.flat(), ...lambdaShows, ...staticFiltered]
