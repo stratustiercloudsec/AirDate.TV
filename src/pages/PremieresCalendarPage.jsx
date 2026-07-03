@@ -367,8 +367,14 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         const season = findSeasonPremiereInRange(detail, first, last)
         if (!season) continue
         seasonPremierIds.set(show.id, season.air_date)
+        const latestPoster2 = (() => {
+          if (detail?.poster_path) return detail.poster_path
+          const valid = (detail?.seasons||[]).filter(s=>s.season_number>0&&s.poster_path)
+          return valid.length ? valid[valid.length-1].poster_path : (show.poster_path||null)
+        })()
         seasonPremieres.push({
           ...show,
+          poster_path:    latestPoster2,
           first_air_date: season.air_date,
           _networkLabel:  netLabel || (detail.networks?.[0]?.name || ''),
           _seasonNum:     season.season_number,
@@ -414,8 +420,14 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         if (seasonPremierIds.has(show.id) && episodeDate === seasonPremierIds.get(show.id)) continue
         if (newIds.has(show.id) && episodeDate === show.first_air_date) continue
 
+        const latestPoster1 = (() => {
+          if (detail?.poster_path) return detail.poster_path
+          const valid = (detail?.seasons||[]).filter(s=>s.season_number>0&&s.poster_path)
+          return valid.length ? valid[valid.length-1].poster_path : (show.poster_path||null)
+        })()
         continuingShows.push({
           ...show,
+          poster_path:    latestPoster1,
           first_air_date: episodeDate,
           _networkLabel:  netLabel || (detail.networks?.[0]?.name || ''),
           _seasonNum:     seasonNum,

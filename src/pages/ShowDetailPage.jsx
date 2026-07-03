@@ -10,6 +10,12 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
 import { API_BASE, IMAGE_BASE } from '@/config/aws'
+
+// Current-season trailer overrides — for shows where TMDB lacks latest season videos
+const TRAILER_OVERRIDES = {
+  85077:  'hhycaf6tuVs',  // The Chosen S6
+  113962: 'jNRQ0PR4a8U',  // Lioness S3 (Paramount+ official teaser)
+}
 import { usePoster, createDefaultPoster } from '@/utils/poster'
 import { RatingBadge } from '@/utils/contentRating.jsx'
 import PredictionBadge from '../components/PredictionBadge'
@@ -758,7 +764,7 @@ export function ShowDetailPage() {
         fetch(`${API_BASE}/show/${id}/providers`).then(r=>r.json()).then(gw).catch(()=>({})),
         // Recommendations — Lambda first, fall back to TMDB if empty
         fetch(`${API_BASE}/show/${id}/recommendations`).then(r=>r.json()).then(gw).catch(()=>({})),
-        // Videos — direct TMDB (no Lambda route for this)
+        // Videos — direct TMDB
         tmdbVideos(id),
         // TMDB providers fallback
         tmdbProviders(id),
@@ -788,13 +794,48 @@ export function ShowDetailPage() {
         }))
         setRecs(finalRecs)
 
-        // Trailer
-        const vid=videoData.results?.find(v=>v.type==='Trailer'&&v.site==='YouTube')||videoData.results?.find(v=>v.site==='YouTube')
+        // Trailer — pick most recent by published_at
+        const vids = videoData.results || []
+        const trailers = vids.filter(v => v.site==='YouTube' && ['Trailer','Teaser'].includes(v.type)).sort((a,b)=>new Date(b.published_at||0)-new Date(a.published_at||0))
+        const vid = trailers[0] || vids.find(v=>v.site==='YouTube')
         if (vid) setYoutubeId(vid.key)
+        // Override with current-season trailer if available
+        const override = TRAILER_OVERRIDES[parseInt(id)]
+        if (override) setYoutubeId(override)
       }).catch(()=>{})
 
     }).catch(()=>{setError(true);setLoading(false)})
   },[id,token])
+
+  // ── Trailer: fetch current-season trailer after show data loads ──────────
+  useEffect(() => {
+    if (!id || !show) return
+    // Check override first — for shows where TMDB lacks latest season videos
+    const overrideKey = TRAILER_OVERRIDES[parseInt(id)]
+    if (overrideKey) { setYoutubeId(overrideKey); return }
+    const seasonNum = requestedSeason ||
+      (show?.season_number && show.season_number > 0 ? show.season_number : null) ||
+      show?.next_episode_to_air?.season_number ||
+      show?.number_of_seasons ||
+      null
+    fetch(`${API_BASE}/get-trailer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tmdb_id: parseInt(id), season_number: seasonNum })
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data?.trailer_url) {
+          try {
+            const u = new URL(data.trailer_url)
+            const key = u.searchParams.get('v') || u.pathname.split('/').pop()
+            if (key) setYoutubeId(key)
+          } catch {}
+        }
+      })
+      .catch(() => {})
+  }, [id, show?.id])
+
 
   function handleTrack() {
     if (!show) return

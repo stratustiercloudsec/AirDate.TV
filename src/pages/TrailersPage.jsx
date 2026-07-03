@@ -169,6 +169,7 @@ function mapTMDB(s) {
 
 // By TMDB ID — confirmed IDs (fastest lookup, no ambiguity)
 const TRAILER_OVERRIDES_BY_ID = {
+  85077:  'hhycaf6tuVs',  // The Chosen S6
   124394: 'U7RT9LZ_6M0',   // Power Book III: Raising Kanan — S5 trailer
   203744: 'WJMbHySi5eQ',   // Sugar (Colin Farrell, Apple TV+) — S2 trailer
   219971: 'cYpslA2ytis',   // The Agency (Fassbender, Paramount+) — S2 trailer

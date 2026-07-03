@@ -135,16 +135,15 @@ async function enrichWithNetwork(shows) {
       network:        s.network || detail?.networks?.[0]?.name || '',
       content_rating: usRating,
       poster_path:    (() => {
-        // Use show-level poster (en-US guaranteed) as primary
-        // Season poster may be localized if TMDB lacks English key art
-        if (detail?.poster_path) return detail.poster_path
+        // Priority: latest season poster → show-level poster → original
         if (detail?.seasons?.length) {
           const valid = detail.seasons.filter(s => s.season_number > 0 && s.poster_path)
           if (valid.length) return valid[valid.length - 1].poster_path
         }
-        return s.poster_path || null
+        return detail?.poster_path || s.poster_path || null
       })(),
       backdrop_path:  s.backdrop_path || detail?.backdrop_path || null,
+      _detail:        detail || null,
     }
   })
 }
@@ -730,8 +729,54 @@ export function SearchPage() {
     setHeader(`Results for "${q}"`)
     setCount('')
     try {
+      // When network filter is active, use TMDB search + client-side network filter
+      // (Lambda /get-premieres with network= returns all network shows, ignoring query)
+      if (network && network !== 'All') {
+        const tmdbData = await tmdbSearchTV(q, overridePage)
+        const tmdbMapped = (tmdbData.results ?? []).map(mapTMDB)
+        const tmdbEnriched = await enrichWithNetwork(tmdbMapped)
+        // Filter by network — strict match, no fallback to unfiltered
+        const NETWORK_ALIASES = {
+          'hbo / max': ['hbo','max','hbo max'],
+          'prime video': ['prime video','amazon','prime'],
+          'apple tv+': ['apple tv','apple tv+'],
+          'paramount+': ['paramount+','paramount plus','showtime'],
+          'disney+': ['disney+','disney plus'],
+        }
+        const netFilter = network.toLowerCase()
+        const aliases = NETWORK_ALIASES[netFilter] || [netFilter]
+        const filtered = tmdbEnriched.filter(s => {
+          const net = (s.network || s._networkLabel || '').toLowerCase()
+          return aliases.some(a => net === a || net.includes(a) || a.includes(net))
+        })
+        // If nothing matches the network filter, show 0 results
+        if (!filtered.length) {
+          setResults([])
+          setHeader(`Results for "${q}"`)
+          setCount('0 results')
+          setTotalPages(1)
+          return
+        }
+        const base = filtered
+        const expanded = base.flatMap(s => {
+          const detail = s._detail
+          const seasons = (detail?.seasons || []).filter(ss => ss.season_number > 0 && ss.air_date)
+          if (seasons.length > 1) {
+            return seasons.map(ss => ({
+              ...s,
+              poster_path: ss.poster_path || s.poster_path,
+              first_air_date: ss.air_date,
+              _seasonNum: ss.season_number,
+            }))
+          }
+          return [s]
+        })
+        setResults(expanded)
+        setHeader(`Results for "${q}"`)
+        setCount(`${expanded.length} results`)
+        setTotalPages(tmdbData.total_pages ?? 1)
+      } else {
       const payload = { query:q, page:overridePage, per_page:20, cache_bust: true }
-      if (network && network !== 'All') payload.network = network
       const res  = await fetch(`${API_BASE}/get-premieres`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload),
@@ -741,15 +786,19 @@ export function SearchPage() {
       const results = (data.results ?? data.shows ?? []).map(normalizeShow)
       if (results.length === 0) {
         const tmdbData = await tmdbSearchTV(q, overridePage)
-        setResults((tmdbData.results ?? []).map(mapTMDB))
+        const tmdbMapped = (tmdbData.results ?? []).map(mapTMDB)
+        const tmdbEnriched = await enrichWithNetwork(tmdbMapped)
+        setResults(tmdbEnriched)
         setHeader(`Results for "${q}"`)
         setCount(tmdbData.total_results ? `${tmdbData.total_results.toLocaleString()} results` : '')
         setTotalPages(tmdbData.total_pages ?? 1)
       } else {
-        setResults(results)
+        const enriched = await enrichWithNetwork(results)
+        setResults(enriched)
         setHeader(data.header || `Results for "${q}"`)
         setCount(data.pagination?.total ? `${data.pagination.total.toLocaleString()} results` : `${results.length} results`)
         setTotalPages(data.pagination?.pages ?? 1)
+      }
       }
       setPage(overridePage)
       if (data?.leaderboard?.length) setLeaderboard(data.leaderboard)
