@@ -558,6 +558,7 @@ export function SearchPage() {
   const [trending,          setTrending]      = useState([])
   const [top10,             setTop10]         = useState([])
   const [thisWeek,          setThisWeek]      = useState([])
+  const [tmdbWeekResults, setTmdbWeekResults] = useState([])
   const curatedShows = useCurated()
   const [nextMonth,         setNextMonth]     = useState([])
   const [leaderboard,       setLeaderboard]   = useState([])
@@ -591,25 +592,15 @@ export function SearchPage() {
       const enriched = await enrichWithNetwork(shows)
       setTop10(dedupById(enriched.filter(isEnglishShow)).slice(0,10))
     }).catch(()=>{}).finally(()=>setLoadTop10(false))
-
     setLoadWeek(true)
     const weekStart = startOfWeek()
     const weekEnd   = endOfWeek()
-    // Curated shows from API — filtered to current week
-    const WEEK_CURATED = curatedShows
-      .filter(s => s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
-      .map(s => ({ ...s, _networkLabel: s.network, original_language: 'en' }))
-
-    // Multi-network parallel sweep for this week — ensures major streaming shows surface
-    // regardless of global popularity ranking
     const NETWORK_WEIGHT = {
       'netflix':100,'hbo / max':100,'max':100,'apple tv+':95,'hulu':95,
       'disney+':95,'prime video':90,'peacock':88,'paramount+':85,'starz':85,
       'showtime':85,'mgm+':80,'fx':80,'amc':78,'bet+':75,'cbs':70,
       'nbc':70,'abc':70,'fox':68,'the cw':65,'tubi':60,'bbc america':55,
     }
-    const nw = s => NETWORK_WEIGHT[(s._networkLabel||s.network||'').toLowerCase()] ?? 10
-
     Promise.all(
       AFFILIATE_NETWORK_IDS.map(nid =>
         tmdbDiscover({
@@ -631,17 +622,10 @@ export function SearchPage() {
         .filter(isRecentShow)
       const enriched = await enrichWithNetwork(unique)
       const tmdbResults = dedupById(enriched.filter(isEnglishShow))
-      // Enrich curated shows to fetch posters + network details from TMDB
-      const curatedEnriched = await enrichWithNetwork(WEEK_CURATED)
-      // Merge curated + TMDB, deduplicate, sort by network weight then date
-      const merged = dedupById([...curatedEnriched, ...tmdbResults])
-        .sort((a,b) => {
-          const nwDiff = nw(b) - nw(a)
-          const dc = (a.first_air_date||'').localeCompare(b.first_air_date||'')
-          return dc !== 0 ? dc : nwDiff
-        })
-      setThisWeek(merged)
+      setTmdbWeekResults(tmdbResults)
     }).catch(()=>{}).finally(()=>setLoadWeek(false))
+
+
 
     setLoadMonth(true)
     const lastDay = new Date(nmYear, nmMonth, 0).getDate()
@@ -713,6 +697,30 @@ export function SearchPage() {
       if (d?.leaderboard) setLeaderboard(d.leaderboard)
     }).catch(()=>{})
   }, [])
+
+  // Merge useEffect — runs when TMDB results OR curated data changes
+  useEffect(() => {
+    if (!tmdbWeekResults.length && !curatedShows.length) return
+    const weekStart = startOfWeek()
+    const weekEnd   = endOfWeek()
+    const NETWORK_WEIGHT = {
+      'netflix':100,'hbo / max':100,'max':100,'apple tv+':95,'hulu':95,
+      'disney+':95,'prime video':90,'peacock':88,'paramount+':85,'starz':85,
+      'showtime':85,'mgm+':80,'fx':80,'amc':78,'bet+':75,'cbs':70,
+      'nbc':70,'abc':70,'fox':68,'the cw':65,'tubi':60,'bbc america':55,
+    }
+    const nw = s => NETWORK_WEIGHT[(s._networkLabel||s.network||'').toLowerCase()] ?? 10
+    const weekCurated = curatedShows
+      .filter(s => s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
+      .map(s => ({ ...s, _networkLabel: s.network, original_language: 'en' }))
+    const merged = dedupById([...weekCurated, ...tmdbWeekResults])
+      .sort((a,b) => {
+        const nwDiff = nw(b) - nw(a)
+        const dc = (a.first_air_date||'').localeCompare(b.first_air_date||'')
+        return dc !== 0 ? dc : nwDiff
+      })
+    setThisWeek(merged)
+  }, [tmdbWeekResults, curatedShows])
 
   async function handleSearch(overrideQuery, overridePage=1) {
     const q = overrideQuery ?? query
