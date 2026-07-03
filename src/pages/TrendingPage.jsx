@@ -34,6 +34,43 @@ const GENRES = [
   { label: 'Reality',   id: '10764' },
 ]
 
+// Networks that should never appear in Most Anticipated or Trending
+const EXCLUDED_NETWORK_NAMES = new Set([
+  // Foreign streaming platforms
+  'youku','iqiyi','bilibili','mango tv','tencent video',
+  'wavve','tving','coupang play','kbs','mbc','sbs','tvn','jtbc','ocn',
+  'ena','channel a','mbn','tv chosun','sky showtime','dstv','canal+','rtl',
+  'kanal d','show tv','fox turkey','star tv','tv8','atv',
+  'viutv','tvb','now tv','mewatch','mediacorp',
+  'globoplay','univisión','telemundo','televisa',
+  'voot','zee5','sonyliv','hotstar','sun nxt','aha',
+  // Non-traditional / obscure platforms
+  'youtube','delasol','rizzler news','usa network','nickelodeon',
+  'cartoon network','adult swim','discovery+','investigation discovery',
+  'history','lifetime','hallmark','cooking channel','food network',
+  'travel channel','animal planet','natgeo','national geographic',
+])
+
+// Only show major streaming + broadcast networks in Most Anticipated
+const ALLOWED_NETWORKS = new Set([
+  'netflix','hbo','hbo / max','max','apple tv+','hulu','disney+',
+  'prime video','amazon','peacock','paramount+','starz','showtime',
+  'mgm+','fx','amc','bet+','tv one','bravo','cbs','nbc','abc',
+  'fox','the cw','tubi','bbc america','epix','AMC+',
+])
+
+function isAllowedNetwork(networkName) {
+  // Default: allow anything not explicitly excluded
+  // This prevents over-filtering legitimate upcoming shows
+  if (!networkName) return true
+  const nl = networkName.toLowerCase()
+  return !EXCLUDED_NETWORK_NAMES.has(nl) &&
+    !['youku','iqiyi','bilibili','wavve','tving','kanal','tencent',
+      'viutv','tvb','mewatch','globo','univision','telemundo','televisa',
+      'voot','zee5','sonyliv','hotstar','fuji','tokyo mx','nhk',
+      'rizzler','delasol'].some(k => nl.includes(k))
+}
+
 function todayISO() {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
@@ -81,6 +118,16 @@ async function fetchNetworksMap(shows) {
   shows.forEach((s, i) => {
     const data = results[i].status === 'fulfilled' ? results[i].value : null
     map[s.id] = data?.networks?.[0]?.name || ''
+    // Use show-level poster_path (en-US guaranteed by tmdbShow call)
+    // Season-level posters may be localized if TMDB lacks English key art
+    if (data?.poster_path) {
+      s.poster_path = data.poster_path
+    } else if (data?.seasons?.length) {
+      const validSeasons = data.seasons.filter(s => s.season_number > 0 && s.poster_path)
+      if (validSeasons.length) {
+        s.poster_path = validSeasons[validSeasons.length - 1].poster_path
+      }
+    }
   })
   return map
 }
@@ -264,8 +311,8 @@ export function TrendingPage() {
       // Non-blocking ratings enrichment — fires after cards render
       fetchRatingsMap(week).then(setWeekRatings).catch(() => {})
       fetchRatingsMap(finalRising).then(setRisingRatings).catch(() => {})
-      fetchNetworksMap(week).then(setWeekNetworks).catch(() => {})
-      fetchNetworksMap(finalRising).then(setRisingNetworks).catch(() => {})
+      fetchNetworksMap(week).then(netMap => { setWeekNetworks(netMap); setTrendingWeek([...week]) }).catch(() => {})
+      fetchNetworksMap(finalRising).then(netMap => { setRisingNetworks(netMap); setRising([...finalRising]) }).catch(() => {})
     }).catch(() => {}).finally(() => { setLoad('week', false); setLoad('rising', false) })
 
     // Most Anticipated
@@ -274,7 +321,12 @@ export function TrendingPage() {
       .then(r => {
         const sliced = r.slice(0, 12)
         setAnticipated(sliced)
-        fetchNetworksMap(sliced).then(setAnticipatedNetworks).catch(() => {})
+        fetchNetworksMap(sliced).then(netMap => {
+          setAnticipatedNetworks(netMap)
+          // Filter out foreign/non-English networks from Most Anticipated
+          const filtered = sliced.filter(s => isAllowedNetwork(netMap[s.id] || ''))
+          setAnticipated(filtered)
+        }).catch(() => {})
       })
       .catch(() => {})
       .finally(() => setLoad('anticipated', false))

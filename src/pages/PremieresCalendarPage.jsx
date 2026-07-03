@@ -455,7 +455,6 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
     { id:241609, name:"Your Friends & Neighbors",      first_air_date:'2026-04-11', _networkLabel:'Apple TV+', _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[35,18] },
     // Hulu
     { id:246472, name:'Deli Boys',                     first_air_date:'2026-05-28', _networkLabel:'Hulu',      _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[35,80] },
-    { id:87108,  name:'The Bear',                      first_air_date:'2026-07-01', _networkLabel:'Hulu',      _seasonNum:4, _episodeNum:1, _isSeason:true,  genre_ids:[18,35] },
     // Showtime
     { id:72071,  name:'The Chi',                       first_air_date:'2026-05-22', _networkLabel:'Showtime',  _seasonNum:8, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
     // STARZ
@@ -465,8 +464,12 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
     { id:154385, name:'Beef',                          first_air_date:'2026-06-01', _networkLabel:'Netflix',   _seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18,35] },
     { id:262388, name:'Man on Fire',                   first_air_date:'2026-04-30', _networkLabel:'Netflix',   _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
     // Paramount+
-    { id:153312, name:'Tulsa King',                    first_air_date:'2026-07-01', _networkLabel:'Paramount+',_seasonNum:4, _episodeNum:1, _isSeason:true,  genre_ids:[18,80] },
     { id:225891, name:'The Madison',                   first_air_date:'2026-03-14', _networkLabel:'Paramount+',_seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
+    // Netflix (continued)
+    { id:227139, name:'Survival of the Thickest',     first_air_date:'2026-07-02', _networkLabel:'Netflix',   _seasonNum:3, _episodeNum:1, _isSeason:true,  genre_ids:[35,18] },
+    { id:278624, name:'Lucky',                        first_air_date:'2026-07-14', _networkLabel:'Apple TV+', _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
+    { id:117581, name:'Ginny & Georgia',              first_air_date:'2026-07-16', _networkLabel:'Netflix',   _seasonNum:4, _episodeNum:1, _isSeason:true,  genre_ids:[35,18] },
+    { id:305357, name:'A Different World',            first_air_date:'2026-09-24', _networkLabel:'Netflix',   _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[35,18] },
     // HBO/Max
     { id:94997,  name:'House of the Dragon',           first_air_date:'2026-07-15', _networkLabel:'HBO / Max', _seasonNum:3, _episodeNum:1, _isSeason:true,  genre_ids:[18,10765] },
   ]

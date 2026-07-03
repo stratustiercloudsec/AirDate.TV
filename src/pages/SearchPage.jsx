@@ -133,7 +133,16 @@ async function enrichWithNetwork(shows) {
       ...s,
       network:        s.network || detail?.networks?.[0]?.name || '',
       content_rating: usRating,
-      poster_path:    s.poster_path || detail?.poster_path || null,
+      poster_path:    (() => {
+        // Use show-level poster (en-US guaranteed) as primary
+        // Season poster may be localized if TMDB lacks English key art
+        if (detail?.poster_path) return detail.poster_path
+        if (detail?.seasons?.length) {
+          const valid = detail.seasons.filter(s => s.season_number > 0 && s.poster_path)
+          if (valid.length) return valid[valid.length - 1].poster_path
+        }
+        return s.poster_path || null
+      })(),
       backdrop_path:  s.backdrop_path || detail?.backdrop_path || null,
     }
   })
@@ -587,12 +596,14 @@ export function SearchPage() {
     // Curated returning seasons — guaranteed to appear in thisWeek
     // TMDB discover only finds new series; returning seasons need explicit injection
     const WEEK_CURATED = [
+      // Week of Jun 29 – Jul 5, 2026
+      { id:227139, name:'Survival of the Thickest',      first_air_date:'2026-07-02', _networkLabel:'Netflix',    original_language:'en' },
+      { id:94997,  name:'House of the Dragon',           first_air_date:'2026-07-15', _networkLabel:'HBO / Max',  original_language:'en' },
+      { id:278624, name:'Lucky',                         first_air_date:'2026-07-14', _networkLabel:'Apple TV+',  original_language:'en' },
+      { id:117581, name:'Ginny & Georgia',               first_air_date:'2026-07-16', _networkLabel:'Netflix',    original_language:'en' },
+      { id:305357, name:'A Different World',             first_air_date:'2026-09-24', _networkLabel:'Netflix',    original_language:'en' },
       { id:124394, name:'Power Book III: Raising Kanan', first_air_date:'2026-06-12', _networkLabel:'STARZ',      original_language:'en' },
-      { id:322803, name:'Outlast: The Jungle',           first_air_date:'2026-06-10', _networkLabel:'Netflix',    original_language:'en' },
-      { id:322426, name:'Norway: The Dark Horse',        first_air_date:'2026-06-09', _networkLabel:'Netflix',    original_language:'en' },
-      { id:312493, name:'Viral Hit',                     first_air_date:'2026-06-11', _networkLabel:'Netflix',    original_language:'en' },
-      { id:252257, name:"AMERICA'S SWEETHEARTS: Dallas Cowboys Cheerleaders Season 3", first_air_date:'2026-06-15', _networkLabel:'Netflix', original_language:'en' },
-      { id:203744, name:'Sugar Season 2', first_air_date:'2026-06-18', _networkLabel:'Apple TV+', original_language:'en' },
+      { id:72071,  name:'The Chi',                       first_air_date:'2026-05-22', _networkLabel:'Paramount+', original_language:'en' },
     ].filter(s => s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
 
     // Multi-network parallel sweep for this week — ensures major streaming shows surface
