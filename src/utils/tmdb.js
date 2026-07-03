@@ -18,4 +18,16 @@ export const tmdbDiscover       = (params = {}) => tmdbFetch('/discover/tv', { l
 export const tmdbCredits        = (id) => tmdbFetch(`/tv/${id}/credits`);
 export const tmdbProviders      = (id) => tmdbFetch(`/tv/${id}/watch/providers`);
 export const tmdbRecommendations= (id) => tmdbFetch(`/tv/${id}/recommendations`, { language: 'en-US', page: 1 });
+
+export async function fetchCuratedPremieres() {
+  try {
+    const res = await fetch(`${API_BASE}/curated/premieres`);
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.shows || []
+  } catch (e) {
+    console.error('fetchCuratedPremieres error:', e)
+    return []
+  }
+}
 export const tmdbOnTheAir       = (page = 1) => tmdbFetch('/tv/on_the_air', { page });
