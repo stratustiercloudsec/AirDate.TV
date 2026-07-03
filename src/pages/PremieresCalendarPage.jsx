@@ -6,6 +6,7 @@ import { usePoster }    from '@/utils/poster'
 import { Footer }       from '@/components/layout/Footer'
 import { API_BASE }     from '@/config/aws'
 import { tmdbFetch, tmdbShow, tmdbDiscover, tmdbSeason } from '../utils/tmdb'
+import { correctAirDate } from '../utils/airdate'
 
 const NETWORK_MAP = {
   'Netflix':      [213],
@@ -375,7 +376,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         seasonPremieres.push({
           ...show,
           poster_path:    latestPoster2,
-          first_air_date: season.air_date,
+          first_air_date: correctAirDate(season.air_date, netLabel || (detail.networks?.[0]?.name || '')),
           _networkLabel:  netLabel || (detail.networks?.[0]?.name || ''),
           _seasonNum:     season.season_number,
           _episodeNum:    1,
@@ -428,7 +429,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
         continuingShows.push({
           ...show,
           poster_path:    latestPoster1,
-          first_air_date: episodeDate,
+          first_air_date: correctAirDate(episodeDate, netLabel || (detail.networks?.[0]?.name || '')),
           _networkLabel:  netLabel || (detail.networks?.[0]?.name || ''),
           _seasonNum:     seasonNum,
           _episodeNum:    episodeNum,
