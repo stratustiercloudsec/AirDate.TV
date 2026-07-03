@@ -602,6 +602,12 @@ export function SearchPage() {
       { id:278624, name:'Lucky',                         first_air_date:'2026-07-14', _networkLabel:'Apple TV+',  original_language:'en' },
       { id:117581, name:'Ginny & Georgia',               first_air_date:'2026-07-16', _networkLabel:'Netflix',    original_language:'en' },
       { id:305357, name:'A Different World',             first_air_date:'2026-09-24', _networkLabel:'Netflix',    original_language:'en' },
+      { id:241882, name:'Ride or Die',                   first_air_date:'2026-07-15', _networkLabel:'Prime Video', original_language:'en' },
+      { id:286709, name:'The Westies',                   first_air_date:'2026-07-12', _networkLabel:'MGM+',        original_language:'en' },
+      { id:82428,  name:'All American',                  first_air_date:'2026-07-13', _networkLabel:'The CW',      original_language:'en' },
+      { id:283151, name:'Five Star Weekend',             first_air_date:'2026-07-16', _networkLabel:'Peacock',     original_language:'en' },
+      { id:113962, name:'Lioness',                       first_air_date:'2026-08-01', _networkLabel:'Paramount+',  original_language:'en' },
+      { id:95350,  name:'Lanterns',                      first_air_date:'2026-08-16', _networkLabel:'HBO / Max',   original_language:'en' },
       { id:124394, name:'Power Book III: Raising Kanan', first_air_date:'2026-06-12', _networkLabel:'STARZ',      original_language:'en' },
       { id:72071,  name:'The Chi',                       first_air_date:'2026-05-22', _networkLabel:'Paramount+', original_language:'en' },
     ].filter(s => s.first_air_date >= weekStart && s.first_air_date <= weekEnd)

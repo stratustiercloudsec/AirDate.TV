@@ -315,20 +315,39 @@ export function TrendingPage() {
       fetchNetworksMap(finalRising).then(netMap => { setRisingNetworks(netMap); setRising([...finalRising]) }).catch(() => {})
     }).catch(() => {}).finally(() => { setLoad('week', false); setLoad('rising', false) })
 
-    // Most Anticipated
+    // Most Anticipated — new series from TMDB + curated returning seasons
     setLoad('anticipated', true)
+    // Curated returning seasons TMDB discover misses (show-level date is in the past)
+    const ANTICIPATED_CURATED = [
+      { id:94997,  name:'House of the Dragon',      first_air_date:'2026-07-15', poster_path:null, network:'HBO / Max'   },
+      { id:82428,  name:'All American',             first_air_date:'2026-07-13', poster_path:null, network:'The CW'      },
+      { id:278624, name:'Lucky',                    first_air_date:'2026-07-14', poster_path:null, network:'Apple TV+'   },
+      { id:286709, name:'The Westies',              first_air_date:'2026-07-12', poster_path:null, network:'MGM+'        },
+      { id:283151, name:'Five Star Weekend',        first_air_date:'2026-07-16', poster_path:null, network:'Peacock'     },
+      { id:241882, name:'Ride or Die',               first_air_date:'2026-07-15', poster_path:null, network:'Prime Video' },
+      { id:117581, name:'Ginny & Georgia',          first_air_date:'2026-07-16', poster_path:null, network:'Netflix'     },
+      { id:113962, name:'Lioness',                  first_air_date:'2026-08-01', poster_path:null, network:'Paramount+'  },
+      { id:95350,  name:'Lanterns',                 first_air_date:'2026-08-16', poster_path:null, network:'HBO / Max'   },
+      { id:305357, name:'A Different World',        first_air_date:'2026-09-24', poster_path:null, network:'Netflix'     },
+      { id:227139, name:'Survival of the Thickest', first_air_date:'2026-07-02', poster_path:null, network:'Netflix'    },
+    ]
     tmdb(`/discover/tv?sort_by=popularity.desc&first_air_date.gte=${todayISO()}&with_original_language=en`)
-      .then(r => {
-        const sliced = r.slice(0, 12)
-        setAnticipated(sliced)
-        fetchNetworksMap(sliced).then(netMap => {
-          setAnticipatedNetworks(netMap)
-          // Filter out foreign/non-English networks from Most Anticipated
-          const filtered = sliced.filter(s => isAllowedNetwork(netMap[s.id] || ''))
-          setAnticipated(filtered)
-        }).catch(() => {})
+      .then(async r => {
+        // Merge curated + TMDB, deduplicate by id, sort by date
+        const tmdbIds = new Set(r.map(s => s.id))
+        const merged = [
+          ...ANTICIPATED_CURATED,
+          ...r.filter(s => !ANTICIPATED_CURATED.some(c => c.id === s.id))
+        ].sort((a, b) => (a.first_air_date || '').localeCompare(b.first_air_date || ''))
+        setAnticipated(merged.slice(0, 15))
+        const netMap = await fetchNetworksMap(merged.slice(0, 15))
+        setAnticipatedNetworks(netMap)
+        const filtered = merged
+          .slice(0, 15)
+          .filter(s => isAllowedNetwork(netMap[s.id] || s.network || ''))
+        setAnticipated(filtered)
       })
-      .catch(() => {})
+      .catch(() => { setAnticipated(ANTICIPATED_CURATED) })
       .finally(() => setLoad('anticipated', false))
   }, [])
 

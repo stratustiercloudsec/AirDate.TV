@@ -470,6 +470,12 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
     { id:278624, name:'Lucky',                        first_air_date:'2026-07-14', _networkLabel:'Apple TV+', _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
     { id:117581, name:'Ginny & Georgia',              first_air_date:'2026-07-16', _networkLabel:'Netflix',   _seasonNum:4, _episodeNum:1, _isSeason:true,  genre_ids:[35,18] },
     { id:305357, name:'A Different World',            first_air_date:'2026-09-24', _networkLabel:'Netflix',   _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[35,18] },
+    { id:241882, name:'Ride or Die',                   first_air_date:'2026-07-15', _networkLabel:'Prime Video',_seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,28] },
+    { id:286709, name:'The Westies',                   first_air_date:'2026-07-12', _networkLabel:'MGM+',      _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
+    { id:82428,  name:'All American',                  first_air_date:'2026-07-13', _networkLabel:'The CW',    _seasonNum:8, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
+    { id:283151, name:'Five Star Weekend',             first_air_date:'2026-07-16', _networkLabel:'Peacock',   _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[10764] },
+    { id:113962, name:'Lioness',                       first_air_date:'2026-08-01', _networkLabel:'Paramount+',_seasonNum:3, _episodeNum:1, _isSeason:true,  genre_ids:[18,28] },
+    { id:95350,  name:'Lanterns',                      first_air_date:'2026-08-16', _networkLabel:'HBO / Max', _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,10765] },
     // HBO/Max
     { id:94997,  name:'House of the Dragon',           first_air_date:'2026-07-15', _networkLabel:'HBO / Max', _seasonNum:3, _episodeNum:1, _isSeason:true,  genre_ids:[18,10765] },
   ]
