@@ -63,14 +63,46 @@ function renderRecapMarkdown(raw) {
   if (!raw || typeof raw !== 'string') return raw
   const blocks = raw.trim().split(/\n\n+/)
   return blocks.map(block => {
-    if (!block.trim()) return ''
-    let html = block
+    const t = block.trim()
+    if (!t) return ''
+    // Skip horizontal rules
+    if (/^---+$/.test(t)) return '<hr class="border-white/10 my-3"/>'
+    // H1 — # Title
+    if (/^# /.test(t)) {
+      const txt = t.replace(/^# /, '')
+      return `<h2 class="text-xl font-black text-white uppercase tracking-tight mb-4">${txt}</h2>`
+    }
+    // H2 — ## Section (may have body text on same line)
+    if (/^## /.test(t)) {
+      const rest = t.replace(/^## /, '')
+      // Check if there's body content after the heading (single line with ## HEADING body...)
+      const colonIdx = rest.search(/\s{2,}|(?<=\w)\s(?=[A-Z][a-z])/)
+      // Split heading from body if content runs on
+      const lines = t.split('\n')
+      const heading = lines[0].replace(/^## /, '')
+      const body = lines.slice(1).join('\n').trim()
+      let html = `<p class="text-cyan-400 font-black text-xs uppercase tracking-widest mt-5 mb-2">${heading}</p>`
+      if (body) {
+        const bodyHtml = body
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
+          .replace(/\*(.+?)\*/g, '<em class="italic text-slate-300">$1</em>')
+        html += `<p class="text-slate-200 text-sm leading-relaxed mb-3">${bodyHtml}</p>`
+      }
+      return html
+    }
+    // H3 — ### Sub-section
+    if (/^### /.test(t)) {
+      const txt = t.replace(/^### /, '')
+      return `<p class="text-slate-300 font-bold text-xs uppercase tracking-wider mt-3 mb-1">${txt}</p>`
+    }
+    // Normal paragraph — escape HTML then apply inline markdown
+    let html = t
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/\*\*([^*]+?:)\*\*/g,
-        '</p><p class="text-cyan-400 font-black text-xs uppercase tracking-widest mt-4 mb-1">$1</p><p class="text-slate-200 text-sm leading-relaxed mb-3">')
       .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
       .replace(/\*(.+?)\*/g, '<em class="italic text-slate-300">$1</em>')
-    return '<p class="text-slate-200 text-sm leading-relaxed mb-3">' + html + '</p>'
+      .replace(/`(.+?)`/g, '<code class="text-cyan-300 bg-slate-800 px-1 rounded text-xs">$1</code>')
+    return `<p class="text-slate-200 text-sm leading-relaxed mb-3">${html}</p>`
   }).filter(Boolean).join('\n')
 }
 
