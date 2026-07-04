@@ -568,8 +568,9 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
       try {
         const seasonNum = show._seasonNum || 1
         const data = await tmdbSeason(show.id, seasonNum)
+        const networkName = show._networkLabel || ''
         const eps  = (data.episodes || [])
-          .map(ep => ep)
+          .map(ep => ({ ...ep, air_date: correctAirDate(ep.air_date, networkName) }))
           .filter(ep => ep.air_date && ep.air_date >= monthFirst && ep.air_date <= monthLast)
           .sort((a,b) => a.air_date.localeCompare(b.air_date))
         setEpisodes(eps)
