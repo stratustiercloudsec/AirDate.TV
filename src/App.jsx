@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 // Context providers
 import { AuthProvider }         from '@/context/AuthContext'
+import SubscribeModal from '@/components/SubscribeModal'
 import { WatchlistProvider }    from '@/context/WatchlistContext'
 import { NotificationProvider } from '@/context/NotificationContext'
 import { CuratedProvider }     from '@/context/CuratedContext'
@@ -106,6 +107,7 @@ export default function App() {
           </CuratedProvider>
       </NotificationProvider>
         </WatchlistProvider>
+        <SubscribeModal />
       </AuthProvider>
     </BrowserRouter>
   )
