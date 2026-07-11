@@ -633,49 +633,17 @@ export function SearchPage() {
     const lte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`
     ;(async () => {
       try {
-        const dateFilter = {
-          'air_date.gte': gte,
-          'air_date.lte': lte,
-          sort_by: 'popularity.desc',
-          with_original_language: 'en',
-        }
-        // Broad combined fetch — pages 1 & 2 (40 results)
-        const [broadP1, broadP2] = await Promise.all([
-          tmdbDiscover({ ...dateFilter, with_networks: encodeURIComponent(NEXT_MONTH_NETWORK_IDS), page: 1 }).catch(() => ({ results: [] })),
-          tmdbDiscover({ ...dateFilter, with_networks: encodeURIComponent(NEXT_MONTH_NETWORK_IDS), page: 2 }).catch(() => ({ results: [] })),
-        ])
-        // Per-affiliate fetch — guarantees each partner network is represented
-        const perNetworkResults = await Promise.all(
-          AFFILIATE_NETWORK_IDS.map(nid =>
-            tmdbDiscover({ ...dateFilter, with_networks: String(nid), page: 1 })
-              .catch(() => ({ results: [] }))
-          )
-        )
-        // on_the_air catches returning shows that discover misses
-        const onTheAirResults = await tmdbOnTheAir(1).catch(() => ({ results: [] }))
-        const onTheAirP2      = await tmdbOnTheAir(2).catch(() => ({ results: [] }))
-
-        const allRaw = [
-          ...(broadP1.results || []),
-          ...(broadP2.results || []),
-          ...perNetworkResults.flatMap(d => d.results || []),
-          ...(onTheAirResults.results || []),
-          ...(onTheAirP2.results || []),
-        ].filter(s => {
-          if (!s.first_air_date) return false
-          // Must be in target month
-          if (s.first_air_date < gte || s.first_air_date > lte) return false
-          // Block legacy catalog (pre-2015 original air date)
-          const year = parseInt((s.first_air_date||'').slice(0,4), 10)
-          if (!isNaN(year) && year < 2015) return false
-          // Block non-English originals
-          if (s.original_language && s.original_language !== 'en') return false
-          return true
+        // Use the RAG orchestration endpoint — handles returning series (Reacher,
+        // Ted Lasso, Lioness) that client-side first_air_date filters miss.
+        const monthName = new Date(nmYear, nmMonth - 1, 1).toLocaleString('default', { month: 'long' })
+        const res = await fetch(`${API_BASE}/get-premieres`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: `Series premiering in ${monthName} ${nmYear}`, page: 1, per_page: 40 }),
         })
-
-        const mapped   = dedupById(allRaw.map(mapTMDB))
-        const enriched = await enrichWithNetwork(mapped)
-        setNextMonth(dedupById(enriched.filter(isEnglishShow)).slice(0, 40))
+        const gw = await res.json()
+        const data = parseGateway(gw)
+        const mapped = (data.results ?? []).map(normalizeShow)
+        setNextMonth(dedupById(mapped).slice(0, 40))
       } catch (e) { console.error('nextMonth fetch failed', e) }
       finally { setLoadMonth(false) }
     })()
