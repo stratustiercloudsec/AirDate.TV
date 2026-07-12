@@ -87,7 +87,7 @@ function isRecentShow(show) {
 const CHIPS = [
   'Premiering Today',
   'Taylor Sheridan',
-  'True Crime Documentaries 2026',
+  'Documentaries 2026',
   'Award Shows 2026',
   'Reality TV 2026',
   'Comedy 2026',
@@ -698,52 +698,77 @@ export function SearchPage() {
     setHeader(`Results for "${q}"`)
     setCount('')
     try {
-      // When network filter is active, use TMDB search + client-side network filter
-      // (Lambda /get-premieres with network= returns all network shows, ignoring query)
+      let data = null
+      // When network filter is active, route through the RAG orchestration Lambda
+      // first — it now correctly combines genre/keyword resolution with network
+      // filtering (fixed 2026-07-12). Falls back to TMDB title search + client-side
+      // network filter only if the RAG path returns nothing (e.g. genuine title
+      // searches TMDB's own search endpoint handles better).
       if (network && network !== 'All') {
-        const tmdbData = await tmdbSearchTV(q, overridePage)
-        const tmdbMapped = (tmdbData.results ?? []).map(mapTMDB)
-        const tmdbEnriched = await enrichWithNetwork(tmdbMapped)
-        // Filter by network — strict match, no fallback to unfiltered
-        const NETWORK_ALIASES = {
-          'hbo / max': ['hbo','max','hbo max'],
-          'prime video': ['prime video','amazon','prime'],
-          'apple tv+': ['apple tv','apple tv+'],
-          'paramount+': ['paramount+','paramount plus','showtime'],
-          'disney+': ['disney+','disney plus'],
-        }
-        const netFilter = network.toLowerCase()
-        const aliases = NETWORK_ALIASES[netFilter] || [netFilter]
-        const filtered = tmdbEnriched.filter(s => {
-          const net = (s.network || s._networkLabel || '').toLowerCase()
-          return aliases.some(a => net === a || net.includes(a) || a.includes(net))
-        })
-        // If nothing matches the network filter, show 0 results
-        if (!filtered.length) {
-          setResults([])
-          setHeader(`Results for "${q}"`)
-          setCount('0 results')
-          setTotalPages(1)
-          return
-        }
-        const base = filtered
-        const expanded = base.flatMap(s => {
-          const detail = s._detail
-          const seasons = (detail?.seasons || []).filter(ss => ss.season_number > 0 && ss.air_date)
-          if (seasons.length > 1) {
-            return seasons.map(ss => ({
-              ...s,
-              poster_path: ss.poster_path || s.poster_path,
-              first_air_date: ss.air_date,
-              _seasonNum: ss.season_number,
-            }))
+        let ragSucceeded = false
+        try {
+          const payload = { query:q, page:overridePage, per_page:20, network, cache_bust: true }
+          const res = await fetch(`${API_BASE}/get-premieres`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(payload),
+          })
+          const gw = await res.json()
+          data = parseGateway(gw)
+          const ragResults = (data.results ?? data.shows ?? []).map(normalizeShow)
+          if (ragResults.length > 0) {
+            const enriched = await enrichWithNetwork(ragResults)
+            setResults(enriched)
+            setHeader(data.header || `Results for "${q}"`)
+            setCount(data.pagination?.total ? `${data.pagination.total.toLocaleString()} results` : `${ragResults.length} results`)
+            setTotalPages(data.pagination?.pages ?? 1)
+            ragSucceeded = true
           }
-          return [s]
-        })
-        setResults(expanded)
-        setHeader(`Results for "${q}"`)
-        setCount(`${expanded.length} results`)
-        setTotalPages(tmdbData.total_pages ?? 1)
+        } catch (e) { console.error('RAG network search failed', e) }
+
+        if (!ragSucceeded) {
+          const tmdbData = await tmdbSearchTV(q, overridePage)
+          const tmdbMapped = (tmdbData.results ?? []).map(mapTMDB)
+          const tmdbEnriched = await enrichWithNetwork(tmdbMapped)
+          // Filter by network — strict match, no fallback to unfiltered
+          const NETWORK_ALIASES = {
+            'hbo / max': ['hbo','max','hbo max'],
+            'prime video': ['prime video','amazon','prime'],
+            'apple tv+': ['apple tv','apple tv+'],
+            'paramount+': ['paramount+','paramount plus','showtime'],
+            'disney+': ['disney+','disney plus'],
+          }
+          const netFilter = network.toLowerCase()
+          const aliases = NETWORK_ALIASES[netFilter] || [netFilter]
+          const filtered = tmdbEnriched.filter(s => {
+            const net = (s.network || s._networkLabel || '').toLowerCase()
+            return aliases.some(a => net === a || net.includes(a) || a.includes(net))
+          })
+          if (!filtered.length) {
+            setResults([])
+            setHeader(`Results for "${q}"`)
+            setCount('0 results')
+            setTotalPages(1)
+            setPage(overridePage)
+            return
+          }
+          const expanded = filtered.flatMap(s => {
+            const detail = s._detail
+            const seasons = (detail?.seasons || []).filter(ss => ss.season_number > 0 && ss.air_date)
+            if (seasons.length > 1) {
+              return seasons.map(ss => ({
+                ...s,
+                poster_path: ss.poster_path || s.poster_path,
+                first_air_date: ss.air_date,
+                _seasonNum: ss.season_number,
+              }))
+            }
+            return [s]
+          })
+          setResults(expanded)
+          setHeader(`Results for "${q}"`)
+          setCount(`${expanded.length} results`)
+          setTotalPages(tmdbData.total_pages ?? 1)
+        }
       } else {
       const payload = { query:q, page:overridePage, per_page:20, cache_bust: true }
       const res  = await fetch(`${API_BASE}/get-premieres`, {
@@ -751,7 +776,7 @@ export function SearchPage() {
         body: JSON.stringify(payload),
       })
       const gw   = await res.json()
-      const data = parseGateway(gw)
+      data = parseGateway(gw)
       const results = (data.results ?? data.shows ?? []).map(normalizeShow)
       if (results.length === 0) {
         const tmdbData = await tmdbSearchTV(q, overridePage)
