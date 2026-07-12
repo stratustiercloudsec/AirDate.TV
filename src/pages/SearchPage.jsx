@@ -97,7 +97,7 @@ const CHIPS = [
 ]
 
 const NETWORKS = {
-  Streaming: ['Netflix','Hulu','Disney+','Paramount+','Showtime','Max','HBO Max','Apple TV+','Prime Video','Peacock','STARZ','BET+','Tubi','YouTube','Turnstr+','MGM+'],
+  Streaming: ['Netflix','Hulu','Disney+','Paramount+','Showtime','Max','HBO Max','Apple TV+','Prime Video','Peacock','STARZ','BET+','Tubi','YouTube','Turnstr+','MGM+','Roku Channel'],
   Broadcast:  ['CBS','NBC','ABC','FOX','The CW'],
   Cable:      ['HBO','FX','AMC','USA Network','Bravo','Syfy','Freeform','OWN','Comedy Central','BET','Showtime','ESPN'],
 }
