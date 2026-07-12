@@ -319,7 +319,11 @@ export function TrendingPage() {
     setLoad('anticipated', true)
     fetchCuratedPremieres()
       .then(async curated => {
-        const sorted = curated.sort((a, b) =>
+        // Only show shows premiering today or in the future — the curated table
+        // is refreshed nightly, so past-dated entries can linger until the next run.
+        const todayStr = new Date().toLocaleDateString('en-CA')
+        const upcoming = curated.filter(s => (s.first_air_date || '') >= todayStr)
+        const sorted = upcoming.sort((a, b) =>
           (a.first_air_date || '').localeCompare(b.first_air_date || ''))
         setAnticipated(sorted)
         const netMap = await fetchNetworksMap(sorted)
