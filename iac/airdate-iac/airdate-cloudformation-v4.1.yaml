@@ -1,0 +1,1236 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  AirDate.TV v3.8 Infrastructure as Code
+  Stratustier Innovation Labs | Account 775443380425
+  Covers: DynamoDB, Lambda, API Gateway, CloudFront, Cognito,
+          EventBridge, S3, GuardDuty, Security Hub, CloudTrail, WAF
+  Disaster Recovery: RTO 4hr / RPO 1hr
+  v3.7 changes: persona-engine role, notifications POST, comments IAM expanded,
+          customInterests in preferences, notification type handlers
+  v3.8 changes: added the 9 airdate-scoop-* Lambdas (agent pipeline), the
+          airdate-scoop-agent Step Functions state machine + its 4-hour
+          EventBridge trigger, and airdate-rag-orchestration /
+          airdate-tmdb-proxy, pulled directly from the live account on
+          2026-07-14. See the "IMPORT / DRIFT NOTES" block below before
+          deploying -- these resources describe what's actually running,
+          they are NOT yet CloudFormation-managed.
+
+# ============================================================
+# IMPORT / DRIFT NOTES (read before running `cloudformation deploy`)
+# ============================================================
+# 1. THESE RESOURCES ARE NOT STACK-MANAGED YET.
+#    Adding a resource block to a template does not "adopt" an existing,
+#    already-running AWS resource. If you run a normal deploy/update-stack
+#    with this template, CloudFormation will try to CREATE new resources
+#    with these exact names/ARNs and FAIL on "already exists" conflicts
+#    (Lambda function names, the state machine name, the rule name are all
+#    already taken by the real, live resources). To actually bring them
+#    under CFN management, use a CloudFormation "Import" change set
+#    (aws cloudformation create-change-set --change-set-type IMPORT) against
+#    each resource. Until that's done, treat this file as an accurate,
+#    version-controlled DESCRIPTION of the live infrastructure, not an
+#    executable deploy script for these particular resources.
+#
+# 2. IAM ROLE DRIFT ALREADY PRESENT IN THIS TEMPLATE BEFORE v3.8.
+#    The template already defines "AirdateScoopLambdaRole" with
+#    RoleName: airdate-scoop-lambda-role-cfn -- but the REAL, currently
+#    deployed airdate-scoop-* Lambdas (synthesizer, scraper, publisher,
+#    plagiarism-gate, healthcheck, imager) all use a DIFFERENT, older role:
+#    arn:aws:iam::775443380425:role/airdate-scoop-lambda-role (no "-cfn"
+#    suffix). AirdateScoopLambdaRole as defined here has never actually been
+#    attached to anything live. The new Lambda resources below reference the
+#    REAL role by its literal ARN so this file matches reality, but the
+#    "-cfn" role is effectively dead weight sitting in this template --
+#    worth a follow-up decision: either delete AirdateScoopLambdaRole here,
+#    or do a deliberate cutover of the real Lambdas onto it.
+#
+# 3. TWO DIFFERENT NewsAPI KEYS IN USE.
+#    airdate-scoop-scraper's NEWS_API_KEY and the separate "airdate-scoop"
+#    function's NEWS_API_KEY are different values. Either one is stale
+#    (e.g. left over from a key rotation that didn't get propagated to both
+#    functions) or they're intentionally on separate NewsAPI accounts/plans.
+#    Worth confirming which is actually valid -- flagged as NewsApiKeyScraper
+#    vs NewsApiKeyScoop parameters below rather than silently merged into one.
+#
+# 4. SECRETS ARE CURRENTLY PLAINTEXT LAMBDA ENVIRONMENT VARIABLES.
+#    TMDB_API_KEY, PEXELS_API_KEY, TAVILY_API_KEY, GOOGLE_API_KEY,
+#    GOOGLE_CSE_ID, and both NEWS_API_KEY values are live third-party API
+#    keys sitting in plain Lambda env vars today. The Parameters below use
+#    NoEcho (so they won't show in `describe-stacks` output or the console),
+#    but their Default values below ARE the real live keys in plaintext --
+#    if this file goes into source control as-is, those keys are exposed in
+#    git history the moment it's committed. Recommended before committing:
+#    strip the Default values here and instead pass them via
+#    --parameter-overrides at deploy time, or better, switch these Lambdas
+#    to read from SSM Parameter Store SecureString / Secrets Manager and
+#    reference them here with a dynamic reference like
+#    '{{resolve:ssm-secure:/airdate/scoop/tavily_api_key:1}}' instead of a
+#    plain Lambda environment variable.
+# ============================================================
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [production, staging]
+
+  AgentModel:
+    Type: String
+    Default: us.anthropic.claude-3-5-haiku-20241022-v1:0
+
+  FromEmail:
+    Type: String
+    Default: noreply@airdate.tv
+
+  CloudTrailBucket:
+    Type: String
+    Default: airdate-cloudtrail-logs
+
+  # ── v3.8 NEW: third-party API keys (see drift note #4 above) ──────────
+  # NoEcho hides these from `describe-stacks`/console output, but the
+  # Default values below are the real live keys -- scrub before committing
+  # this file to source control, or better, move these to SSM SecureString.
+  TmdbApiKey:
+    Type: String
+    NoEcho: true
+    Default: d80b629f69e7c5393047c32a865ed697
+
+  PexelsApiKey:
+    Type: String
+    NoEcho: true
+    Default: CnztLHPtpOzmHstS35gB1XzraV7FYnVpkdizlZGlHlQId411pwP0Oxx1
+
+  TavilyApiKey:
+    Type: String
+    NoEcho: true
+    Default: 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
+
+  GoogleApiKey:
+    Type: String
+    NoEcho: true
+    Default: AIzaSyBXDdkZbYwvK-23AcYW5B2uBBhPQN6LWs4
+
+  GoogleCseId:
+    Type: String
+    NoEcho: true
+    Default: f16ab709a7d104a1d
+
+  # See drift note #3 -- these two are genuinely different live values today.
+  NewsApiKeyScraper:
+    Type: String
+    NoEcho: true
+    Default: b1ff8e187cb149ac92eac18fe032c740
+
+  NewsApiKeyScoop:
+    Type: String
+    NoEcho: true
+    Default: 40d3016d-44a9-41c9-8c4f-5309d12f1cd6
+
+Resources:
+
+  # ── DYNAMODB TABLES ──────────────────────────────────────
+
+  AirdateUsersTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-users
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateNotificationsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-notifications
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+        - AttributeName: created_at
+          KeyType: RANGE
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateCacheTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-cache
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: cache_key
+          AttributeType: S
+        - AttributeName: content_type
+          AttributeType: S
+      KeySchema:
+        - AttributeName: cache_key
+          KeyType: HASH
+        - AttributeName: content_type
+          KeyType: RANGE
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  TmdbShowCacheTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: tmdb-show-cache
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateRenewalPredictionsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-renewal-predictions
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: show_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: show_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateScoopStoriesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-scoop-stories
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: story_hash
+          AttributeType: S
+      KeySchema:
+        - AttributeName: story_hash
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateContentRatingsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-content-ratings
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: show_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: show_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateSessionsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-sessions
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateRenewalScoresTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-renewal-scores
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: show_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: show_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  # ── v3.5.1 NEW: airdate-comments table ───────────────────
+  AirdateCommentsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-comments
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: show_id
+          AttributeType: S
+        - AttributeName: comment_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: show_id
+          KeyType: HASH
+        - AttributeName: comment_id
+          KeyType: RANGE
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Comments
+
+  # ── v3.8 NEW: airdate-scoop-seen table (used by scraper for dedup) ──
+  # Referenced by airdate-scoop-scraper's SEEN_TABLE env var; wasn't in
+  # the template before even though the Lambda depends on it existing.
+  AirdateScoopSeenTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: airdate-scoop-seen
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: url_hash
+          AttributeType: S
+      KeySchema:
+        - AttributeName: url_hash
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  # ── IAM ROLES ────────────────────────────────────────────
+
+  AirdateScoopLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: airdate-scoop-lambda-role-cfn
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: airdate-scoop-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket]
+                Resource:
+                  - arn:aws:s3:::airdate.tv
+                  - arn:aws:s3:::airdate.tv/*
+                  - arn:aws:s3:::stage.s3.airdate.tv
+                  - arn:aws:s3:::stage.s3.airdate.tv/*
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem,
+                         dynamodb:DeleteItem, dynamodb:Query, dynamodb:Scan]
+                Resource:
+                  - !GetAtt AirdateScoopStoriesTable.Arn
+                  - !GetAtt TmdbShowCacheTable.Arn
+              - Effect: Allow
+                Action: [cloudfront:CreateInvalidation]
+                Resource: '*'
+              - Effect: Allow
+                Action: [bedrock:InvokeModel, bedrock:Converse]
+                Resource: '*'
+              - Effect: Allow
+                Action: [ssm:GetParameter, ssm:GetParameters]
+                Resource: arn:aws:ssm:us-east-1:775443380425:parameter/airdate/*
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateNotificationsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: airdate-notifications-role-cfn
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: airdate-notifications-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [ses:SendEmail, ses:SendRawEmail]
+                Resource: '*'
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem,
+                         dynamodb:Query, dynamodb:Scan]
+                Resource:
+                  - !GetAtt AirdateNotificationsTable.Arn
+                  - !GetAtt AirdateUsersTable.Arn
+              - Effect: Allow
+                Action: [lambda:InvokeFunction]
+                Resource:
+                  - !Sub arn:aws:lambda:us-east-1:${AWS::AccountId}:function:airdate-push-notifications
+                  - !Sub arn:aws:lambda:us-east-1:${AWS::AccountId}:function:airdate-persona-engine
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateRagRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: airdate-rag-orchestration-role-cfn
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: airdate-rag-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [bedrock:InvokeModel, bedrock:Converse]
+                Resource: '*'
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem,
+                         dynamodb:Query, dynamodb:Scan]
+                Resource:
+                  - !GetAtt TmdbShowCacheTable.Arn
+                  - !GetAtt AirdateCacheTable.Arn
+                  - !GetAtt AirdateContentRatingsTable.Arn
+                  - !GetAtt AirdateRenewalPredictionsTable.Arn
+              - Effect: Allow
+                Action: [ssm:GetParameter, ssm:GetParameters]
+                Resource: arn:aws:ssm:us-east-1:775443380425:parameter/airdate/*
+              - Effect: Allow
+                Action: [cloudwatch:PutMetricData]
+                Resource: '*'
+      Tags:
+        - Key: Project
+          Value: AirDate
+      # NOTE (v3.8 drift check): the REAL airdate-rag-orchestration and
+      # airdate-tmdb-proxy Lambdas both currently use a console-created role,
+      # arn:aws:iam::775443380425:role/service-role/airdate-rag-orchestration-role-g10h6orn,
+      # NOT this CFN-managed role. Same unused-role situation as
+      # AirdateScoopLambdaRole above -- see IMPORT/DRIFT NOTES at the top.
+
+  # ── v3.5.1 NEW: airdate-comments Lambda IAM role ─────────
+  AirdateCommentsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: airdate-comments-role-cfn
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: airdate-comments-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:DeleteItem, dynamodb:Query]
+                Resource: !GetAtt AirdateCommentsTable.Arn
+              - Effect: Allow
+                Action: [dynamodb:PutItem]
+                Resource: !GetAtt AirdateNotificationsTable.Arn
+              - Effect: Allow
+                Action: [dynamodb:GetItem]
+                Resource: !GetAtt AirdateUsersTable.Arn
+              - Effect: Allow
+                Action: [lambda:InvokeFunction]
+                Resource: !Sub arn:aws:lambda:us-east-1:${AWS::AccountId}:function:airdate-notifications
+              - Effect: Allow
+                Action: [bedrock:ApplyGuardrail]
+                Resource: '*'
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Comments
+
+  # ── v3.7 NEW: airdate-persona-engine IAM role ──────────────────
+  AirdatePersonaEngineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: airdate-persona-engine-role-cfn
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: airdate-persona-engine-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [bedrock:InvokeModel, bedrock:Converse]
+                Resource: '*'
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:Query]
+                Resource:
+                  - !GetAtt AirdateUsersTable.Arn
+              - Effect: Allow
+                Action: [dynamodb:PutItem]
+                Resource:
+                  - !GetAtt AirdateNotificationsTable.Arn
+              - Effect: Allow
+                Action: [lambda:InvokeFunction]
+                Resource: !Sub arn:aws:lambda:us-east-1:${AWS::AccountId}:function:airdate-notifications
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Persona
+
+  # ── v3.8 NEW: LAMBDA FUNCTIONS — Scoop pipeline + RAG + TMDB proxy ──
+  # Code is NOT managed by this template -- these functions are deployed
+  # out-of-band today via zip + `aws lambda update-function-code` (see
+  # deploy.sh). The Code property below is a harmless inline placeholder
+  # purely so the resource is valid CloudFormation; it is intentionally
+  # NOT what's actually running. Do not `update-stack` expecting this to
+  # push real code -- see IMPORT/DRIFT NOTES at the top of this file.
+  # Role ARNs below are the REAL, currently-attached roles (literal ARNs,
+  # not !GetAtt) -- see drift notes #2 above for why they're not the
+  # CFN-managed roles defined earlier in this file.
+
+  AirdateTmdbProxyFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-tmdb-proxy
+      Runtime: python3.12
+      Handler: tmdb_proxy.lambda_handler
+      MemorySize: 128
+      Timeout: 15
+      Role: arn:aws:iam::775443380425:role/service-role/airdate-rag-orchestration-role-g10h6orn
+      Environment:
+        Variables:
+          TMDB_API_KEY: !Ref TmdbApiKey
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              # Placeholder only -- real code deployed via update-function-code.
+              return {"statusCode": 200, "body": "placeholder"}
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateRagOrchestrationFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-rag-orchestration
+      Runtime: python3.14
+      Handler: lambda_function.lambda_handler
+      MemorySize: 1024
+      Timeout: 60
+      Role: arn:aws:iam::775443380425:role/service-role/airdate-rag-orchestration-role-g10h6orn
+      Environment:
+        Variables:
+          AGENT_MODE: enabled
+          RESOLVE_CAP: '50'
+          TMDB_API_KEY: !Ref TmdbApiKey
+          AGENT_MODEL: us.anthropic.claude-haiku-4-5-20251001-v1:0
+          INLINE_SYSTEM_PROMPT: 'true'
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              # Placeholder only -- real code deployed via update-function-code.
+              return {"statusCode": 200, "body": "placeholder"}
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  AirdateScoopSynthesizerFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-scoop-synthesizer
+      Runtime: python3.12
+      Handler: handler.handler
+      MemorySize: 256
+      Timeout: 120
+      Role: arn:aws:iam::775443380425:role/airdate-scoop-lambda-role
+      Environment:
+        Variables:
+          PROMPT_PARAM: /airdate/scoop/system_prompt
+          BEDROCK_MODEL: us.anthropic.claude-haiku-4-5-20251001-v1:0
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return event
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  AirdateScoopRankerFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-scoop-ranker
+      Runtime: python3.12
+      Handler: lambda_function.lambda_handler
+      MemorySize: 256
+      Timeout: 120
+      # Real, pre-existing role -- not created by this template.
+      Role: arn:aws:iam::775443380425:role/airdate-scoop-ranker-role
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return event
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  AirdateScoopPublisherFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-scoop-publisher
+      Runtime: python3.12
+      Handler: handler.handler
+      MemorySize: 256
+      Timeout: 60
+      Role: arn:aws:iam::775443380425:role/airdate-scoop-lambda-role
+      Environment:
+        Variables:
+          BUCKET: airdate.tv
+          STORIES_PREFIX: scoop/stories/
+          CF_DIST_ID: E790ECNWOI9EN
+          STAGE_BUCKET: stage.s3.airdate.tv
+          STAGE_CF_DIST_ID: E2FVOUR7O26Q7P
+          DYNAMO_TABLE: airdate-scoop-stories
+          STORIES_MANIFEST_KEY: scoop/stories.json
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return event
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  # This is a distinct function from the airdate-scoop-* pipeline steps --
+  # a separate "airdate-scoop" Lambda (no suffix) with its own search API
+  # keys (Google CSE, Tavily, a THIRD-PARTY NewsAPI key that differs from
+  # the scraper's -- see drift note #3). Not referenced anywhere in the
+  # Step Functions definition pulled below, so its actual role in the
+  # pipeline (manual trigger? legacy/superseded scraper? on-demand API?)
+  # wasn't confirmed in this pass -- worth clarifying before relying on it.
+  AirdateScoopFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-scoop
+      Runtime: python3.14
+      Handler: lambda_function.lambda_handler
+      MemorySize: 128
+      Timeout: 30
+      Role: arn:aws:iam::775443380425:role/service-role/airdate-scoop-role-tb9hgjun
+      Environment:
+        Variables:
+          TMDB_API_KEY: !Ref TmdbApiKey
+          GOOGLE_CSE_ID: !Ref GoogleCseId
+          TAVILY_API_KEY: !Ref TavilyApiKey
+          NEWS_API_KEY: !Ref NewsApiKeyScoop
+          GOOGLE_API_KEY: !Ref GoogleApiKey
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return event
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  AirdateScoopScraperFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-scoop-scraper
+      Runtime: python3.12
+      Handler: handler.handler
+      MemorySize: 256
+      Timeout: 120
+      Role: arn:aws:iam::775443380425:role/airdate-scoop-lambda-role
+      Environment:
+        Variables:
+          TAVILY_API_KEY: !Ref TavilyApiKey
+          SEEN_TABLE: airdate-scoop-seen
+          DYNAMO_TABLE: airdate-scoop-stories
+          NEWS_API_KEY: !Ref NewsApiKeyScraper
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return event
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  AirdateScoopPlagiarismGateFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-scoop-plagiarism-gate
+      Runtime: python3.12
+      Handler: handler.handler
+      MemorySize: 256
+      Timeout: 30
+      Role: arn:aws:iam::775443380425:role/airdate-scoop-lambda-role
+      Environment:
+        Variables:
+          SIMILARITY_THRESHOLD: '0.55'
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return event
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  AirdateScoopArchiveFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-scoop-archive
+      Runtime: python3.14
+      Handler: lambda_function.lambda_handler
+      MemorySize: 128
+      Timeout: 3
+      Role: arn:aws:iam::775443380425:role/service-role/airdate-scoop-archive-role-9sp1sgqv
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return event
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  AirdateScoopHealthcheckFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-scoop-healthcheck
+      Runtime: python3.12
+      Handler: lambda_function.lambda_handler
+      MemorySize: 256
+      Timeout: 300
+      Role: arn:aws:iam::775443380425:role/airdate-scoop-lambda-role
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return event
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  AirdateScoopImagerFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: airdate-scoop-imager
+      Runtime: python3.12
+      Handler: lambda_function.handler
+      MemorySize: 512
+      Timeout: 60
+      Role: arn:aws:iam::775443380425:role/airdate-scoop-lambda-role
+      Environment:
+        Variables:
+          TMDB_API_KEY: !Ref TmdbApiKey
+          BUCKET: airdate.tv
+          CDN_BASE: https://airdate-social-images.s3.amazonaws.com
+          STAGE_BUCKET: stage.s3.airdate.tv
+          STAGE_CDN_BASE: https://dev.airdate.tv
+          PEXELS_API_KEY: !Ref PexelsApiKey
+          # Not yet set live -- added in the July 2026 crop-fix pass.
+          # Safe to add here now so the next real deploy carries them;
+          # defaults in the code match these if unset.
+          CARD_ASPECT_RATIO: '1.7'
+          CROP_BIAS_BACKDROP: '0.15'
+          CROP_BIAS_PORTRAIT: '0.10'
+          IMAGE_OUT_WIDTH: '1600'
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return event
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  # ── v3.8 NEW: STEP FUNCTIONS — Scoop agent pipeline ─────────────────
+  # Pulled directly from the live state machine on 2026-07-14. RoleArn
+  # below is the real, pre-existing role (not created by this template).
+  AirdateScoopAgentStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      StateMachineName: airdate-scoop-agent
+      StateMachineType: EXPRESS
+      RoleArn: arn:aws:iam::775443380425:role/airdate-scoop-sfn-role
+      DefinitionString: |
+        {
+          "Comment": "AirDate Scoop Agent — autonomous journalism pipeline",
+          "StartAt": "ScrapeArticles",
+          "States": {
+            "ScrapeArticles": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:us-east-1:775443380425:function:airdate-scoop-scraper",
+              "ResultPath": "$",
+              "Retry": [{"ErrorEquals": ["States.TaskFailed"], "IntervalSeconds": 10, "MaxAttempts": 2}],
+              "Catch": [{"ErrorEquals": ["States.ALL"], "Next": "PipelineFailed", "ResultPath": "$.error"}],
+              "Next": "AnyFreshArticles"
+            },
+            "AnyFreshArticles": {
+              "Type": "Choice",
+              "Choices": [{"Variable": "$.raw_articles[0]", "IsPresent": true, "Next": "RankArticles"}],
+              "Default": "NoNewContent"
+            },
+            "RankArticles": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:us-east-1:775443380425:function:airdate-scoop-ranker",
+              "ResultPath": "$",
+              "Next": "SynthesizeStories"
+            },
+            "SynthesizeStories": {
+              "Type": "Map",
+              "ItemsPath": "$.ranked_articles",
+              "MaxConcurrency": 3,
+              "ResultPath": "$.synthesized",
+              "ItemSelector": {
+                "headline.$": "$$.Map.Item.Value.headline",
+                "summary.$": "$$.Map.Item.Value.summary",
+                "domain.$": "$$.Map.Item.Value.domain",
+                "url.$": "$$.Map.Item.Value.url",
+                "published_at.$": "$$.Map.Item.Value.published_at",
+                "story_hash.$": "$$.Map.Item.Value.story_hash"
+              },
+              "Iterator": {
+                "StartAt": "SynthesizeOne",
+                "States": {
+                  "SynthesizeOne": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:lambda:us-east-1:775443380425:function:airdate-scoop-synthesizer",
+                    "ResultPath": "$",
+                    "Retry": [{"ErrorEquals": ["States.TaskFailed"], "IntervalSeconds": 5, "MaxAttempts": 2}],
+                    "Catch": [{"ErrorEquals": ["States.ALL"], "Next": "StoryDiscarded", "ResultPath": "$.error"}],
+                    "Next": "ImageStory"
+                  },
+                  "ImageStory": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:lambda:us-east-1:775443380425:function:airdate-scoop-imager",
+                    "ResultPath": "$",
+                    "Retry": [{"ErrorEquals": ["States.TaskFailed"], "IntervalSeconds": 3, "MaxAttempts": 1}],
+                    "Catch": [{"ErrorEquals": ["States.ALL"], "Next": "PlagiarismCheck", "ResultPath": "$.image_error"}],
+                    "Next": "PlagiarismCheck"
+                  },
+                  "PlagiarismCheck": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:lambda:us-east-1:775443380425:function:airdate-scoop-plagiarism-gate",
+                    "ResultPath": "$",
+                    "Next": "DidPassGate"
+                  },
+                  "DidPassGate": {
+                    "Type": "Choice",
+                    "Choices": [{"Variable": "$.passes", "BooleanEquals": true, "Next": "CheckConfidence"}],
+                    "Default": "StoryDiscarded"
+                  },
+                  "CheckConfidence": {
+                    "Type": "Choice",
+                    "Choices": [{"Variable": "$.confidence_score", "NumericGreaterThanEquals": 6, "Next": "StoryApproved"}],
+                    "Default": "StoryDiscarded"
+                  },
+                  "StoryApproved": {"Type": "Pass", "End": true},
+                  "StoryDiscarded": {"Type": "Pass", "Result": null, "End": true}
+                }
+              },
+              "Next": "PublishApproved"
+            },
+            "PublishApproved": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:us-east-1:775443380425:function:airdate-scoop-publisher",
+              "InputPath": "$.synthesized",
+              "End": true
+            },
+            "NoNewContent": {"Type": "Succeed", "Comment": "No new articles since last run"},
+            "PipelineFailed": {"Type": "Fail", "Error": "ScoopPipelineError", "Cause": "Pipeline encountered an unrecoverable error"}
+          }
+        }
+      Tags:
+        - Key: Project
+          Value: AirDate
+        - Key: Feature
+          Value: Scoop
+
+  # ── EVENTBRIDGE RULES ────────────────────────────────────
+
+  AirdateDailyNotificationsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: airdate-daily-notifications-cfn
+      Description: Daily premiere alerts 9AM ET
+      ScheduleExpression: cron(0 14 * * ? *)
+      State: DISABLED
+      Targets:
+        - Id: notification-scheduler
+          Arn: !Sub arn:aws:lambda:us-east-1:${AWS::AccountId}:function:airdate-notification-scheduler
+
+  AirdateSidebarWarmupRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: airdate-sidebar-warmup-cfn
+      Description: RAG warmup every 90 minutes
+      ScheduleExpression: rate(90 minutes)
+      State: DISABLED
+      Targets:
+        - Id: rag-warmup
+          Arn: !Sub arn:aws:lambda:us-east-1:${AWS::AccountId}:function:airdate-rag-orchestration
+          Input: '{"warmup": true}'
+
+  # v3.8 NEW: the real trigger for the Scoop pipeline, pulled live.
+  # Note this rule's real name has no "-cfn" suffix (unlike the two above,
+  # which were presumably created through this template originally) --
+  # another sign it was hand-created outside CloudFormation.
+  AirdateScoopRefreshRule:
+    Type: AWS::Events::Rule
+    DeletionPolicy: Retain
+    Properties:
+      Name: airdate-scoop-refresh
+      Description: Triggers the Scoop agent pipeline every 4 hours
+      ScheduleExpression: rate(4 hours)
+      State: ENABLED
+      Targets:
+        - Id: scoop-agent-target
+          Arn: !GetAtt AirdateScoopAgentStateMachine.Arn
+          # Real, pre-existing invoke role -- not created by this template.
+          RoleArn: arn:aws:iam::775443380425:role/Amazon_EventBridge_Invoke_StepFunctions_airdate
+          Input: '{}'
+
+  # ── SECURITY — GuardDuty ─────────────────────────────────
+
+  GuardDutyDetector:
+    Type: AWS::GuardDuty::Detector
+    Properties:
+      Enable: true
+      FindingPublishingFrequency: SIX_HOURS
+      Features:
+        - Name: S3_DATA_EVENTS
+          Status: ENABLED
+        - Name: LAMBDA_NETWORK_LOGS
+          Status: ENABLED
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  # ── SECURITY — CloudTrail ────────────────────────────────
+
+  CloudTrailBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CloudTrailBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AWSCloudTrailAclCheck
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource: !Sub arn:aws:s3:::${CloudTrailBucket}
+          - Sid: AWSCloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub arn:aws:s3:::${CloudTrailBucket}/AWSLogs/${AWS::AccountId}/*
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+
+  AirdateCloudTrail:
+    Type: AWS::CloudTrail::Trail
+    DependsOn: CloudTrailBucketPolicy
+    Properties:
+      TrailName: airdate-cloudtrail-cfn
+      S3BucketName: !Ref CloudTrailBucket
+      IsLogging: true
+      IsMultiRegionTrail: false
+      IncludeGlobalServiceEvents: true
+      EnableLogFileValidation: true
+      EventSelectors:
+        - ReadWriteType: All
+          IncludeManagementEvents: true
+          DataResources:
+            - Type: AWS::S3::Object
+              Values:
+                - arn:aws:s3:::airdate.tv/
+                - arn:aws:s3:::stage.s3.airdate.tv/
+                - arn:aws:s3:::airdate-ml-data/
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+  # ── SECURITY — WAF ───────────────────────────────────────
+
+  AirdateWAFWebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: airdate-waf-cfn
+      Scope: CLOUDFRONT
+      DefaultAction:
+        Allow: {}
+      Rules:
+        - Name: CommonRuleSet
+          Priority: 1
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesCommonRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: CommonRuleSet
+        - Name: KnownBadInputs
+          Priority: 2
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesKnownBadInputsRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: KnownBadInputs
+        - Name: SQLiRuleSet
+          Priority: 3
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesSQLiRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: SQLiRuleSet
+        - Name: RateLimitGlobal
+          Priority: 4
+          Action:
+            Block: {}
+          Statement:
+            RateBasedStatement:
+              Limit: 1000
+              AggregateKeyType: IP
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: RateLimitGlobal
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: AirdateWAF
+      Tags:
+        - Key: Project
+          Value: AirDate
+
+# ── OUTPUTS ──────────────────────────────────────────────
+
+Outputs:
+
+  UsersTableArn:
+    Value: !GetAtt AirdateUsersTable.Arn
+    Export:
+      Name: airdate-users-table-arn
+
+  NotificationsTableArn:
+    Value: !GetAtt AirdateNotificationsTable.Arn
+    Export:
+      Name: airdate-notifications-table-arn
+
+  ScoopStoriesTableArn:
+    Value: !GetAtt AirdateScoopStoriesTable.Arn
+    Export:
+      Name: airdate-scoop-stories-table-arn
+
+  # v3.5.1
+  CommentsTableArn:
+    Value: !GetAtt AirdateCommentsTable.Arn
+    Export:
+      Name: airdate-comments-table-arn
+
+  GuardDutyDetectorId:
+    Value: !Ref GuardDutyDetector
+
+  ProdCognitoPoolId:
+    Value: us-east-1_J62LRXqEx
+    Description: Existing prod Cognito pool - managed outside IaC
+
+  DevCognitoPoolId:
+    Value: us-east-1_LIdVq7KLY
+
+  StaffCognitoPoolId:
+    Value: us-east-1_6lLVVlzzk
+
+  ProdCloudFrontId:
+    Value: E790ECNWOI9EN
+
+  StagingCloudFrontId:
+    Value: E2FVOUR7O26Q7P
+
+  # v3.5.1 — API Gateway updated from 21ave5trw7 (deleted) to qg0x31ranc
+  MainApiGatewayId:
+    Value: qg0x31ranc
+    Description: Recreated 2026-05-23 — old ID 21ave5trw7 is permanently lost
+
+  PaymentsApiGatewayId:
+    Value: hazl8ggqu3
+
+  # v3.7 additions
+  PersonaEngineRoleArn:
+    Value: !GetAtt AirdatePersonaEngineRole.Arn
+    Export:
+      Name: airdate-persona-engine-role-arn
+
+  NotificationsPostRouteResource:
+    Value: y48ysb
+    Description: API Gateway resource ID for POST /user/{sub}/notifications (added v3.7)
+
+  CustomInterestsPersistence:
+    Value: customInterests-added-to-airdate-users-preferences-v3.7
+    Description: DynamoDB airdate-users now stores customInterests in preferences attribute
+
+  # v3.8 additions
+  ScoopAgentStateMachineArn:
+    Value: !GetAtt AirdateScoopAgentStateMachine.Arn
+    Export:
+      Name: airdate-scoop-agent-state-machine-arn
+
+  ScoopRefreshRuleArn:
+    Value: !GetAtt AirdateScoopRefreshRule.Arn
+    Export:
+      Name: airdate-scoop-refresh-rule-arn
+
+  ScoopLambdaRoleDriftWarning:
+    Value: "REAL role in use: arn:aws:iam::775443380425:role/airdate-scoop-lambda-role -- CFN-managed AirdateScoopLambdaRole (airdate-scoop-lambda-role-cfn) is currently unused. See IMPORT/DRIFT NOTES."
