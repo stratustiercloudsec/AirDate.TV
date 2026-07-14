@@ -231,7 +231,7 @@ export function ScoopStoryPage() {
         {story.image_url && (
           <div className="relative h-64 sm:h-80 rounded-2xl overflow-hidden mb-8">
             <img src={story.image_url} alt={story.headline}
-              className="w-full h-full object-cover"/>
+              className="w-full h-full object-cover object-top"/>
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"/>
             {story.image_source === 'pexels' && (
               <span className="absolute bottom-3 right-3 text-[10px] text-slate-200 bg-slate-950/60 px-2 py-1 rounded-md">

@@ -159,6 +159,23 @@ function dedupById(shows) {
     seen.add(key); return true
   })
 }
+
+// Dedup keyed purely on show id (ignores season_number). Used specifically
+// where sources with inconsistent season_number shapes get merged together
+// (e.g. the curated-premieres feed, which tags season_number, vs the raw
+// client-side TMDB discover sweep via mapTMDB(), which never sets it) --
+// dedupById's id+season composite key treats those as two different shows
+// even though they're the same TMDB id, which is what caused the same show
+// (e.g. "Ride or Die") to render twice under "Premiering This Week."
+function dedupByShowId(shows) {
+  const seen = new Set()
+  return shows.filter(s => {
+    const key = s.id ?? (s.name || s.title || '')
+    if (!key || seen.has(key)) return false
+    seen.add(key); return true
+  })
+}
+
 function mapTMDB(s) {
   return { id:s.id, name:s.name??s.original_name, poster_path:s.poster_path,
     backdrop_path:s.backdrop_path, first_air_date:s.first_air_date,
@@ -681,7 +698,7 @@ export function SearchPage() {
     const weekCurated = curatedShows
       .filter(s => s.first_air_date >= weekStart && s.first_air_date <= weekEnd)
       .map(s => ({ ...s, _networkLabel: s.network, original_language: 'en' }))
-    const merged = dedupById([...weekCurated, ...tmdbWeekResults])
+    const merged = dedupByShowId([...weekCurated, ...tmdbWeekResults])
       .sort((a,b) => {
         const nwDiff = nw(b) - nw(a)
         const dc = (a.first_air_date||'').localeCompare(b.first_air_date||'')

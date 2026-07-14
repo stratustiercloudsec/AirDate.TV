@@ -59,7 +59,7 @@ function HeroCard({ item }) {
     >
       {poster
         ? <img src={poster} onError={e => { e.currentTarget.style.display="none"; e.currentTarget.parentElement.classList.add("no-image") }} alt=""
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"/>
+            className="absolute inset-0 w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"/>
         : <div className="absolute inset-0" style={{background:'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)'}}/>
       }
       <div className="absolute inset-0" style={{background:'linear-gradient(to top,rgba(2,6,23,0.98) 0%,rgba(2,6,23,0.7) 40%,rgba(2,6,23,0.1) 100%)'}}/>
@@ -118,7 +118,7 @@ function FeaturedCard({ item }) {
     >
       {poster
         ? <img src={poster} onError={e => { e.currentTarget.style.display="none"; e.currentTarget.parentElement.classList.add("no-image") }} alt=""
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+            className="absolute inset-0 w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"/>
         : <div className="absolute inset-0 bg-slate-800"/>
       }
       <div className="absolute inset-0" style={{background:'linear-gradient(to top,rgba(2,6,23,0.97) 0%,rgba(2,6,23,0.4) 60%,transparent 100%)'}}/>
@@ -157,7 +157,7 @@ function GridCard({ item }) {
       {poster ? (
         <div className="relative h-36 overflow-hidden flex-shrink-0">
           <img src={poster} onError={e => { e.currentTarget.style.display="none"; e.currentTarget.parentElement.classList.add("no-image") }} alt={item.show_title||''}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
+            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"/>
           <div className="absolute inset-0" style={{background:'linear-gradient(to top,rgba(15,23,42,0.9) 0%,transparent 60%)'}}/>
           <div className="absolute top-2.5 left-2.5"><CatBadge cat={cat} small/></div>
           {item.show_title && (
@@ -189,6 +189,10 @@ function GridCard({ item }) {
 }
 
 // ─── LIST ROW (sidebar numbered list) ─────────────────────────────────────────
+// NOTE: this thumbnail is a square box (w-14 h-14). Our composed images are
+// now ~1.7:1 landscape, which is WIDER than a 1:1 square, so object-fit:cover
+// crops the SIDES here, not the top/bottom -- heads aren't at risk in this
+// one, so it's intentionally left on the default center position.
 function ListRow({ item, index }) {
   const navigate = useNavigate()
   const cat    = item.category || 'premieres'
