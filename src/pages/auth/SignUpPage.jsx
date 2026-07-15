@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth, buildGoogleAuthUrl } from '@/context/AuthContext'
+import { API_BASE } from '@/config/aws'
 
 const PW_RULES = [
   { label: 'At least 8 characters',          test: p => p.length >= 8 },
@@ -33,6 +34,7 @@ export function SignUpPage() {
   const [focused,  setFocused]  = useState(false)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
+  const [subscribeToList, setSubscribeToList] = useState(false)
 
   const passedRules = PW_RULES.filter(r => r.test(password)).length
   const strengthPct = (passedRules / PW_RULES.length) * 100
@@ -54,6 +56,14 @@ export function SignUpPage() {
     setError(''); setLoading(true)
     try {
       await signUp(email.trim().toLowerCase(), password, name.trim())
+      if (subscribeToList) {
+        // Fire-and-forget — mailing list opt-in should never block or fail signup
+        fetch(`${API_BASE}/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim().toLowerCase(), source: 'signup-page' }),
+        }).catch(() => {})
+      }
       navigate('/auth/verify', { state: { email: email.trim().toLowerCase() } })
     } catch (err) {
       setError(friendlyError(err))
@@ -202,6 +212,19 @@ export function SignUpPage() {
                   </div>
                 )}
               </div>
+
+              {/* Mailing list opt-in */}
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={subscribeToList}
+                  onChange={e => setSubscribeToList(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-white/20 bg-slate-800/60 text-cyan-500 focus:ring-2 focus:ring-cyan-500/40 focus:ring-offset-0 cursor-pointer"
+                />
+                <span className="text-xs text-slate-200 leading-snug">
+                  Sign me up for the AirDate weekly premiere email
+                </span>
+              </label>
 
               <button
                 type="submit" disabled={loading}
