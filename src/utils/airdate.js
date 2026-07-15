@@ -1,15 +1,19 @@
 // Network-aware air date correction
-// Apple TV+ releases episodes at midnight PT (Friday), but TMDB often logs Thursday UTC
-// Paramount+/Showtime (The Chi) also has Friday releases logged as wrong day
+// TMDB consistently logs Apple TV+/Showtime/Paramount+ release dates ONE DAY EARLY,
+// regardless of weekday. Verified cases:
+//   Lucky S1        TMDB 2026-07-14 (Tue) -> actual 2026-07-15 (Wed), per tv.apple.com
+//   Ted Lasso S4E1   TMDB 2026-08-04 (Tue) -> actual 2026-08-05 (Wed), per tv.apple.com
+// A prior "Thursday UTC -> Friday" heuristic only fired on Thursday dates and silently
+// let Tuesday-logged dates like these through. Root cause is upstream at TMDB (likely a
+// PT-midnight timestamp getting attributed to the wrong UTC calendar day), and the fix
+// must NOT be conditioned on weekday — apply flat +1 day to any date from these networks.
 
-const FRIDAY_NETWORKS = new Set([
+const OFFSET_NETWORKS = new Set([
   'apple tv+', 'apple tv', 'appletv+',
-  'showtime', 'paramount+', 'paramount plus',
-])
+  ])
 
 /**
- * Corrects TMDB air dates for networks known to release on Friday midnight PT
- * but get logged as Thursday in TMDB due to UTC offset.
+ * Corrects TMDB air dates for networks known to log dates one calendar day early.
  * @param {string} airDate - YYYY-MM-DD from TMDB
  * @param {string} networkName - network label
  * @returns {string} corrected YYYY-MM-DD
@@ -17,12 +21,8 @@ const FRIDAY_NETWORKS = new Set([
 export function correctAirDate(airDate, networkName) {
   if (!airDate || !networkName) return airDate
   const net = networkName.toLowerCase()
-  if (!FRIDAY_NETWORKS.has(net)) return airDate
-  // Check if the date falls on a Thursday (day 4)
+  if (!OFFSET_NETWORKS.has(net)) return airDate
   const d = new Date(airDate + 'T12:00:00Z')
-  if (d.getUTCDay() === 4) { // Thursday UTC → should be Friday
-    d.setUTCDate(d.getUTCDate() + 1)
-    return d.toISOString().split('T')[0]
-  }
-  return airDate
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.toISOString().split('T')[0]
 }

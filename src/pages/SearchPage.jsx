@@ -134,6 +134,10 @@ async function enrichWithNetwork(shows) {
     return {
       ...s,
       network:        s.network || detail?.networks?.[0]?.name || '',
+      // tmdbShow() already corrects first_air_date for Apple TV+/Showtime/Paramount+
+      // (see utils/tmdb.js correctShowDates); use it here since discover/search
+      // results never carry a corrected date on their own.
+      first_air_date: detail?.first_air_date || s.first_air_date,
       content_rating: usRating,
       poster_path:    (() => {
         // Priority: latest season poster → show-level poster → original

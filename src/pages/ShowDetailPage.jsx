@@ -10,7 +10,6 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
 import { API_BASE, IMAGE_BASE } from '@/config/aws'
-import { correctAirDate } from '@/utils/airdate'
 
 // Current-season trailer overrides — for shows where TMDB lacks latest season videos
 const TRAILER_OVERRIDES = {
@@ -456,7 +455,7 @@ function EpisodeCard({ episode, role, recapHtml='', networkName='' }) {
   const sn=String(episode.season_number||'?').padStart(2,'0')
   const en=String(episode.episode_number||'?').padStart(2,'0')
   const epLabel=`S${sn} E${en}`
-  const airedOn=episode.air_date?formatDate(correctAirDate(episode.air_date, networkName)):'TBA'
+  const airedOn=episode.air_date?formatDate(episode.air_date):'TBA'
   const accent=isNext?'border-cyan-500/20 hover:border-cyan-500/40':'border-purple-500/20 hover:border-purple-500/40'
   const epColor=isNext?'bg-cyan-500/20 text-cyan-400':'bg-purple-500/20 text-purple-400'
   const headerColor=isNext?'text-cyan-400':'text-purple-400'
@@ -514,7 +513,7 @@ function EpisodeIntelligence({ showId, showTitle, showData, requestedSeason }) {
         }
         const seasons=currentSeason>1?[currentSeason-1,currentSeason]:[currentSeason]
         const fetched=await Promise.all(seasons.map(n=>
-          tmdbSeason(showId, n)
+          tmdbSeason(showId, n, showData?.networks?.[0]?.name||'')
             .then(d=>(d.episodes||[]).sort((a,b)=>a.episode_number-b.episode_number).map(ep=>{
               return ep  // air_dates used as-is from TMDB — no UTC shift
             })).catch(()=>[])
@@ -525,11 +524,9 @@ function EpisodeIntelligence({ showId, showTitle, showData, requestedSeason }) {
         let last=null,next=null
         for (const ep of all) {
           if (!ep.air_date) continue
-          const correctedDate = correctAirDate(ep.air_date, showData?.networks?.[0]?.name||'')
-          const epWithCorrected = {...ep, air_date: correctedDate}
-          const cmp=correctedDate.localeCompare(today)
-          if (cmp<=0){if (!last||correctedDate.localeCompare(last.air_date)>=0) last=epWithCorrected}
-          else{if (!next||correctedDate.localeCompare(next.air_date)<0) next=epWithCorrected}
+          const cmp=ep.air_date.localeCompare(today)
+          if (cmp<=0){if (!last||ep.air_date.localeCompare(last.air_date)>=0) last=ep}
+          else{if (!next||ep.air_date.localeCompare(next.air_date)<0) next=ep}
         }
         if (last&&last.air_date===today) {
           next=last
@@ -778,7 +775,7 @@ export function ShowDetailPage() {
           if (effectiveSeason && effectiveSeason > 0) {
             const { tmdbSeason: _tmdbSeason } = await import('../utils/tmdb')
             try {
-              const seasonData = await _tmdbSeason(id, effectiveSeason)
+              const seasonData = await _tmdbSeason(id, effectiveSeason, data?.networks?.[0]?.name||'')
               if (seasonData?.air_date) {
                 setShow(prev => prev ? { ...prev, first_air_date: seasonData.air_date } : prev)
                 return

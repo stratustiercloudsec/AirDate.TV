@@ -286,7 +286,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
       const newShows = newShowsRaw
         .map(s => ({
           ...s,
-          first_air_date: s.first_air_date,
+          first_air_date: correctAirDate(s.first_air_date, netLabel),
           ...(netLabel ? { _networkLabel: netLabel } : {}),
           _seasonNum:  1,
           _episodeNum: 1,
@@ -480,7 +480,7 @@ async function fetchMonthPremieres(year, month, networkIds=null, selectedNetwork
     { id:225891, name:'The Madison',                   first_air_date:'2026-03-14', _networkLabel:'Paramount+',_seasonNum:2, _episodeNum:1, _isSeason:true,  genre_ids:[18] },
     // Netflix (continued)
     { id:227139, name:'Survival of the Thickest',     first_air_date:'2026-07-02', _networkLabel:'Netflix',   _seasonNum:3, _episodeNum:1, _isSeason:true,  genre_ids:[35,18] },
-    { id:278624, name:'Lucky',                        first_air_date:'2026-07-14', _networkLabel:'Apple TV+', _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
+    { id:278624, name:'Lucky',                        first_air_date:'2026-07-15', _networkLabel:'Apple TV+', _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,80] },
     { id:117581, name:'Ginny & Georgia',              first_air_date:'2026-07-16', _networkLabel:'Netflix',   _seasonNum:4, _episodeNum:1, _isSeason:true,  genre_ids:[35,18] },
     { id:305357, name:'A Different World',            first_air_date:'2026-09-24', _networkLabel:'Netflix',   _seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[35,18] },
     { id:241882, name:'Ride or Die',                   first_air_date:'2026-07-15', _networkLabel:'Prime Video',_seasonNum:1, _episodeNum:1, _isSeason:false, genre_ids:[18,28] },
@@ -567,10 +567,9 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
       setError(false)
       try {
         const seasonNum = show._seasonNum || 1
-        const data = await tmdbSeason(show.id, seasonNum)
+        const data = await tmdbSeason(show.id, seasonNum, networkName)
         const networkName = show._networkLabel || ''
         const eps  = (data.episodes || [])
-          .map(ep => ({ ...ep, air_date: correctAirDate(ep.air_date, networkName) }))
           .filter(ep => ep.air_date && ep.air_date >= monthFirst && ep.air_date <= monthLast)
           .sort((a,b) => a.air_date.localeCompare(b.air_date))
         setEpisodes(eps)
