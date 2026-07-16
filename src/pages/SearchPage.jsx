@@ -912,7 +912,7 @@ export function SearchPage() {
           <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
 
             {/* Watchlist banner */}
-            <a href="/persona"
+            <a href="/persona#watchlist"
               className="flex items-center justify-between gap-4 px-5 py-4
                          bg-slate-800/40 hover:bg-slate-800/70
                          border border-pink-500/20 hover:border-pink-500/40
@@ -950,7 +950,7 @@ export function SearchPage() {
             </a>
 
             {/* My Persona banner */}
-            <a href="/persona?tab=persona"
+            <a href="/persona#persona"
               className="flex items-center justify-between gap-4 px-5 py-4
                          bg-slate-800/40 hover:bg-slate-800/70
                          border border-violet-500/20 hover:border-violet-500/40

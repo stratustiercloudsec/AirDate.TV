@@ -1,6 +1,6 @@
 // src/pages/MyPersonaPage.jsx
 import { useEffect, useState, useCallback } from 'react'
-import { Link, useNavigate }   from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import PredictionBadge from '../components/PredictionBadge'
 import { useAuth }             from '@/context/AuthContext'
 import { useWatchlist }        from '@/context/WatchlistContext'
@@ -33,6 +33,12 @@ function hashLabel(label) {
   return label.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 4
 }
 
+const VALID_TABS = ['persona', 'watchlist', 'preferences']
+function tabFromHash(hash) {
+  const h = (hash || '').replace('#', '')
+  return VALID_TABS.includes(h) ? h : 'persona'
+}
+
 function ratingColor(rating) {
   if (!rating) return 'border-white/20 text-slate-200'
   if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
@@ -44,6 +50,7 @@ function ratingColor(rating) {
 
 function ShowCard({ show, liveData, onRemove }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const poster   = usePoster(show?.poster_path ?? show?.poster, show?.name, 185)
   if (!show) return null
   const rating = show.content_rating || liveData?.content_ratings?.results?.[0]?.rating || ''
@@ -269,7 +276,7 @@ export function MyPersonaPage() {
   const [watchlistChanged, setWatchlistChanged] = useState(false)
   const [digest,         setDigest]        = useState(null)
   const [digestLoading,  setDigestLoading] = useState(false)
-  const [activeTab,      setActiveTab]     = useState('persona') // 'persona' | 'watchlist' | 'preferences'
+  const [activeTab,      setActiveTab]     = useState(() => tabFromHash(window.location.hash)) // 'persona' | 'watchlist' | 'preferences'
 
   const email = user?.email ?? ''
   const sub   = user?.sub   ?? ''
@@ -278,6 +285,17 @@ export function MyPersonaPage() {
     setToast({ msg, color })
     setTimeout(() => setToast(null), 5000)
   }
+
+  function selectTab(key) {
+    setActiveTab(key)
+    navigate(`/persona#${key}`, { replace: false })
+  }
+
+  // Keep activeTab in sync if the hash changes externally (browser back/forward,
+  // or another link on the site pointing directly at /persona#watchlist etc.)
+  useEffect(() => {
+    setActiveTab(tabFromHash(location.hash))
+  }, [location.hash])
 
   useEffect(() => {
     if (!token || !sub) return
@@ -539,7 +557,7 @@ export function MyPersonaPage() {
             {/* Tab nav */}
             <div className="flex items-center gap-1 p-1 bg-slate-900/60 border border-white/10 rounded-2xl">
               {tabs.map(tab => (
-                <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                <button key={tab.key} onClick={() => selectTab(tab.key)}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all
                     ${activeTab === tab.key
                       ? 'bg-slate-800 text-white border border-white/10'
