@@ -49,6 +49,9 @@ const EXCLUDED_NETWORK_NAMES = new Set([
   'cartoon network','adult swim','discovery+','investigation discovery',
   'history','lifetime','hallmark','cooking channel','food network',
   'travel channel','animal planet','natgeo','national geographic',
+  // Partnership-driven exclusions (2026-07)
+  'm-net','phoenix television','cctv-10','tokyo mx','das erste',
+  'fuji tv','france 3','guangdong television','tv globo','sun tv',
 ])
 
 // Only show major streaming + broadcast networks in Most Anticipated
@@ -68,7 +71,7 @@ function isAllowedNetwork(networkName) {
     !['youku','iqiyi','bilibili','wavve','tving','kanal','tencent',
       'viutv','tvb','mewatch','globo','univision','telemundo','televisa',
       'voot','zee5','sonyliv','hotstar','fuji','tokyo mx','nhk',
-      'rizzler','delasol'].some(k => nl.includes(k))
+      'rizzler','delasol','phoenix tv','cctv','guangdong'].some(k => nl.includes(k))
 }
 
 function todayISO() {
@@ -311,8 +314,14 @@ export function TrendingPage() {
       // Non-blocking ratings enrichment — fires after cards render
       fetchRatingsMap(week).then(setWeekRatings).catch(() => {})
       fetchRatingsMap(finalRising).then(setRisingRatings).catch(() => {})
-      fetchNetworksMap(week).then(netMap => { setWeekNetworks(netMap); setTrendingWeek([...week]) }).catch(() => {})
-      fetchNetworksMap(finalRising).then(netMap => { setRisingNetworks(netMap); setRising([...finalRising]) }).catch(() => {})
+      fetchNetworksMap(week).then(netMap => {
+        setWeekNetworks(netMap)
+        setTrendingWeek(week.filter(s => isAllowedNetwork(netMap[s.id])))
+      }).catch(() => {})
+      fetchNetworksMap(finalRising).then(netMap => {
+        setRisingNetworks(netMap)
+        setRising(finalRising.filter(s => isAllowedNetwork(netMap[s.id])))
+      }).catch(() => {})
     }).catch(() => {}).finally(() => { setLoad('week', false); setLoad('rising', false) })
 
     // Most Anticipated — fetched from airdate-curated-premieres API (nightly refresh)

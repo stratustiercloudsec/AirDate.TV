@@ -65,6 +65,9 @@ const EXCLUDED_NETWORK_NAMES = new Set([
   'viutv','tvb','now tv','mewatch','mediacorp',
   'globoplay','univision','telemundo','televisa',
   'voot','zee5','sonyliv','hotstar','sun nxt','aha',
+  // Partnership-driven exclusions (2026-07)
+  'm-net','phoenix television','cctv-10','tokyo mx','das erste',
+  'fuji tv','france 3','guangdong television','tv globo','sun tv',
 ])
 function isEnglishShow(show) {
   // original_language is always present from TMDB discover/trending results
@@ -73,7 +76,8 @@ function isEnglishShow(show) {
   // After enrichment, also check network name
   const net = (show.network || '').toLowerCase()
   if (net && EXCLUDED_NETWORK_NAMES.has(net)) return false
-  if (net && ['youku','iqiyi','bilibili','wavve','tving','tencent','viutv','hotstar'].some(k => net.includes(k))) return false
+  if (net && ['youku','iqiyi','bilibili','wavve','tving','tencent','viutv','hotstar',
+    'phoenix tv','cctv','guangdong','globo'].some(k => net.includes(k))) return false
   return true
 }
 // Only include shows that premiered in 2015 or later (blocks legacy catalog bleed)

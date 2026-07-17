@@ -65,6 +65,9 @@ const EXCLUDED_NETWORK_NAMES = new Set([
   'viutv','tvb','now tv','mewatch','mediacorp',
   'globoplay','univisión','telemundo','televisa',
   'voot','zee5','sonyliv','hotstar','sun nxt','aha','discovery+india',
+  // Partnership-driven exclusions (2026-07)
+  'm-net','phoenix television','cctv-10','tokyo mx','das erste',
+  'fuji tv','france 3','guangdong television','tv globo','sun tv',
 ])
 
 // Network priority weights — higher = shown first within same date
@@ -88,7 +91,8 @@ function isEnglishNetwork(networkLabel) {
   if (!networkLabel) return true
   const nl = networkLabel.toLowerCase()
   return !EXCLUDED_NETWORK_NAMES.has(nl) &&
-    !['youku','iqiyi','bilibili','mango','wavve','tving','kanal','tencent','viutv'].some(k => nl.includes(k))
+    !['youku','iqiyi','bilibili','mango','wavve','tving','kanal','tencent','viutv',
+      'phoenix tv','cctv','guangdong','globo'].some(k => nl.includes(k))
 }
 
 // Curated show IDs per network — ensures high-profile returning seasons
