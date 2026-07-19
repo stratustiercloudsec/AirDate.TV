@@ -92,7 +92,7 @@ function isEnglishNetwork(networkLabel) {
   const nl = networkLabel.toLowerCase()
   return !EXCLUDED_NETWORK_NAMES.has(nl) &&
     !['youku','iqiyi','bilibili','mango','wavve','tving','kanal','tencent','viutv',
-      'phoenix tv','cctv','guangdong','globo'].some(k => nl.includes(k))
+      'phoenix tv','cctv','guangdong','globo','tokyo','bandai'].some(k => nl.includes(k))
 }
 
 // Curated show IDs per network — ensures high-profile returning seasons

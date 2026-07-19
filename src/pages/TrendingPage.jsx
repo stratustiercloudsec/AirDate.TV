@@ -70,8 +70,8 @@ function isAllowedNetwork(networkName) {
   return !EXCLUDED_NETWORK_NAMES.has(nl) &&
     !['youku','iqiyi','bilibili','wavve','tving','kanal','tencent',
       'viutv','tvb','mewatch','globo','univision','telemundo','televisa',
-      'voot','zee5','sonyliv','hotstar','fuji','tokyo mx','nhk',
-      'rizzler','delasol','phoenix tv','cctv','guangdong'].some(k => nl.includes(k))
+      'voot','zee5','sonyliv','hotstar','fuji','tokyo','nhk',
+      'rizzler','delasol','phoenix tv','cctv','guangdong','bandai'].some(k => nl.includes(k))
 }
 
 function todayISO() {

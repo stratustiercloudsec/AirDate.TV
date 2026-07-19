@@ -77,7 +77,7 @@ function isEnglishShow(show) {
   const net = (show.network || '').toLowerCase()
   if (net && EXCLUDED_NETWORK_NAMES.has(net)) return false
   if (net && ['youku','iqiyi','bilibili','wavve','tving','tencent','viutv','hotstar',
-    'phoenix tv','cctv','guangdong','globo'].some(k => net.includes(k))) return false
+    'phoenix tv','cctv','guangdong','globo','tokyo','bandai'].some(k => net.includes(k))) return false
   return true
 }
 // Only include shows that premiered in 2015 or later (blocks legacy catalog bleed)
