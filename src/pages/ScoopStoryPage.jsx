@@ -18,6 +18,108 @@ const CATS = {
   production:    { label:'Production Updates', icon:'clapperboard',  color:'#fb923c' },
 }
 
+function formatTime(iso) {
+  if (!iso) return ''
+  try {
+    const d = new Date(iso), diff = Date.now() - d.getTime()
+    const h = Math.floor(diff/3600000), days = Math.floor(diff/86400000)
+    if (h < 1) return 'Just now'
+    if (h < 24) return `${h}h ago`
+    if (days < 7) return `${days}d ago`
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})
+  } catch { return '' }
+}
+
+function CatBadge({ cat, small }) {
+  const conf = CATS[cat] || CATS.premieres
+  return (
+    <span
+      className={`inline-flex items-center gap-1 font-black uppercase tracking-widest rounded-full
+        ${small ? 'text-[9px] px-2 py-0.5' : 'text-[10px] px-2.5 py-1'}`}
+      style={{background:`${conf.color}20`, color:conf.color, border:`1px solid ${conf.color}30`}}>
+      <i className={`fa-solid fa-${conf.icon}`} style={{fontSize:'8px'}}/>
+      {conf.label}
+    </span>
+  )
+}
+
+// ── Related Stories sidebar (same-category list, matches /scoop's sidebar pattern) ──
+function RelatedListRow({ item, index }) {
+  const navigate = useNavigate()
+  const cat    = item.category || 'premieres'
+  const poster = item.image_url || item.poster_url || item.poster
+  return (
+    <article
+      onClick={() => item.story_hash && navigate(`/scoop/${item.story_hash}`)}
+      className="group flex gap-3 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-all border border-transparent hover:border-white/5"
+    >
+      <span className="text-2xl font-black text-slate-700 w-6 shrink-0 leading-tight mt-0.5"
+        style={{fontVariantNumeric:'tabular-nums'}}>
+        {String(index+1).padStart(2,'0')}
+      </span>
+      {poster && (
+        <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
+          <img src={poster} onError={e => { e.currentTarget.style.display="none"; e.currentTarget.parentElement.classList.add("no-image") }} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"/>
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="mb-1"><CatBadge cat={cat} small/></div>
+        <h4 className="text-white text-xs font-bold leading-snug line-clamp-2 group-hover:text-cyan-400 transition-colors">
+          {item.headline}
+        </h4>
+        <p className="text-slate-200 text-[10px] mt-1">{formatTime(item.published_at)}</p>
+      </div>
+    </article>
+  )
+}
+
+function RelatedStories({ category, currentHash }) {
+  const [related, setRelated] = useState([])
+  const [loading,  setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${MANIFEST_URL}?t=${Date.now()}`)
+      .then(r => r.json())
+      .then(data => {
+        const items = (data.items || [])
+          .filter(i => i.story_hash && i.headline && i.story_hash !== currentHash)
+          .filter(i => (i.category || 'production') === category)
+        items.sort((a,b) => new Date(b.published_at||0) - new Date(a.published_at||0))
+        setRelated(items.slice(0, 8))
+      })
+      .catch(() => setRelated([]))
+      .finally(() => setLoading(false))
+  }, [category, currentHash])
+
+  const conf = CATS[category] || CATS.production
+
+  if (loading) return (
+    <div className="space-y-3">
+      {Array.from({length: 4}).map((_, i) => (
+        <div key={i} className="animate-pulse flex gap-3 p-3">
+          <div className="w-6 h-4 bg-slate-800 rounded"/>
+          <div className="w-14 h-14 bg-slate-800 rounded-lg flex-shrink-0"/>
+          <div className="flex-1"><div className="h-3 bg-slate-800 rounded w-full mb-2"/><div className="h-2 bg-slate-800 rounded w-2/3"/></div>
+        </div>
+      ))}
+    </div>
+  )
+
+  if (!related.length) return null
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <i className={`fa-solid fa-${conf.icon}`} style={{color:conf.color, fontSize:'12px'}}/>
+        <h3 className="text-white font-black text-xs uppercase tracking-widest">More {conf.label}</h3>
+      </div>
+      <div className="space-y-1">
+        {related.map((item, i) => <RelatedListRow key={item.story_hash} item={item} index={i}/>)}
+      </div>
+    </div>
+  )
+}
+
 function renderMarkdown(md) {
   if (!md) return ''
   return md.split(/\n\n+/).map(block => {
@@ -209,7 +311,9 @@ export function ScoopStoryPage() {
 
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen">
-      <div className="w-full max-w-3xl mx-auto px-6 pt-24 pb-20">
+      <div className="w-full max-w-7xl mx-auto px-6 pt-24 pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <main className="lg:col-span-2">
 
         {/* Back + Archive nav */}
         <div className="flex items-center justify-between mb-8">
@@ -229,10 +333,9 @@ export function ScoopStoryPage() {
 
         {/* Hero image */}
         {story.image_url && (
-          <div className="relative h-64 sm:h-80 rounded-2xl overflow-hidden mb-8">
+          <div className="relative max-h-[85vh] rounded-2xl overflow-hidden mb-8 bg-slate-900 flex items-center justify-center">
             <img src={story.image_url} alt={story.headline}
-              className="w-full h-full object-cover object-top"/>
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"/>
+              className="w-full h-auto max-h-[85vh] object-contain"/>
             {story.image_source === 'pexels' && (
               <span className="absolute bottom-3 right-3 text-[10px] text-slate-200 bg-slate-950/60 px-2 py-1 rounded-md">
                 Photo by Pexels
@@ -308,6 +411,15 @@ export function ScoopStoryPage() {
           <ProPaywall headline={story.headline}/>
         )}
 
+        </main>
+
+        <aside className="lg:col-span-1">
+          <div className="lg:sticky lg:top-24">
+            <RelatedStories category={cat} currentHash={story.story_hash}/>
+          </div>
+        </aside>
+
+        </div>
       </div>
       <Footer/>
     </div>
