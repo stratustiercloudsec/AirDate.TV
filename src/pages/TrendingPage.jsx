@@ -29,7 +29,7 @@ const GENRES = [
   { label: 'Sci-Fi',    id: '10765' },
   { label: 'Comedy',    id: '35'    },
   { label: 'Action',    id: '10759' },
-  { label: 'Thriller',  id: '53'    },
+  { label: 'Thriller',  id: '9648|80' },  // TMDB has no TV 'Thriller' genre -- combines Mystery(9648) + Crime(80) as the closest thriller-adjacent match
   { label: 'Animation', id: '16'    },
   { label: 'Reality',   id: '10764' },
 ]
@@ -52,6 +52,7 @@ const EXCLUDED_NETWORK_NAMES = new Set([
   // Partnership-driven exclusions (2026-07)
   'm-net','phoenix television','cctv-10','tokyo mx','das erste',
   'fuji tv','france 3','guangdong television','tv globo','sun tv',
+  'nine network','seven network','tv 2 direkte','rtl 4','nrk1',
 ])
 
 // Only show major streaming + broadcast networks in Most Anticipated
@@ -362,9 +363,11 @@ export function TrendingPage() {
     setLoad('genre', true)
     tmdb(`/discover/tv?sort_by=popularity.desc&with_genres=${activeGenre.id}`)
       .then(r => {
-        setGenreShows(r)
+        fetchNetworksMap(r).then(netMap => {
+          setGenreNetworks(netMap)
+          setGenreShows(r.filter(s => isAllowedNetwork(netMap[s.id])))
+        }).catch(() => setGenreShows(r))
         fetchRatingsMap(r).then(setGenreRatings).catch(() => {})
-        fetchNetworksMap(r).then(setGenreNetworks).catch(() => {})
       })
       .catch(() => {})
       .finally(() => setLoad('genre', false))

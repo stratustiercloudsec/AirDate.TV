@@ -68,6 +68,7 @@ const EXCLUDED_NETWORK_NAMES = new Set([
   // Partnership-driven exclusions (2026-07)
   'm-net','phoenix television','cctv-10','tokyo mx','das erste',
   'fuji tv','france 3','guangdong television','tv globo','sun tv',
+  'nine network','seven network','tv 2 direkte','rtl 4','nrk1',
 ])
 
 // Network priority weights — higher = shown first within same date
@@ -571,8 +572,8 @@ function EpisodeDrawer({ show, monthFirst, monthLast }) {
       setError(false)
       try {
         const seasonNum = show._seasonNum || 1
-        const data = await tmdbSeason(show.id, seasonNum, networkName)
         const networkName = show._networkLabel || ''
+        const data = await tmdbSeason(show.id, seasonNum, networkName)
         const eps  = (data.episodes || [])
           .filter(ep => ep.air_date && ep.air_date >= monthFirst && ep.air_date <= monthLast)
           .sort((a,b) => a.air_date.localeCompare(b.air_date))

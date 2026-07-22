@@ -68,6 +68,7 @@ const EXCLUDED_NETWORK_NAMES = new Set([
   // Partnership-driven exclusions (2026-07)
   'm-net','phoenix television','cctv-10','tokyo mx','das erste',
   'fuji tv','france 3','guangdong television','tv globo','sun tv',
+  'nine network','seven network','tv 2 direkte','rtl 4','nrk1',
 ])
 function isEnglishShow(show) {
   // original_language is always present from TMDB discover/trending results
@@ -663,16 +664,16 @@ export function SearchPage() {
         const monthName = new Date(nmYear, nmMonth - 1, 1).toLocaleString('default', { month: 'long' })
         const res = await fetch(`${API_BASE}/get-premieres`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: `Series premiering in ${monthName} ${nmYear}`, page: 1, per_page: 40 }),
+          body: JSON.stringify({ query: `Series premiering in ${monthName} ${nmYear}`, page: 1, per_page: 40, cache_bust: true }),
         })
         const gw = await res.json()
         const data = parseGateway(gw)
         const mapped = (data.results ?? []).map(normalizeShow)
-        setNextMonth(dedupById(mapped).slice(0, 40))
+        setNextMonth(dedupById(mapped).filter(isEnglishShow).slice(0, 40))
       } catch (e) { console.error('nextMonth fetch failed', e) }
       finally { setLoadMonth(false) }
     })()
-
+    
     setLoadTonight(true)
     const todayStr = new Date().toLocaleDateString('en-CA')
     tmdbDiscover({ sort_by:'popularity.desc', 'first_air_date.gte':todayStr, 'first_air_date.lte':todayStr, with_original_language:'en', page:1 })
