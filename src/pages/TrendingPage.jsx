@@ -29,14 +29,13 @@ const GENRES = [
   { label: 'Sci-Fi',    id: '10765' },
   { label: 'Comedy',    id: '35'    },
   { label: 'Action',    id: '10759' },
-  { label: 'Thriller',  id: '9648|80' },  // TMDB has no TV 'Thriller' genre -- combines Mystery(9648) + Crime(80) as the closest thriller-adjacent match
+  { label: 'Thriller',  id: '9648|80' },
   { label: 'Animation', id: '16'    },
   { label: 'Reality',   id: '10764' },
 ]
 
 // Networks that should never appear in Most Anticipated or Trending
 const EXCLUDED_NETWORK_NAMES = new Set([
-  // Foreign streaming platforms
   'youku','iqiyi','bilibili','mango tv','tencent video',
   'wavve','tving','coupang play','kbs','mbc','sbs','tvn','jtbc','ocn',
   'ena','channel a','mbn','tv chosun','sky showtime','dstv','canal+','rtl',
@@ -44,18 +43,15 @@ const EXCLUDED_NETWORK_NAMES = new Set([
   'viutv','tvb','now tv','mewatch','mediacorp',
   'globoplay','univisión','telemundo','televisa',
   'voot','zee5','sonyliv','hotstar','sun nxt','aha',
-  // Non-traditional / obscure platforms
   'youtube','delasol','rizzler news','usa network','nickelodeon',
   'cartoon network','adult swim','discovery+','investigation discovery',
   'history','lifetime','hallmark','cooking channel','food network',
   'travel channel','animal planet','natgeo','national geographic',
-  // Partnership-driven exclusions (2026-07)
   'm-net','phoenix television','cctv-10','tokyo mx','das erste',
   'fuji tv','france 3','guangdong television','tv globo','sun tv',
   'nine network','seven network','tv 2 direkte','rtl 4','nrk1',
 ])
 
-// Only show major streaming + broadcast networks in Most Anticipated
 const ALLOWED_NETWORKS = new Set([
   'netflix','hbo','hbo / max','max','apple tv+','hulu','disney+',
   'prime video','amazon','peacock','paramount+','starz','showtime',
@@ -64,8 +60,6 @@ const ALLOWED_NETWORKS = new Set([
 ])
 
 function isAllowedNetwork(networkName) {
-  // Default: allow anything not explicitly excluded
-  // This prevents over-filtering legitimate upcoming shows
   if (!networkName) return true
   const nl = networkName.toLowerCase()
   return !EXCLUDED_NETWORK_NAMES.has(nl) &&
@@ -80,7 +74,6 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
-// ─── Rating helpers (mirror of HomePage) ─────────────────────────────────────
 function ratingColor(rating) {
   if (!rating) return 'border-white/20 text-slate-200'
   if (rating === 'TV-MA')  return 'border-red-500/50 text-red-400'
@@ -90,8 +83,6 @@ function ratingColor(rating) {
   return 'border-white/20 text-slate-200'
 }
 
-// ─── Non-blocking ratings enrichment ─────────────────────────────────────────
-// Fires AFTER cards render — never blocks card display
 async function fetchRatingsMap(shows) {
   if (!shows?.length) return {}
   const results = await Promise.allSettled(
@@ -122,8 +113,6 @@ async function fetchNetworksMap(shows) {
   shows.forEach((s, i) => {
     const data = results[i].status === 'fulfilled' ? results[i].value : null
     map[s.id] = data?.networks?.[0]?.name || ''
-    // Use show-level poster_path (en-US guaranteed by tmdbShow call)
-    // Season-level posters may be localized if TMDB lacks English key art
     if (data?.poster_path) {
       s.poster_path = data.poster_path
     } else if (data?.seasons?.length) {
@@ -146,8 +135,54 @@ function SkeletonCard() {
   )
 }
 
+// ─── Auth prompt modal — shown instead of silently redirecting to /auth/login ──
+function AuthPromptModal({ onClose }) {
+  return (
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-slate-900 border border-white/20 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-8 text-white/50 hover:text-white text-3xl cursor-pointer transition-colors"
+        >
+          ×
+        </button>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2.5 bg-pink-500/10 rounded-xl border border-pink-500/20">
+            <i className="fa-solid fa-heart text-pink-400 text-lg"/>
+          </div>
+          <h3 className="text-xl font-black text-white tracking-tight">Sign In to Track Shows</h3>
+        </div>
+
+        <p className="text-slate-200 leading-relaxed text-sm font-medium mb-6">
+          Create a free AirDate account to track shows, build your watchlist, and get
+          early premiere alerts — it only takes a few seconds.
+        </p>
+
+        <div className="flex items-center gap-3">
+          <a
+            href="/auth/login"
+            className="flex-1 text-center bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
+          >
+            Sign In / Sign Up
+          </a>
+          <button
+            onClick={onClose}
+            className="flex-1 text-center bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-200 font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
+          >
+            Not Now
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── ShowCard — heart icon + rating badge (mirrors HomePage pattern) ──────────
-function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = 'normal', ratingsMap = {}, networksMap = {} }) {
+function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, onAuthRequired, size = 'normal', ratingsMap = {}, networksMap = {} }) {
   const tracked    = isTracked(show.id)
   const posterImg  = usePoster(show.poster_path || show.poster, show.name, 342)
   const rating     = show.content_rating || ratingsMap[show.id] || ''
@@ -162,14 +197,12 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = '
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"/>
 
-        {/* Hover gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"/>
 
-        {/* ── Heart button — always visible, top-right ── */}
         <button
           onClick={e => {
             e.stopPropagation()
-            if (!isAuthenticated) { window.location.href = '/auth/login'; return }
+            if (!isAuthenticated) { onAuthRequired(); return }
             onTrack(show)
           }}
           disabled={isAuthenticated && !tracked && atLimit}
@@ -185,7 +218,6 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = '
           <i className={`fa-${tracked ? 'solid' : 'regular'} fa-heart text-xs`}/>
         </button>
 
-        {/* ── Content rating badge — bottom-right ── */}
         {rating && (
           <span className={`absolute bottom-2 right-2 z-10 px-1.5 py-0.5 bg-slate-950/85 border rounded text-[9px] font-black tracking-widest backdrop-blur-sm ${ratingColor(rating)}`}>
             {rating}
@@ -208,7 +240,7 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, size = '
   )
 }
 
-function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthenticated, networksMap = {} }) {
+function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthenticated, onAuthRequired, networksMap = {} }) {
   const tracked   = isTracked(show.id)
   const posterImg = usePoster(show.poster_path || show.poster, show.name, 185)
   const voteStr   = show.vote_count > 0 ? `${show.vote_count.toLocaleString()} votes` : 'Upcoming'
@@ -230,21 +262,23 @@ function AnticipatedCard({ show, rank, isTracked, onTrack, atLimit, isAuthentica
         )}
         <p className="text-[9px] text-purple-400 font-black uppercase tracking-widest mt-1">{voteStr}</p>
       </div>
-      {isAuthenticated && (
-        <button
-          onClick={e => { e.stopPropagation(); onTrack(show) }}
-          disabled={!tracked && atLimit}
-          className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-lg
-            ${tracked
-              ? 'bg-pink-500 text-white'
-              : atLimit
-                ? 'bg-slate-900/70 text-slate-600 cursor-not-allowed'
-                : 'bg-slate-900/70 text-slate-300 hover:bg-pink-500/90 hover:text-white'
-            }`}
-        >
-          <i className={`fa-${tracked ? 'solid' : 'regular'} fa-heart text-xs`}/>
-        </button>
-      )}
+      <button
+        onClick={e => {
+          e.stopPropagation()
+          if (!isAuthenticated) { onAuthRequired(); return }
+          onTrack(show)
+        }}
+        disabled={isAuthenticated && !tracked && atLimit}
+        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-lg
+          ${tracked
+            ? 'bg-pink-500 text-white'
+            : isAuthenticated && atLimit
+              ? 'bg-slate-900/70 text-slate-600 cursor-not-allowed'
+              : 'bg-slate-900/70 text-slate-300 hover:bg-pink-500/90 hover:text-white'
+          }`}
+      >
+        <i className={`fa-${tracked ? 'solid' : 'regular'} fa-heart text-xs`}/>
+      </button>
     </div>
   )
 }
@@ -256,7 +290,6 @@ async function tmdb(path) {
   const extraParams = {}
   if (qs) new URLSearchParams(qs).forEach((v, k) => { extraParams[k] = v })
   const raw = await tmdbFetch(basePath, { language: 'en-US', ...extraParams })
-  // tmdbFetch may return parsed JSON or Response — handle both
   const d = (raw && typeof raw.json === 'function') ? await raw.json() : raw
   return d?.results || []
 }
@@ -271,7 +304,6 @@ export function TrendingPage() {
   const [networkShows, setNetworkShows] = useState([])
   const [genreShows,   setGenreShows]   = useState([])
 
-  // Ratings maps — keyed by show id, populated after cards load
   const [weekRatings,    setWeekRatings]    = useState({})
   const [risingRatings,  setRisingRatings]  = useState({})
   const [networkRatings, setNetworkRatings] = useState({})
@@ -285,6 +317,7 @@ export function TrendingPage() {
   const [activeNetwork, setActiveNetwork] = useState(NETWORKS[0])
   const [activeGenre,   setActiveGenre]   = useState(GENRES[0])
   const [activeSection, setSection]       = useState('trending-week')
+  const [authModal,     setAuthModal]     = useState(false)
 
   const [loading, setLoading] = useState({
     week: true, anticipated: true, rising: true, network: true, genre: true,
@@ -296,9 +329,8 @@ export function TrendingPage() {
     if (r?.error === 'FREEMIUM_LIMIT') window.location.href = '/upgrade'
   }
 
-  const cardProps = { isTracked, onTrack: handleTrack, atLimit, isAuthenticated }
+  const cardProps = { isTracked, onTrack: handleTrack, atLimit, isAuthenticated, onAuthRequired: () => setAuthModal(true) }
 
-  // ── Trending This Week + Rising ───────────────────────────────────────────
   useEffect(() => {
     setLoad('week', true)
     setLoad('rising', true)
@@ -312,7 +344,6 @@ export function TrendingPage() {
       const finalRising = risingShows.length >= 4 ? risingShows : day.slice(0, 12)
       setRising(finalRising)
 
-      // Non-blocking ratings enrichment — fires after cards render
       fetchRatingsMap(week).then(setWeekRatings).catch(() => {})
       fetchRatingsMap(finalRising).then(setRisingRatings).catch(() => {})
       fetchNetworksMap(week).then(netMap => {
@@ -325,12 +356,9 @@ export function TrendingPage() {
       }).catch(() => {})
     }).catch(() => {}).finally(() => { setLoad('week', false); setLoad('rising', false) })
 
-    // Most Anticipated — fetched from airdate-curated-premieres API (nightly refresh)
     setLoad('anticipated', true)
     fetchCuratedPremieres()
       .then(async curated => {
-        // Only show shows premiering today or in the future — the curated table
-        // is refreshed nightly, so past-dated entries can linger until the next run.
         const todayStr = new Date().toLocaleDateString('en-CA')
         const upcoming = curated.filter(s => (s.first_air_date || '') >= todayStr)
         const sorted = upcoming.sort((a, b) =>
@@ -338,14 +366,12 @@ export function TrendingPage() {
         setAnticipated(sorted)
         const netMap = await fetchNetworksMap(sorted)
         setAnticipatedNetworks(netMap)
-        // Update poster_path from TMDB (curated API may have stale posters)
         setAnticipated([...sorted])
       })
       .catch(() => {})
       .finally(() => setLoad('anticipated', false))
   }, [])
 
-  // ── By Network ────────────────────────────────────────────────────────────
   useEffect(() => {
     setLoad('network', true)
     tmdb(`/discover/tv?sort_by=popularity.desc&with_networks=${activeNetwork.id}`)
@@ -358,7 +384,6 @@ export function TrendingPage() {
       .finally(() => setLoad('network', false))
   }, [activeNetwork])
 
-  // ── By Genre ──────────────────────────────────────────────────────────────
   useEffect(() => {
     setLoad('genre', true)
     tmdb(`/discover/tv?sort_by=popularity.desc&with_genres=${activeGenre.id}`)
@@ -401,7 +426,6 @@ export function TrendingPage() {
           <p className="text-slate-200 text-base max-w-2xl">Real-time signals across TMDB popularity, weekly spikes, and upcoming premiere anticipation.</p>
         </div>
 
-        {/* Sticky tabs */}
         <div className="sticky top-16 z-40 bg-slate-950/95 backdrop-blur-xl border-b border-white/5 -mx-6 px-6 mb-10">
           <div className="flex items-center gap-1 overflow-x-auto py-3" style={{ scrollbarWidth: 'none' }}>
             {TABS.map(t => (
@@ -417,7 +441,6 @@ export function TrendingPage() {
           </div>
         </div>
 
-        {/* 1. Trending This Week */}
         <section id="trending-week" className="mb-16">
           <SectionHeader icon="fa-bolt" color="text-yellow-400" title="Trending This Week" subtitle="Powered by TMDB"/>
           {loading.week ? (
@@ -438,7 +461,6 @@ export function TrendingPage() {
           )}
         </section>
 
-        {/* 2. Most Anticipated */}
         <section id="most-anticipated" className="mb-16">
           <SectionHeader icon="fa-calendar-star" color="text-purple-400" title="Most Anticipated Premieres" subtitle="Upcoming · Sorted by Popularity"/>
           <p className="text-slate-200 text-xs mb-6">English-language shows with future premiere dates, ranked by TMDB popularity score.</p>
@@ -463,7 +485,6 @@ export function TrendingPage() {
           )}
         </section>
 
-        {/* 3. Rising */}
         <section id="rising" className="mb-16">
           <SectionHeader icon="fa-arrow-trend-up" color="text-green-400" title="Rising Right Now" subtitle="Today's Signals"/>
           <p className="text-slate-200 text-xs mb-6">Trending today but not yet in this week's top 5 — early signals before they go mainstream.</p>
@@ -478,7 +499,6 @@ export function TrendingPage() {
           )}
         </section>
 
-        {/* 4. By Network */}
         <section id="by-network" className="mb-16">
           <SectionHeader icon="fa-tv" color="text-cyan-400" title="Trending by Network"/>
           <div className="flex flex-wrap gap-2 mb-8">
@@ -503,7 +523,6 @@ export function TrendingPage() {
           )}
         </section>
 
-        {/* 5. By Genre */}
         <section id="by-genre" className="mb-16">
           <SectionHeader icon="fa-tags" color="text-pink-400" title="Trending by Genre"/>
           <div className="flex flex-wrap gap-2 mb-8">
@@ -530,6 +549,8 @@ export function TrendingPage() {
 
       </div>
       <Footer/>
+
+      {authModal && <AuthPromptModal onClose={() => setAuthModal(false)} />}
     </div>
   )
 }

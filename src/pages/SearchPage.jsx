@@ -139,13 +139,9 @@ async function enrichWithNetwork(shows) {
     return {
       ...s,
       network:        s.network || detail?.networks?.[0]?.name || '',
-      // tmdbShow() already corrects first_air_date for Apple TV+/Showtime/Paramount+
-      // (see utils/tmdb.js correctShowDates); use it here since discover/search
-      // results never carry a corrected date on their own.
       first_air_date: detail?.first_air_date || s.first_air_date,
       content_rating: usRating,
       poster_path:    (() => {
-        // Priority: latest season poster → show-level poster → original
         if (detail?.seasons?.length) {
           const valid = detail.seasons.filter(s => s.season_number > 0 && s.poster_path)
           if (valid.length) return valid[valid.length - 1].poster_path
@@ -169,13 +165,6 @@ function dedupById(shows) {
   })
 }
 
-// Dedup keyed purely on show id (ignores season_number). Used specifically
-// where sources with inconsistent season_number shapes get merged together
-// (e.g. the curated-premieres feed, which tags season_number, vs the raw
-// client-side TMDB discover sweep via mapTMDB(), which never sets it) --
-// dedupById's id+season composite key treats those as two different shows
-// even though they're the same TMDB id, which is what caused the same show
-// (e.g. "Ride or Die") to render twice under "Premiering This Week."
 function dedupByShowId(shows) {
   const seen = new Set()
   return shows.filter(s => {
@@ -237,6 +226,52 @@ function fuzzyScore(query, name) {
   const maxLen = Math.max(q.length, (words[0]||n).length)
   const similarity = 1 - dist/maxLen
   return similarity > 0.6 ? Math.round(similarity*50) : 0
+}
+
+// ─── Auth prompt modal — shown instead of silently redirecting to /auth/login ──
+function AuthPromptModal({ onClose }) {
+  return (
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-slate-900 border border-white/20 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-8 text-white/50 hover:text-white text-3xl cursor-pointer transition-colors"
+        >
+          ×
+        </button>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2.5 bg-pink-500/10 rounded-xl border border-pink-500/20">
+            <i className="fa-solid fa-heart text-pink-400 text-lg"/>
+          </div>
+          <h3 className="text-xl font-black text-white tracking-tight">Sign In to Track Shows</h3>
+        </div>
+
+        <p className="text-slate-200 leading-relaxed text-sm font-medium mb-6">
+          Create a free AirDate account to track shows, build your watchlist, and get
+          early premiere alerts — it only takes a few seconds.
+        </p>
+
+        <div className="flex items-center gap-3">
+          <a
+            href="/auth/login"
+            className="flex-1 text-center bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
+          >
+            Sign In / Sign Up
+          </a>
+          <button
+            onClick={onClose}
+            className="flex-1 text-center bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-200 font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
+          >
+            Not Now
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ─── Scoop Sidebar ────────────────────────────────────────────────────────────
@@ -472,7 +507,7 @@ function ratingColor(rating) {
   return 'border-white/20 text-slate-200'
 }
 
-function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) {
+function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, onAuthRequired, rank }) {
   const tracked   = isTracked(show.id)
   const posterImg = usePoster(show.poster_path || show.poster, show.name, 342)
   const href      = detailUrl(show)
@@ -495,7 +530,7 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, rank }) 
         <button
           onClick={e => {
             e.stopPropagation()
-            if (!isAuthenticated) { window.location.href = '/auth/login'; return }
+            if (!isAuthenticated) { onAuthRequired(); return }
             onTrack(show)
           }}
           disabled={isAuthenticated && !tracked && atLimit}
@@ -596,6 +631,7 @@ export function SearchPage() {
   const [modalTitle,        setModalTitle]    = useState('')
   const [modalContent,      setModalContent]  = useState('')
   const [modalLoading,      setModalLoading]  = useState(false)
+  const [authModal,         setAuthModal]     = useState(false)
 
   useEffect(() => {
     const now = new Date()
@@ -604,7 +640,6 @@ export function SearchPage() {
 
     setLoadTrend(true)
     tmdbTrending('week').then(async d => {
-      // Trending = what's hot this week — English only, no age restriction
       const shows = (d.results||[]).map(mapTMDB).filter(s => !s.original_language || s.original_language === 'en')
       const enriched = await enrichWithNetwork(shows)
       setTrending(dedupById(enriched.filter(isEnglishShow)).slice(0,10))
@@ -613,7 +648,6 @@ export function SearchPage() {
     setLoadTop10(true)
     Promise.all([tmdbPopular(1), tmdbPopular(2), tmdbPopular(3)]).then(async ([d1, d2, d3]) => {
       const all = [...(d1.results||[]), ...(d2.results||[]), ...(d3.results||[])]
-      // Top 10 = most popular shows — English only, no age restriction
       const shows = all.map(mapTMDB).filter(s => !s.original_language || s.original_language === 'en')
       const enriched = await enrichWithNetwork(shows)
       setTop10(dedupById(enriched.filter(isEnglishShow)).slice(0,10))
@@ -659,8 +693,6 @@ export function SearchPage() {
     const lte = `${nmYear}-${String(nmMonth).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`
     ;(async () => {
       try {
-        // Use the RAG orchestration endpoint — handles returning series (Reacher,
-        // Ted Lasso, Lioness) that client-side first_air_date filters miss.
         const monthName = new Date(nmYear, nmMonth - 1, 1).toLocaleString('default', { month: 'long' })
         const res = await fetch(`${API_BASE}/get-premieres`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -692,7 +724,6 @@ export function SearchPage() {
     }).catch(()=>{})
   }, [])
 
-  // Merge useEffect — runs when TMDB results OR curated data changes
   useEffect(() => {
     if (!tmdbWeekResults.length && !curatedShows.length) return
     const weekStart = startOfWeek()
@@ -720,16 +751,10 @@ export function SearchPage() {
     const q = overrideQuery ?? query
     if (!q.trim()) return
     setSearching(true); setShowResults(true)
-    // Sync header immediately so it reflects the active query, not the previous result
     setHeader(`Results for "${q}"`)
     setCount('')
     try {
       let data = null
-      // When network filter is active, route through the RAG orchestration Lambda
-      // first — it now correctly combines genre/keyword resolution with network
-      // filtering (fixed 2026-07-12). Falls back to TMDB title search + client-side
-      // network filter only if the RAG path returns nothing (e.g. genuine title
-      // searches TMDB's own search endpoint handles better).
       if (network && network !== 'All') {
         let ragSucceeded = false
         try {
@@ -755,7 +780,6 @@ export function SearchPage() {
           const tmdbData = await tmdbSearchTV(q, overridePage)
           const tmdbMapped = (tmdbData.results ?? []).map(mapTMDB)
           const tmdbEnriched = await enrichWithNetwork(tmdbMapped)
-          // Filter by network — strict match, no fallback to unfiltered
           const NETWORK_ALIASES = {
             'hbo / max': ['hbo','max','hbo max'],
             'prime video': ['prime video','amazon','prime'],
@@ -846,7 +870,7 @@ export function SearchPage() {
     finally { setModalLoading(false) }
   }
 
-  const cardProps = { isTracked, onTrack:handleTrack, atLimit, isAuthenticated }
+  const cardProps = { isTracked, onTrack:handleTrack, atLimit, isAuthenticated, onAuthRequired: () => setAuthModal(true) }
   const nextMonthLabel = new Date(new Date().getFullYear(), new Date().getMonth()+1, 1)
     .toLocaleString('default',{month:'long',year:'numeric'})
 
@@ -916,7 +940,6 @@ export function SearchPage() {
         {isAuthenticated && watchlist.length > 0 && (
           <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-            {/* Watchlist banner */}
             <a href="/persona#watchlist"
               className="flex items-center justify-between gap-4 px-5 py-4
                          bg-slate-800/40 hover:bg-slate-800/70
@@ -954,7 +977,6 @@ export function SearchPage() {
               </div>
             </a>
 
-            {/* My Persona banner */}
             <a href="/persona#persona"
               className="flex items-center justify-between gap-4 px-5 py-4
                          bg-slate-800/40 hover:bg-slate-800/70
@@ -1035,7 +1057,6 @@ export function SearchPage() {
             {!showResults && (
               <div className="flex flex-col gap-14">
 
-                {/* ── v3.7 Personalized Recommendations ("Because you tracked...") ── */}
                 {isAuthenticated && (
                   <RecommendedForYou className="" />
                 )}
@@ -1060,10 +1081,8 @@ export function SearchPage() {
             )}
           </div>
 
-          {/* ── Sidebar ── */}
           <aside className="space-y-8">
 
-            {/* Get The Scoop */}
             <div>
               <div className="flex items-start gap-3 mb-4">
                 <div className="p-2.5 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
@@ -1077,7 +1096,6 @@ export function SearchPage() {
               <ScoopSidebar />
             </div>
 
-            {/* Global Hype Ranking */}
             <div>
               <div className="flex items-start gap-3 mb-4">
                 <div className="p-2.5 bg-pink-500/10 rounded-xl border border-pink-500/20">
@@ -1133,6 +1151,8 @@ export function SearchPage() {
           </div>
         </div>
       )}
+
+      {authModal && <AuthPromptModal onClose={() => setAuthModal(false)} />}
     </div>
   )
 }

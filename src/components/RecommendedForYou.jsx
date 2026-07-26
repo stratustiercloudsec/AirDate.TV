@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useWatchlist } from '../context/WatchlistContext'
 
 const API     = 'https://qg0x31ranc.execute-api.us-east-1.amazonaws.com/prod'
 const PER_PAGE = 6
 
-function ShowPill({ show }) {
+function ShowPill({ show, isTracked, onTrack, atLimit, isAuthenticated, onLimitHit, onAuthRequired }) {
   const poster    = show.poster || show.posterPath
   const date      = show.premiereDate || show.first_air_date || ''
   const dateLabel = date && date !== 'TBA'
@@ -13,8 +14,11 @@ function ShowPill({ show }) {
         { month: 'short', day: 'numeric', year: 'numeric' })
     : date || ''
 
+  const showId  = show.tmdb_id || show.id
+  const tracked = isTracked(showId)
+
   return (
-    <Link to={`/details/${show.tmdb_id || show.id}`} className="group">
+    <Link to={`/details/${showId}`} className="group">
       <div className="relative rounded-xl overflow-hidden bg-slate-800 aspect-[2/3] mb-2
                       ring-1 ring-white/5 group-hover:ring-cyan-400/40
                       group-hover:scale-[1.03] group-hover:shadow-xl group-hover:shadow-black/40
@@ -26,11 +30,39 @@ function ShowPill({ show }) {
             </div>
         }
         {show.score > 0 && (
-          <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm
+          <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm
                           text-cyan-400 text-[9px] font-black px-1.5 py-0.5 rounded-lg uppercase tracking-wider">
             {Math.round(show.score * 100)}%
           </div>
         )}
+
+        {/* ── Heart / Track button — mirrors HomePage.jsx / TrendingPage.jsx ShowCard ── */}
+        <button
+          onClick={e => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (!isAuthenticated) { onAuthRequired(); return }
+            if (!tracked && atLimit) { onLimitHit?.(); return }
+            onTrack({
+              id: showId,
+              name: show.title,
+              poster_path: show.posterPath || null,
+              poster: show.poster || null,
+              network: show.network || '',
+              first_air_date: show.premiereDate || show.first_air_date || null,
+            })
+          }}
+          aria-label={tracked ? 'Untrack show' : 'Track show'}
+          className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-lg
+            ${tracked
+              ? 'bg-pink-500 text-white'
+              : isAuthenticated && atLimit
+                ? 'bg-slate-900/70 text-slate-500 hover:text-slate-300'
+                : 'bg-slate-900/70 text-slate-300 hover:bg-pink-500/90 hover:text-white'
+            }`}
+        >
+          <i className={`fa-${tracked ? 'solid' : 'regular'} fa-heart text-xs`}/>
+        </button>
       </div>
       <p className="text-white text-[11px] font-bold leading-tight truncate group-hover:text-cyan-400 transition-colors">
         {show.title}
@@ -41,14 +73,63 @@ function ShowPill({ show }) {
   )
 }
 
+// ─── Auth prompt modal — shown instead of silently redirecting to /auth/login ──
+function AuthPromptModal({ onClose }) {
+  return (
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-slate-900 border border-white/20 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-8 text-white/50 hover:text-white text-3xl cursor-pointer transition-colors"
+        >
+          ×
+        </button>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2.5 bg-pink-500/10 rounded-xl border border-pink-500/20">
+            <i className="fa-solid fa-heart text-pink-400 text-lg"/>
+          </div>
+          <h3 className="text-xl font-black text-white tracking-tight">Sign In to Track Shows</h3>
+        </div>
+
+        <p className="text-slate-200 leading-relaxed text-sm font-medium mb-6">
+          Create a free AirDate account to track shows, build your watchlist, and get
+          early premiere alerts — it only takes a few seconds.
+        </p>
+
+        <div className="flex items-center gap-3">
+          <a
+            href="/auth/login"
+            className="flex-1 text-center bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
+          >
+            Sign In / Sign Up
+          </a>
+          <button
+            onClick={onClose}
+            className="flex-1 text-center bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-200 font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
+          >
+            Not Now
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function RecommendedForYou({ className = '' }) {
   const { user, token, isAuthenticated } = useAuth()
+  const { toggleWatchlist, isTracked, atLimit } = useWatchlist()
   const [shows,    setShows]    = useState([])
   const [label,    setLabel]    = useState('Recommended for You')
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
   const [strategy, setStrategy] = useState('')
   const [page,     setPage]     = useState(0)
+  const [limitModal, setLimitModal] = useState(false)
+  const [authModal,  setAuthModal]  = useState(false)
   const fetchedRef = useRef(false)
 
   const totalPages = Math.ceil(shows.length / PER_PAGE)
@@ -78,6 +159,11 @@ export default function RecommendedForYou({ className = '' }) {
     } catch (err) {
       console.error('Recs fetch error:', err); setError('Could not load recommendations.')
     } finally { setLoading(false) }
+  }
+
+  function handleTrack(show) {
+    const r = toggleWatchlist(show)
+    if (r?.error === 'FREEMIUM_LIMIT') window.location.href = '/upgrade'
   }
 
   if (!isAuthenticated) return null
@@ -152,10 +238,67 @@ export default function RecommendedForYou({ className = '' }) {
         <p className="text-slate-200 text-sm">{error}</p>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-          {pageShows.map((show, i) => <ShowPill key={`${show.id}-${page}-${i}`} show={show}/>)}
+          {pageShows.map((show, i) => (
+            <ShowPill
+              key={`${show.id}-${page}-${i}`}
+              show={show}
+              isTracked={isTracked}
+              onTrack={handleTrack}
+              atLimit={atLimit}
+              isAuthenticated={isAuthenticated}
+              onLimitHit={() => setLimitModal(true)}
+              onAuthRequired={() => setAuthModal(true)}
+            />
+          ))}
           {[...Array(Math.max(0, PER_PAGE - pageShows.length))].map((_, i) => <div key={`g${i}`}/>)}
         </div>
       )}
+
+      {/* ── Freemium limit modal ── */}
+      {limitModal && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+          onClick={e => e.target === e.currentTarget && setLimitModal(false)}
+        >
+          <div className="bg-slate-900 border border-white/20 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative">
+            <button
+              onClick={() => setLimitModal(false)}
+              className="absolute top-6 right-8 text-white/50 hover:text-white text-3xl cursor-pointer transition-colors"
+            >
+              ×
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
+                <i className="fa-solid fa-bolt text-cyan-400 text-lg"/>
+              </div>
+              <h3 className="text-xl font-black text-white tracking-tight">Free Plan Limit Reached</h3>
+            </div>
+
+            <p className="text-slate-200 leading-relaxed text-sm font-medium mb-6">
+              You're tracking the max number of shows allowed on the Free plan. Upgrade to
+              track unlimited shows, get early premiere alerts, and unlock The Scoop.
+            </p>
+
+            <div className="flex items-center gap-3">
+              <a
+                href="/upgrade"
+                className="flex-1 text-center bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
+              >
+                Upgrade — $4.99/mo
+              </a>
+              <button
+                onClick={() => setLimitModal(false)}
+                className="flex-1 text-center bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-200 font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {authModal && <AuthPromptModal onClose={() => setAuthModal(false)} />}
 
     </section>
   )
