@@ -6,10 +6,10 @@ import { API_BASE } from '@/config/aws'
 
 const PW_RULES = [
   { label: 'At least 8 characters',          test: p => p.length >= 8 },
-  { label: 'One uppercase letter (A–Z)',      test: p => /[A-Z]/.test(p) },
-  { label: 'One lowercase letter (a–z)',      test: p => /[a-z]/.test(p) },
-  { label: 'One number (0–9)',                test: p => /\d/.test(p) },
-  { label: 'One special character (!@#$…)',   test: p => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
+  { label: 'One uppercase letter (A-Z)',      test: p => /[A-Z]/.test(p) },
+  { label: 'One lowercase letter (a-z)',      test: p => /[a-z]/.test(p) },
+  { label: 'One number (0-9)',                test: p => /\d/.test(p) },
+  { label: 'One special character (!@#$...)',   test: p => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
 ]
 
 function friendlyError(err) {
@@ -18,7 +18,7 @@ function friendlyError(err) {
     UsernameExistsException:   'An account with this email already exists.',
     InvalidPasswordException:  'Password does not meet the requirements below.',
     InvalidParameterException: err?.message || 'Please check your information.',
-    TooManyRequestsException:  'Too many requests — please wait a moment.',
+    TooManyRequestsException:  'Too many requests - please wait a moment.',
   }
   return map[code] ?? err?.message ?? 'Sign up failed. Please try again.'
 }
@@ -50,6 +50,15 @@ export function SignUpPage() {
     : passedRules === 4 ? 'Good'
     : 'Strong'
 
+  // Used by the email/password path, where we already have the address in hand.
+  function fireSubscribe(emailAddr, source) {
+    fetch(`${API_BASE}/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: emailAddr.trim().toLowerCase(), source }),
+    }).catch(() => {})
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     if (passedRules < PW_RULES.length) { setError('Please meet all password requirements.'); return }
@@ -57,17 +66,27 @@ export function SignUpPage() {
     try {
       await signUp(email.trim().toLowerCase(), password, name.trim())
       if (subscribeToList) {
-        // Fire-and-forget — mailing list opt-in should never block or fail signup
-        fetch(`${API_BASE}/subscribe`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim().toLowerCase(), source: 'signup-page' }),
-        }).catch(() => {})
+        // Fire-and-forget - mailing list opt-in should never block or fail signup
+        fireSubscribe(email, 'signup-page-email')
       }
       navigate('/auth/verify', { state: { email: email.trim().toLowerCase() } })
     } catch (err) {
       setError(friendlyError(err))
     } finally { setLoading(false) }
+  }
+
+  // Google path never returns to this component - the browser navigates away to
+  // Google, then to Cognito, then to /auth/callback. React state (subscribeToList)
+  // does not survive that trip, so we stash the choice in sessionStorage and let
+  // CallbackPage.jsx pick it up and fire the actual /subscribe call once the user's
+  // email is known (from the freshly-issued ID token) after the OAuth exchange.
+  function handleGoogleSignUp() {
+    if (subscribeToList) {
+      sessionStorage.setItem('airdate_pending_subscribe', 'true')
+    } else {
+      sessionStorage.removeItem('airdate_pending_subscribe')
+    }
+    window.location.href = buildGoogleAuthUrl('/')
   }
 
   return (
@@ -80,7 +99,7 @@ export function SignUpPage() {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* Dark overlay — no blur to keep image sharp */}
+      {/* Dark overlay - no blur to keep image sharp */}
       <div className="absolute inset-0 bg-slate-950/60" />
 
       {/* Content sits above overlay */}
@@ -101,12 +120,29 @@ export function SignUpPage() {
           <div className="bg-slate-900/90 border border-white/10 rounded-3xl p-8 shadow-2xl">
 
             <h1 className="text-2xl font-black text-white tracking-tight mb-1">Create your account</h1>
-            <p className="text-slate-200 text-sm mb-7">Free forever · No credit card needed</p>
+            <p className="text-slate-200 text-sm mb-5">Free forever - No credit card needed</p>
+
+            {/* Mailing list opt-in - sits ABOVE both auth paths so it governs
+                Google sign-up and email/password sign-up equally. Previously
+                this checkbox lived only inside the email/password form below,
+                which meant clicking "Sign up with Google" skipped it entirely -
+                every Google sign-up silently never got the mailing-list option. */}
+            <label className="flex items-start gap-2.5 cursor-pointer select-none mb-5 px-1">
+              <input
+                type="checkbox"
+                checked={subscribeToList}
+                onChange={e => setSubscribeToList(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-white/20 bg-slate-800/60 text-cyan-500 focus:ring-2 focus:ring-cyan-500/40 focus:ring-offset-0 cursor-pointer"
+              />
+              <span className="text-xs text-slate-200 leading-snug">
+                Sign me up for the AirDate weekly premiere email
+              </span>
+            </label>
 
             {/* Google */}
             <button
               type="button"
-              onClick={() => { window.location.href = buildGoogleAuthUrl('/') }}
+              onClick={handleGoogleSignUp}
               className="w-full flex items-center justify-center gap-3 py-3 bg-white hover:bg-slate-100 border border-white/20 rounded-xl transition-all font-bold text-slate-800 text-sm mb-5"
             >
               <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
@@ -213,25 +249,12 @@ export function SignUpPage() {
                 )}
               </div>
 
-              {/* Mailing list opt-in */}
-              <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={subscribeToList}
-                  onChange={e => setSubscribeToList(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-white/20 bg-slate-800/60 text-cyan-500 focus:ring-2 focus:ring-cyan-500/40 focus:ring-offset-0 cursor-pointer"
-                />
-                <span className="text-xs text-slate-200 leading-snug">
-                  Sign me up for the AirDate weekly premiere email
-                </span>
-              </label>
-
               <button
                 type="submit" disabled={loading}
                 className="w-full py-3.5 mt-1 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-black text-sm uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2"
               >
                 {loading
-                  ? <><div className="w-4 h-4 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin"/>Creating account…</>
+                  ? <><div className="w-4 h-4 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin"/>Creating account...</>
                   : 'Create Account'
                 }
               </button>
