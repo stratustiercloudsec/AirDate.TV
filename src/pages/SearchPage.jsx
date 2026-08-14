@@ -143,7 +143,16 @@ async function enrichWithNetwork(shows) {
       content_rating: usRating,
       poster_path:    (() => {
         if (detail?.seasons?.length) {
-          const valid = detail.seasons.filter(s => s.season_number > 0 && s.poster_path)
+          // Match THIS row's specific season when we know which one it is —
+          // otherwise every season card for the same show falls back to the
+          // same (latest) poster, since they all share the same TMDB show id.
+          if (s.season_number) {
+            const seasonMatch = detail.seasons.find(
+              ss => ss.season_number === s.season_number && ss.poster_path
+            )
+            if (seasonMatch) return seasonMatch.poster_path
+          }
+          const valid = detail.seasons.filter(ss => ss.season_number > 0 && ss.poster_path)
           if (valid.length) return valid[valid.length - 1].poster_path
         }
         return detail?.poster_path || s.poster_path || null
