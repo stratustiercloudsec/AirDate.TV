@@ -1,5 +1,5 @@
 // src/pages/PremieresCalendarPage.jsx
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
 import { usePoster }    from '@/utils/poster'
@@ -841,18 +841,25 @@ export function PremieresCalendarPage() {
   const { toggleWatchlist, isTracked, atLimit } = useWatchlist()
 
   const filterScrollRef = useRef(null)
-  const [view,        setView]        = useState('list')
-  const [network,     setNetwork]     = useState('All')
-  const [premieres,   setPremieres]   = useState([])
-  const [loading,     setLoading]     = useState(true)
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [selectedDay, setSelectedDay] = useState(null)
+  const [view,             setView]             = useState('list')
+  const [network,          setNetwork]          = useState('All')
+  const [premieres,        setPremieres]        = useState([])
+  const [loading,          setLoading]          = useState(true)
+  const [currentDate,      setCurrentDate]      = useState(new Date())
+  const [selectedDay,      setSelectedDay]      = useState(null)
+  const [episodeTypeFilter,setEpisodeTypeFilter]= useState('all') // 'all' | 'premieres' | 'continuing'
 
   const year  = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1
 
   const monthFirst = `${year}-${pad(month)}-01`
   const monthLast  = `${year}-${pad(month)}-${new Date(year, month, 0).getDate()}`
+
+  const filteredPremieres = useMemo(() => {
+    if (episodeTypeFilter === 'premieres')  return premieres.filter(s => !s._isContinuing)
+    if (episodeTypeFilter === 'continuing') return premieres.filter(s => s._isContinuing)
+    return premieres
+  }, [premieres, episodeTypeFilter])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -884,10 +891,10 @@ export function PremieresCalendarPage() {
   const monthLabel  = new Date(year, month-1, 1).toLocaleString('default',{month:'long',year:'numeric'})
 
   function dateStr(day) { return `${year}-${pad(month)}-${pad(day)}` }
-  function showsForDay(day) { return premieres.filter(s=>s.first_air_date===dateStr(day)) }
+  function showsForDay(day) { return filteredPremieres.filter(s=>s.first_air_date===dateStr(day)) }
 
   const byDate = {}
-  premieres.forEach(s=>{
+  filteredPremieres.forEach(s=>{
     const d=s.first_air_date||''
     if (d){ if (!byDate[d]) byDate[d]=[]; byDate[d].push(s) }
   })
@@ -907,7 +914,7 @@ export function PremieresCalendarPage() {
       <div className="text-center">
         <h2 className="text-2xl font-black text-white tracking-tight">{monthLabel}</h2>
         <p className="text-xs text-slate-200 font-bold uppercase tracking-widest mt-0.5">
-          {loading?'Loading…':`${premieres.length} Premiere${premieres.length!==1?'s':''}`}
+          {loading?'Loading…':`${filteredPremieres.length} Premiere${filteredPremieres.length!==1?'s':''}`}
         </p>
       </div>
       <button onClick={goNext}
@@ -949,17 +956,38 @@ export function PremieresCalendarPage() {
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-5 mb-6 text-[10px] font-bold uppercase tracking-widest">
-          <span className="text-slate-200">Key:</span>
-          <span className="flex items-center gap-1.5 text-cyan-400">
+        {/* Episode type filter — click to filter, click again to clear */}
+        <div className="flex items-center gap-2.5 mb-6 text-[10px] font-bold uppercase tracking-widest flex-wrap">
+          <span className="text-slate-200">Filter:</span>
+
+          <button
+            onClick={()=>setEpisodeTypeFilter('all')}
+            className={`px-3 py-1.5 rounded-xl border transition-all
+              ${episodeTypeFilter==='all'
+                ? 'bg-white/10 border-white/25 text-white'
+                : 'border-white/10 text-slate-200 hover:text-white hover:border-white/20'}`}>
+            All
+          </button>
+
+          <button
+            onClick={()=>setEpisodeTypeFilter(v=>v==='premieres'?'all':'premieres')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all
+              ${episodeTypeFilter==='premieres'
+                ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400'
+                : 'border-white/10 text-slate-200 hover:text-cyan-400 hover:border-cyan-500/20'}`}>
             <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block"/>
             Season / Series Premiere
-          </span>
-          <span className="flex items-center gap-1.5 text-amber-400">
+          </button>
+
+          <button
+            onClick={()=>setEpisodeTypeFilter(v=>v==='continuing'?'all':'continuing')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all
+              ${episodeTypeFilter==='continuing'
+                ? 'bg-amber-500/10 border-amber-500/40 text-amber-400'
+                : 'border-white/10 text-slate-200 hover:text-amber-400 hover:border-amber-500/20'}`}>
             <span className="w-2 h-2 rounded-full bg-amber-400 inline-block"/>
             Continuing Episodes
-          </span>
+          </button>
         </div>
 
         {/* Network filter — scrollable carousel with arrow controls */}
