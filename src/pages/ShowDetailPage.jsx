@@ -406,9 +406,13 @@ function RenewalBadge({ showId }) {
       .then(r => r.ok ? r.json() : null)
       .then(raw => {
         if (cancelled || !raw) return
-        const d   = gw(raw)
-        const pct = parseFloat(d.probability || d.renewal_probability)
-        if (!isNaN(pct)) setData({ pct, updated: d.updated || d.updated_at })
+        const d         = gw(raw)
+        const pct       = parseFloat(d.probability || d.renewal_probability)
+        const confirmed = d.confirmed === true
+        const confirmedDate = d.confirmed_date || d.confirmedDate || null
+        if (!isNaN(pct) || confirmed) {
+          setData({ pct, updated: d.updated || d.updated_at, confirmed, confirmedDate })
+        }
       })
       .catch(() => {})  // silently swallow network errors
  
@@ -416,8 +420,31 @@ function RenewalBadge({ showId }) {
   }, [showId])
  
   if (!data) return null
- 
-  const { pct, updated } = data
+  const { pct, updated, confirmed, confirmedDate } = data
+
+  if (confirmed) {
+    return (
+      <div className="mt-4 pt-4 border-t border-white/5">
+        <div className="flex items-center gap-2">
+          <span className="text-slate-200 text-xs font-bold uppercase tracking-widest">
+            Renewal Status
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-black text-green-400 border-green-500/30 bg-green-500/10">
+            ✅ CONFIRMED
+          </span>
+        </div>
+        {confirmedDate && (
+          <p className="text-slate-200 text-[10px] mt-1">
+            Renewed{' '}
+            {new Date(confirmedDate).toLocaleDateString('en-US', {
+              month: 'short', day: 'numeric', year: 'numeric',
+            })}
+          </p>
+        )}
+      </div>
+    )
+  }
+
   const isHigh  = pct >= 70
   const isMid   = pct >= 40
   const color   = isHigh

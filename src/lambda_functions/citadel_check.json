@@ -1,0 +1,1 @@
+{"statusCode": 404, "headers": {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type,Authorization", "Access-Control-Allow-Methods": "GET,OPTIONS"}, "body": "{\"error\": \"No prediction found\", \"show_id\": \"114922\"}"}

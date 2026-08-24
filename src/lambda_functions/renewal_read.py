@@ -1,0 +1,71 @@
+import json
+import boto3
+import os
+import logging
+from decimal import Decimal
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+dynamo = boto3.resource("dynamodb", region_name="us-east-1")
+PREDICTIONS_TABLE = os.environ.get("PREDICTIONS_TABLE", "airdate-renewal-predictions")
+
+CORS = {
+    "Access-Control-Allow-Origin":  "*",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
+}
+
+def decimal_default(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError
+
+def lambda_handler(event, context):
+    method = (event.get("httpMethod") or
+              event.get("requestContext", {}).get("http", {}).get("method", "GET"))
+
+    if method == "OPTIONS":
+        return {"statusCode": 200, "headers": CORS, "body": ""}
+
+    # Extract show_id from path /renewal/{showId}
+    path_params = event.get("pathParameters") or {}
+    show_id = (path_params.get("showId") or
+               path_params.get("show_id") or
+               (event.get("path") or "").split("/")[-1])
+
+    if not show_id:
+        return {"statusCode": 400, "headers": CORS,
+                "body": json.dumps({"error": "Missing showId"})}
+
+    logger.info(f"Renewal lookup: show_id={show_id}")
+
+    try:
+        resp = dynamo.Table(PREDICTIONS_TABLE).get_item(
+            Key={"show_id": str(show_id)}
+        )
+        item = resp.get("Item")
+
+        if not item:
+            return {"statusCode": 404, "headers": CORS,
+                    "body": json.dumps({"error": "No prediction found", "show_id": show_id})}
+
+        return {
+            "statusCode": 200,
+            "headers": CORS,
+            "body": json.dumps({
+                "show_id":             item.get("show_id"),
+                "probability":         float(item.get("renewal_probability", 0)),
+                "renewal_probability": float(item.get("renewal_probability", 0)),
+                "label":               item.get("label", "unknown"),
+                "updated_at":          item.get("updated_at", ""),
+                "model_version":       item.get("model_version", ""),
+                "confirmed":           item.get("confirmed", False),
+                "confirmed_date":      item.get("confirmed_date"),
+            }, default=decimal_default)
+        }
+
+    except Exception as e:
+        logger.error(f"DynamoDB error: {e}")
+        return {"statusCode": 500, "headers": CORS,
+                "body": json.dumps({"error": str(e)})}
