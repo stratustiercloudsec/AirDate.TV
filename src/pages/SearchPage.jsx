@@ -717,9 +717,22 @@ export function SearchPage() {
     
     setLoadTonight(true)
     const todayStr = new Date().toLocaleDateString('en-CA')
+    const SPAM_TERMS = ['robinhood','c0inbase','coinbase','venmo','okx','binance support','paypal support','cash app support']
+    const SPAM_PHRASES = ['locked account','withdrawal pending','withdrawal support','how to cancel','cancellation guide','login with email','security, privacy & scam','is safe?']
+    const PHONE_OBFUSCATED_RE = /1[\W_]{0,3}8\d\d[\W_]{0,3}\d{3}[\W_]{0,3}\d{4}/
+    const looksLikeSpam = (title, overview) => {
+      const text = `${title||''} ${overview||''}`.toLowerCase()
+      if (SPAM_TERMS.some(t => text.includes(t))) return true
+      if (SPAM_PHRASES.some(p => text.includes(p))) return true
+      if (PHONE_OBFUSCATED_RE.test(text)) return true
+      return false
+    }
     tmdbDiscover({ sort_by:'popularity.desc', 'first_air_date.gte':todayStr, 'first_air_date.lte':todayStr, with_original_language:'en', page:1 })
       .then(async d => {
-        const shows = (d.results || []).map(mapTMDB).filter(isEnglishShow).filter(isRecentShow)
+        const shows = (d.results || [])
+          .filter(s => s.poster_path)
+          .filter(s => !looksLikeSpam(s.name, s.overview))
+          .map(mapTMDB).filter(isEnglishShow).filter(isRecentShow)
         setPremieringTonight(dedupById(await enrichWithNetwork(shows)))
       }).catch(() => setPremieringTonight([]))
       .finally(() => setLoadTonight(false))
