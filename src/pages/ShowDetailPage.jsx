@@ -32,6 +32,13 @@
 // Unaired episodes are disabled in the slider — no plot exists yet, so
 // there's nothing to send to Bedrock. Recaps are cached client-side per
 // episode_number for the session so re-clicking is instant.
+//
+// v116.10: On mobile the spotlight card mounts below both existing
+// episode cards, well below the fold — tapping a slider chip looked like
+// it did nothing since nothing visible changed above the scroll line.
+// Added scrollIntoView (offset via scrollMarginTop so the sticky header
+// doesn't cover the card's title) plus a brief highlight ring on open, so
+// selecting an episode now visibly and immediately takes you to it.
 
 import { useEffect, useState, useRef } from 'react'
 import { Footer } from '@/components/layout/Footer'
@@ -678,11 +685,32 @@ function EpisodeIntelligence({ showId, showTitle, showData, requestedSeason }) {
   // back and forth between episodes in the slider doesn't re-fetch/re-bill
   // Bedrock for one you've already viewed this session.
   const spotlightRecapCache = useRef({})
+  // Ref on the spotlight's wrapper + a "just opened" flag purely so we can
+  // scroll it into view and briefly highlight it the moment it appears —
+  // on mobile it renders below both existing episode cards, well off
+  // screen, so without this a tap on the slider looks like it did nothing.
+  const spotlightRef = useRef(null)
+  const [spotlightJustOpened, setSpotlightJustOpened] = useState(false)
   // Generation counter — guards against a stale/duplicate effect run (e.g.
   // React 18 StrictMode double-invoking this effect in dev) overwriting a
   // fresher, correct recap with a slower-arriving one. Only the response
   // belonging to the MOST RECENT effect invocation is ever applied.
   const recapGenerationRef = useRef(0)
+
+  // Scroll the spotlight into view whenever a (new) episode is selected,
+  // and hold a brief highlight ring so the change is unmistakable even if
+  // the card was already partly visible. requestAnimationFrame lets the
+  // card mount/paint first — scrolling to a ref on the same render it
+  // first appears can measure the wrong position otherwise.
+  useEffect(()=>{
+    if (!selectedEp) return
+    setSpotlightJustOpened(true)
+    const raf = requestAnimationFrame(()=>{
+      spotlightRef.current?.scrollIntoView({behavior:'smooth', block:'start'})
+    })
+    const timeout = setTimeout(()=>setSpotlightJustOpened(false), 1200)
+    return ()=>{ cancelAnimationFrame(raf); clearTimeout(timeout) }
+  },[selectedEp?.episode_number])
 
   useEffect(()=>{
     if (!showId) return
@@ -803,14 +831,22 @@ function EpisodeIntelligence({ showId, showTitle, showData, requestedSeason }) {
         {eps.lastAired&&<EpisodeCard episode={eps.lastAired} role="last" recapHtml={recap} networkName={showData?.networks?.[0]?.name||''}/>}
       </div>
       {selectedEp && (
-        <EpisodeSpotlight
-          episode={selectedEp}
-          showTitle={showTitle}
-          showId={showId}
-          seasonNumber={currentSeasonNum}
-          onClose={()=>setSelectedEp(null)}
-          recapCache={spotlightRecapCache}
-        />
+        <div
+          ref={spotlightRef}
+          // scrollMarginTop keeps the sticky header from covering the top
+          // of the card when scrollIntoView aligns it to the viewport top.
+          style={{ scrollMarginTop: '96px' }}
+          className={`transition-shadow duration-700 rounded-2xl ${spotlightJustOpened ? 'ring-2 ring-purple-400/70' : 'ring-0 ring-transparent'}`}
+        >
+          <EpisodeSpotlight
+            episode={selectedEp}
+            showTitle={showTitle}
+            showId={showId}
+            seasonNumber={currentSeasonNum}
+            onClose={()=>setSelectedEp(null)}
+            recapCache={spotlightRecapCache}
+          />
+        </div>
       )}
     </section>
   )
