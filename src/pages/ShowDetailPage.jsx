@@ -1,8 +1,37 @@
-// src/pages/ShowDetailPage.jsx — v116.6 (React port)
+// src/pages/ShowDetailPage.jsx — v116.8 (React port)
 // 3-tier progressive rendering matching details.js v116.6 exactly:
 //   Tier 1: Hero visible     ~1–1.5s  (Lambda /get-premieres tmdb_id POST)
 //   Tier 2: Secondary data   ~1–3s    (cast, trailer, recs, episode intel — parallel)
 //   Tier 3: Scoop            ~3–6s    (Bedrock /generate-recap — never blocks)
+//
+// v116.7: EpisodeIntelligence's "previous episode" recap now sends
+// tmdb_id/season_number/episode_number/episode_name as real fields instead
+// of jamming "Season X Episode Y: Name" into series_title. The Lambda used
+// to have no way to tell an episode-recap request from a show-recap
+// request, so it ran the full 10-section show-intelligence-brief prompt
+// for every request — producing a generic show-level blurb wearing an
+// episode title. See airdate-recap-agent v2.3 for the matching backend fix.
+//
+// v116.8: EpisodeIntelligence's recap fetch had no cancellation/dedupe
+// guard, so a stale or duplicate effect run (e.g. React 18 StrictMode
+// double-invoking the effect in dev) could resolve AFTER a fresher,
+// correct recap had already rendered and silently overwrite it — visible
+// as the correct episode recap flashing in, then reverting to a generic
+// one a few seconds later. Added a generation-counter ref (same pattern
+// as RenewalBadge's `cancelled` flag) so only the most recent effect run's
+// response is ever applied. Paired with airdate-recap-agent v2.4, which
+// also stops trusting the model's output blindly on the backend side.
+//
+// v116.9: New feature — per-episode recaps for the whole current season.
+// EpisodeIntelligence now also tracks the full season's episode list and
+// renders an E01/E02/... slider in its header (the previously-empty strip
+// next to the section title). Clicking an aired episode opens an
+// EpisodeSpotlight card below the existing Next/Previous grid with an
+// on-demand recap for that specific episode (same tmdb_id/season_number/
+// episode_number/episode_name contract as the existing recap calls).
+// Unaired episodes are disabled in the slider — no plot exists yet, so
+// there's nothing to send to Bedrock. Recaps are cached client-side per
+// episode_number for the session so re-clicking is instant.
 
 import { useEffect, useState, useRef } from 'react'
 import { Footer } from '@/components/layout/Footer'
@@ -522,13 +551,144 @@ function EpisodeCard({ episode, role, recapHtml='', networkName='' }) {
   )
 }
 
+// ─── Episode Slider (per-episode recap picker) ────────────────────────────────
+// Sits in the Episode Intelligence header. Shows every episode of the
+// current season as a compact E01/E02/... chip. Unaired episodes are
+// disabled — there's no plot to recap yet, so clicking them would just
+// send a doomed request to Bedrock and either hallucinate or eat a
+// deterministic-fallback response for nothing.
+function EpisodeSlider({ episodes, selectedNumber, onSelect }) {
+  if (!episodes?.length) return null
+  const today = todayLocal()
+  return (
+    <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 -mb-1">
+      {episodes.map(ep=>{
+        const aired = !!ep.air_date && ep.air_date <= today
+        const isSelected = ep.episode_number === selectedNumber
+        const label = ep.name
+          ? `${ep.name}${ep.air_date ? ' · ' + formatDate(ep.air_date) : ''}`
+          : (aired ? '' : 'Not yet aired')
+        return (
+          <button
+            key={ep.episode_number}
+            disabled={!aired}
+            onClick={()=>aired && onSelect(ep)}
+            title={label}
+            className={`shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all
+              ${isSelected
+                ? 'bg-purple-500 border-purple-400 text-slate-950'
+                : aired
+                  ? 'bg-slate-800/60 border-white/10 text-slate-300 hover:border-purple-500/40 hover:text-purple-400 cursor-pointer'
+                  : 'bg-slate-900/40 border-white/5 text-slate-600 cursor-not-allowed'}`}
+          >
+            E{String(ep.episode_number).padStart(2,'0')}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Episode Spotlight (on-demand single-episode recap) ───────────────────────
+function EpisodeSpotlight({ episode, showTitle, showId, seasonNumber, onClose, recapCache }) {
+  // null = loading, '' = fetched but empty/unavailable, string = ready HTML
+  const [html, setHtml] = useState(null)
+
+  useEffect(()=>{
+    if (!episode) return
+    const key = episode.episode_number
+    // Serve from the in-memory cache if we've already fetched this episode
+    // this session — no reason to hit Bedrock again for a re-click.
+    if (recapCache.current[key] !== undefined) {
+      setHtml(recapCache.current[key])
+      return
+    }
+    setHtml(null)
+    let cancelled = false
+    const cleanTitle = showTitle.replace(/\s+Season\s+\d+$/i,'').trim()
+    fetch(`${API_BASE}/generate-recap`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        series_title:   cleanTitle,
+        tmdb_id:        showId,
+        season_number:  seasonNumber,
+        episode_number: episode.episode_number,
+        episode_name:   episode.name,
+      })})
+      .then(r=>r.json()).then(raw=>{
+        if (cancelled) return
+        const d = gw(raw); const r = d.recap || null
+        const rendered = r ? renderRecapMarkdown(formatScoop(r)) : ''
+        recapCache.current[key] = rendered
+        setHtml(rendered)
+      }).catch(()=>{
+        if (cancelled) return
+        recapCache.current[key] = ''
+        setHtml('')
+      })
+    return () => { cancelled = true }
+  },[episode?.episode_number])
+
+  if (!episode) return null
+  const stillSrc = episode.still_path ? `${IMAGE_BASE}/t/p/w400${episode.still_path}` : null
+  return (
+    <div className="bg-slate-800/40 rounded-2xl border border-purple-500/20 overflow-hidden mt-6">
+      <div className="flex items-start justify-between gap-3 p-5 pb-0">
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-1">
+            S{String(episode.season_number||seasonNumber).padStart(2,'0')} E{String(episode.episode_number).padStart(2,'0')}
+            {episode.air_date && <span className="text-slate-200 normal-case tracking-normal font-medium"> · {formatDate(episode.air_date)}</span>}
+          </p>
+          <h3 className="text-white font-black text-lg leading-snug truncate">{episode.name||`Episode ${episode.episode_number}`}</h3>
+        </div>
+        <button onClick={onClose} aria-label="Close" className="text-white/50 hover:text-white text-2xl leading-none px-1 shrink-0">×</button>
+      </div>
+      <div className="p-5 flex flex-col sm:flex-row gap-4">
+        {stillSrc
+          ? <img src={stillSrc} alt={episode.name||''} className="w-full sm:w-48 h-28 object-cover rounded-xl flex-shrink-0"/>
+          : <div className="w-full sm:w-48 h-28 rounded-xl bg-slate-900/60 flex items-center justify-center flex-shrink-0"><i className="fa-solid fa-film text-slate-700 text-2xl"></i></div>}
+        <div className="flex-1 min-w-0 text-slate-200 text-sm leading-relaxed">
+          {html===null ? (
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 border-2 border-purple-500/30 border-t-purple-400 rounded-full animate-spin"></div>
+              <span>Generating intel…</span>
+            </div>
+          ) : html==='' ? (
+            <p className="text-slate-200">Recap unavailable for this episode.</p>
+          ) : (
+            <div dangerouslySetInnerHTML={{__html:html}}/>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Episode Intelligence ─────────────────────────────────────────────────────
 function EpisodeIntelligence({ showId, showTitle, showData, requestedSeason }) {
   const [eps, setEps]       = useState(null)
   const [recap, setRecap]   = useState('')
+  // Full episode list for the CURRENT season, feeding the E01/E02/... slider
+  // (separate from `eps`, which only tracks the single last-aired/next-airing
+  // pair). currentSeasonNum is the season those episodes/spotlight requests
+  // belong to — needed since `requestedSeason` can be null (latest season).
+  const [seasonEpisodes, setSeasonEpisodes] = useState([])
+  const [currentSeasonNum, setCurrentSeasonNum] = useState(null)
+  const [selectedEp, setSelectedEp] = useState(null)
+  // In-memory cache of episode_number -> rendered recap HTML, so switching
+  // back and forth between episodes in the slider doesn't re-fetch/re-bill
+  // Bedrock for one you've already viewed this session.
+  const spotlightRecapCache = useRef({})
+  // Generation counter — guards against a stale/duplicate effect run (e.g.
+  // React 18 StrictMode double-invoking this effect in dev) overwriting a
+  // fresher, correct recap with a slower-arriving one. Only the response
+  // belonging to the MOST RECENT effect invocation is ever applied.
+  const recapGenerationRef = useRef(0)
 
   useEffect(()=>{
     if (!showId) return
+    recapGenerationRef.current += 1
+    const myGeneration = recapGenerationRef.current
+    let cancelled = false
     ;(async()=>{
       try {
         let currentSeason = requestedSeason || showData?.next_episode_to_air?.season_number || showData?.last_episode_to_air?.season_number || null
@@ -560,17 +720,40 @@ function EpisodeIntelligence({ showId, showTitle, showData, requestedSeason }) {
           const idx=all.findIndex(e=>e.season_number===last.season_number&&e.episode_number===last.episode_number)
           last=idx>0?all[idx-1]:null
         }
+        if (cancelled) return
         setEps({lastAired:last,nextAiring:next})
+        setCurrentSeasonNum(currentSeason)
+        setSeasonEpisodes(all.filter(e=>e.season_number===currentSeason).sort((a,b)=>a.episode_number-b.episode_number))
+        setSelectedEp(null) // reset any open spotlight when the season changes
         if (last&&showTitle) {
+          // FIX: send tmdb_id / season_number / episode_number / episode_name
+          // as explicit fields instead of folding "Season X Episode Y: Name"
+          // into series_title. That string-jamming was the root cause of the
+          // generic recap — the Lambda had no way to tell this was a
+          // single-episode request, so it always ran the full show-level
+          // 10-section intelligence-brief prompt. See lambda_function.py v2.3/v2.4.
+          const cleanTitle = showTitle.replace(/\s+Season\s+\d+$/i,'').trim()
           fetch(`${API_BASE}/generate-recap`,{method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({series_title:`${showTitle.replace(/\s+Season\s+\d+$/i,'').trim()} Season ${last.season_number} Episode ${last.episode_number}: ${last.name}`})})
+            body:JSON.stringify({
+              series_title:    cleanTitle,
+              tmdb_id:         showId,
+              season_number:   last.season_number,
+              episode_number:  last.episode_number,
+              episode_name:    last.name,
+            })})
             .then(r=>r.json()).then(raw=>{
+              // Bail if unmounted, or a newer effect run has already
+              // superseded this one — prevents a slower, stale response
+              // (e.g. from a StrictMode double-invoked effect) from
+              // clobbering a fresher/correct recap that already rendered.
+              if (cancelled || recapGenerationRef.current !== myGeneration) return
               const d=gw(raw);const r=d.recap||null
               if (r&&r.length>(last.overview?.length||0)+40) setRecap(renderRecapMarkdown(formatScoop(r)))
             }).catch(()=>{})
         }
-      } catch(e) { console.warn('[AirDate] Episode intelligence failed:',e);setEps({lastAired:null,nextAiring:null}) }
+      } catch(e) { if(!cancelled){ console.warn('[AirDate] Episode intelligence failed:',e);setEps({lastAired:null,nextAiring:null}) } }
     })()
+    return () => { cancelled = true }
   },[showId, requestedSeason])
 
   if (!eps) return (
@@ -599,28 +782,44 @@ function EpisodeIntelligence({ showId, showTitle, showData, requestedSeason }) {
           <span className="text-slate-200 text-xs font-medium truncate">{todayLabel}</span>
         </div>
       )}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-cyan-500/10 rounded-lg"><i className="fa-solid fa-clapperboard text-cyan-400 text-xl"></i></div>
-        <h2 className="text-2xl font-black text-white uppercase tracking-tight">Episode Intelligence</h2>
-        {isAiringToday && (
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-widest">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-cyan-500/10 rounded-lg"><i className="fa-solid fa-clapperboard text-cyan-400 text-xl"></i></div>
+          <h2 className="text-2xl font-black text-white uppercase tracking-tight">Episode Intelligence</h2>
+          {isAiringToday && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-widest">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+              </span>
+              Live
             </span>
-            Live
-          </span>
-        )}
+          )}
+        </div>
+        <EpisodeSlider episodes={seasonEpisodes} selectedNumber={selectedEp?.episode_number} onSelect={setSelectedEp}/>
       </div>
       <div className={`grid gap-6 ${eps.nextAiring&&eps.lastAired?'grid-cols-1 md:grid-cols-2':'grid-cols-1 max-w-lg'}`}>
         {eps.nextAiring&&<EpisodeCard episode={eps.nextAiring} role="next" networkName={showData?.networks?.[0]?.name||''}/>}
         {eps.lastAired&&<EpisodeCard episode={eps.lastAired} role="last" recapHtml={recap} networkName={showData?.networks?.[0]?.name||''}/>}
       </div>
+      {selectedEp && (
+        <EpisodeSpotlight
+          episode={selectedEp}
+          showTitle={showTitle}
+          showId={showId}
+          seasonNumber={currentSeasonNum}
+          onClose={()=>setSelectedEp(null)}
+          recapCache={spotlightRecapCache}
+        />
+      )}
     </section>
   )
 }
 
 // ─── The Recap (Tier 3 — never blocks) ─────────────────────────────────────────
+// NOTE: this stays series/season-level on purpose (no episode_number sent) —
+// this is meant to be the show-wide intelligence brief, unlike the episode
+// recap in EpisodeIntelligence above.
 function ScoopSection({ showId, showTitle, seasonNumber }) {
   const [html, setHtml] = useState(null)
   useEffect(()=>{
