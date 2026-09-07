@@ -5,7 +5,7 @@ const SOCIAL = [
   { icon: 'fa-brands fa-facebook',  href: 'https://www.facebook.com/people/AirDate-TV/61590161696097/',       label: 'Facebook'  },
   { icon: 'fa-brands fa-tiktok',    href: 'https://tiktok.com/@airdatetv',        label: 'TikTok'    },
   { icon: 'fa-brands fa-youtube',   href: 'https://youtube.com/@AirDateTV_Premieres',       label: 'YouTube'   },
-  { icon: 'fa-brands fa-x-twitter', href: 'https://x.com/AirdatetvF42317',        label: 'X'         },
+  { icon: 'fa-brands fa-x-twitter', href: 'https://x.com/AirDateTVApp',        label: 'X'         },
   { icon: 'fa-brands fa-linkedin', href: 'https://www.linkedin.com/company/airdate-tv',        label: 'LinkedIn'         }
 ]
 
