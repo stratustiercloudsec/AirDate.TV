@@ -950,7 +950,21 @@ export function ShowDetailPage() {
     // ── TIER 1: Core show data — Lambda /get-premieres with tmdb_id ───────────
     const cacheKey=`airdate_show_${id}_s${requestedSeason||'latest'}`
     let cachedData=null
-    try { const raw=sessionStorage.getItem(cacheKey);if(raw) cachedData=JSON.parse(raw) } catch {}
+    try {
+      const raw=sessionStorage.getItem(cacheKey)
+      if (raw) {
+        const parsed=JSON.parse(raw)
+        // Expiry is checked here on READ, not via a setTimeout set at write
+        // time — a setTimeout only fires if the page that scheduled it stays
+        // alive, but window.location.href (used by the search typeahead and
+        // elsewhere) is a full page reload that destroys that timer before
+        // it can run. That let a single stale/failed lookup get cached here
+        // permanently for the rest of the tab's session. A timestamp checked
+        // on every read works regardless of how many reloads happen between.
+        if (parsed && parsed.expiresAt > Date.now()) cachedData = parsed.data
+        else sessionStorage.removeItem(cacheKey)
+      }
+    } catch {}
 
     const fetchCore = cachedData
       ? Promise.resolve(cachedData)
@@ -959,21 +973,34 @@ export function ShowDetailPage() {
           body:JSON.stringify({tmdb_id:parseInt(id),page:1,per_page:10})
         }).then(r=>r.json()).then(raw=>{
           const d=gw(raw)
-          try{sessionStorage.setItem(cacheKey,JSON.stringify(d));setTimeout(()=>sessionStorage.removeItem(cacheKey),5*60*1000)}catch{}
+          // Only cache a genuine hit. Caching an empty-results response
+          // meant one early failed lookup (e.g. before a backend fix
+          // shipped) would keep being served as "not found" indefinitely —
+          // the show would work everywhere else but stay permanently
+          // broken on this exact detail-page route for that browser tab.
+          if ((d.results||d.shows||[]).length) {
+            try{sessionStorage.setItem(cacheKey,JSON.stringify({data:d,expiresAt:Date.now()+5*60*1000}))}catch{}
+          }
           return d
         })
 
     fetchCore.then(data=>{
       const results=data.results||data.shows||[]
       if (!results.length){setError(true);setLoading(false);return}
-      // Pick the season matching ?season=N, else fall back to results[0]
+      // Default season when none is requested (or the requested one isn't
+      // found) is the EARLIEST season, not results[0]. Results come back
+      // sorted by premiere date descending, so results[0] was the most
+      // recently aired season — for an ended show, that's the series
+      // finale, not the season someone landing on a show for the first
+      // time would expect to see.
+      const earliestSeason = [...results].sort((a,b)=>(a.season_number??Infinity)-(b.season_number??Infinity))[0]
       const s = requestedSeason
         ? results.find(r =>
             r.season_number === requestedSeason ||
             (r.title||'').includes(`Season ${requestedSeason}`) ||
             (r.name||'').includes(`Season ${requestedSeason}`)
-          ) || results[0]
-        : results[0]
+          ) || earliestSeason
+        : earliestSeason
       const show={
         ...s,
         id:          s.id,
@@ -1197,7 +1224,7 @@ export function ShowDetailPage() {
                             key={n}
                             href={`/details/${show.id}?season=${n}`}
                             className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest border transition-all ${
-                              (requestedSeason || show.number_of_seasons) === n
+                              (requestedSeason || show.season_number) === n
                                 ? 'bg-cyan-500 border-cyan-400 text-slate-950'
                                 : 'bg-slate-800/60 border-white/10 text-slate-300 hover:border-cyan-500/30 hover:text-cyan-400'
                             }`}
@@ -1227,7 +1254,7 @@ export function ShowDetailPage() {
                     </div>
                     {show.overview&&<div className="mb-6"><h2 className="text-lg font-black text-white uppercase tracking-wide mb-3">Overview</h2><p className="text-slate-200 leading-relaxed">{show.overview}</p></div>}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                      <div><p className="text-slate-200 text-xs font-black uppercase tracking-widest mb-1">Creator</p><p className="text-white font-bold truncate">{creator}</p></div>
+                      <div><p className="text-slate-200 text-xs font-black uppercase tracking-widest mb-1">Creator</p><p className="text-white font-bold break-words">{creator}</p></div>
                       <div>
                         <p className="text-slate-200 text-xs font-black uppercase tracking-widest mb-1">Premiere</p>
                         {(()=>{
