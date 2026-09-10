@@ -6,6 +6,17 @@
 //   POST   /user/{sub}/pulse              ← add show to watchlist
 //   DELETE /user/{sub}/pulse/{show_id}    ← remove show from watchlist
 //   POST   /user/{sub}/history            ← log view history
+//
+// Fix (season-mismatch bug): the POST /pulse body previously whitelisted a
+// fixed set of fields and never included the season number, so a tracked
+// item like "Reasonable Doubt Season 4" always persisted as a plain series
+// record with no season info. Once loaded back from GET /user/{sub} on any
+// later session, that missing season_number meant ShowDetailPage had
+// nothing to route on and fell back to the earliest season (Season 1).
+// season_number is now included in the POST body, and loadWatchlist() maps
+// it back to _seasonNum on read so it matches the underscore-prefixed
+// convention PremieresCalendarPage/MyPersonaPage use for card rendering
+// and for building the /details/{id}?season=N link.
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/context/AuthContext'
@@ -41,7 +52,15 @@ export function WatchlistProvider({ children }) {
       if (!res.ok) return
       const data = await res.json()
       // Lambda returns watchlist inside user profile object
-      const list = data.watchlist ?? data.pulse ?? data.shows ?? data.items ?? []
+      const rawList = data.watchlist ?? data.pulse ?? data.shows ?? data.items ?? []
+      // Remap persisted season_number back to _seasonNum so ShowCard /
+      // ShowListCard / DayPanelCard (which all read show._seasonNum) can
+      // build the correct /details/{id}?season=N link after a fresh load,
+      // not just in the same session an item was first tracked.
+      const list = rawList.map(s => ({
+        ...s,
+        _seasonNum: s.season_number ?? s._seasonNum ?? null,
+      }))
       setWatchlist(list)
     } catch {
       // Silently fail
@@ -92,6 +111,13 @@ export function WatchlistProvider({ children }) {
               poster:         show.poster       ?? null,
               first_air_date: show.first_air_date ?? null,
               network:        show.network      ?? show.networks?.[0]?.name ?? '',
+              // Fix: previously omitted entirely, so every tracked item
+              // lost its season on the next load and defaulted back to
+              // Season 1 on the Details page. show._seasonNum is what
+              // PremieresCalendarPage/MyPersonaPage attach; show.season_number
+              // covers callers (e.g. ShowDetailPage's own handleTrack) that
+              // use the unprefixed field name instead.
+              season_number:  show._seasonNum   ?? show.season_number ?? null,
             },
           }),
         }).catch(() => {})

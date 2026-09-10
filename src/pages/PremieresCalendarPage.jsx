@@ -695,7 +695,7 @@ function ShowListCard({ show, onTrack, isTracked, atLimit, isAuthenticated, mont
       {/* ── Card header row ── */}
       <div
         className="flex items-start gap-3 p-3 cursor-pointer group"
-        onClick={()=>window.location.href=`/details/${show.id}`}
+        onClick={()=>window.location.href=`/details/${show.id}${show._seasonNum ? `?season=${show._seasonNum}` : ''}`}
       >
         {/* Poster */}
         <img {...poster} alt={show.name}
@@ -787,7 +787,7 @@ function DayPanelCard({ show, onTrack, isTracked, atLimit, isAuthenticated, mont
       ${expanded ? 'border-cyan-500/20 bg-slate-800/40' : 'border-white/5 bg-slate-800/40 hover:border-cyan-500/20'}`}>
       <div
         className="flex items-center gap-3 p-3 cursor-pointer"
-        onClick={()=>window.location.href=`/details/${show.id}`}
+        onClick={()=>window.location.href=`/details/${show.id}${show._seasonNum ? `?season=${show._seasonNum}` : ''}`}
       >
         <img {...poster} alt={show.name} className="w-10 h-14 object-cover rounded-lg flex-shrink-0"/>
         <div className="flex-1 min-w-0">

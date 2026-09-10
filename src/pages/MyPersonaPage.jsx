@@ -64,7 +64,7 @@ function ShowCard({ show, liveData, onRemove }) {
     : null
   const network = show.network ?? liveData?.networks?.[0]?.name ?? show.networks?.[0]?.name ?? null
   return (
-    <div className="relative cursor-pointer group" onClick={() => navigate(`/details/${show.id}`)}>
+    <div className="relative cursor-pointer group" onClick={() => navigate(`/details/${show.id}${show._seasonNum ? `?season=${show._seasonNum}` : ''}`)}>
       <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-2 bg-slate-800">
         <img {...poster} alt={show.name ?? ''} className="w-full h-full object-cover"/>
         <button onClick={e => { e.stopPropagation(); onRemove(show) }}
