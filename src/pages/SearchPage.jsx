@@ -92,12 +92,12 @@ function isRecentShow(show) {
 const CHIPS = [
   'Premiering Today',
   'Taylor Sheridan',
-  'Documentaries 2026',
+  'Westerns 2026',
   'Award Shows 2026',
   'Reality TV 2026',
   'Comedy 2026',
   'HBO Premieres 2026',
-  'Power Universe',
+  'Psychological Thrillers 2026',
   'Shonda Rhimes Produced Series'
 ]
 
