@@ -947,6 +947,34 @@ export function SearchPage() {
       .catch(() => setRecIds(new Set()))
   }, [isAuthenticated, user?.sub, token])
 
+  // Next season premiere for every tracked show (within 120 days), straight from TMDB
+  const [watchUpcoming, setWatchUpcoming] = useState([])
+  useEffect(() => {
+    if (!isAuthenticated || !(watchlist || []).length) { setWatchUpcoming([]); return }
+    const today = new Date().toISOString().split('T')[0]
+    const horizon = new Date(Date.now() + 120 * 86400000).toISOString().split('T')[0]
+    let cancelled = false
+    Promise.all(watchlist.map(w => tmdbShow(w.id)
+      .then(r => (r && typeof r.json === 'function') ? r.json() : r).catch(() => null)))
+      .then(details => {
+        if (cancelled) return
+        const out = []
+        for (const d of details) {
+          if (!d?.id) continue
+          const next = (d.seasons || [])
+            .filter(ss => ss.season_number > 0 && ss.air_date && ss.air_date >= today && ss.air_date <= horizon)
+            .sort((a, b) => a.air_date.localeCompare(b.air_date))[0]
+          if (!next) continue
+          out.push({ id: d.id, name: d.name, poster_path: next.poster_path || d.poster_path,
+                     backdrop_path: d.backdrop_path, first_air_date: next.air_date,
+                     season_number: next.season_number, network: d.networks?.[0]?.name || '',
+                     vote_average: d.vote_average, overview: d.overview })
+        }
+        setWatchUpcoming(out)
+      })
+    return () => { cancelled = true }
+  }, [isAuthenticated, watchlist])
+
   // Upcoming premieres ranked for this user: tracked (3) + model rec (2) + tracked network (1)
   const forYou = useMemo(() => {
     if (!isAuthenticated) return []
@@ -954,14 +982,14 @@ export function SearchPage() {
     const tracked = new Set((watchlist || []).map(w => String(w.id)))
     const today = new Date().toISOString().split('T')[0]
     const seen = new Set()
-    return [...thisWeek, ...restMonth, ...nextMonth]
+    return [...watchUpcoming, ...thisWeek, ...restMonth, ...nextMonth]
       .filter(x => x.first_air_date && x.first_air_date >= today && !seen.has(x.id) && seen.add(x.id))
       .map(x => ({ x, score: (tracked.has(String(x.id)) ? 3 : 0) + (recIds?.has(String(x.id)) ? 2 : 0)
                               + (nets.has((x.network || '').toLowerCase()) ? 1 : 0) }))
       .filter(r => r.score > 0)
       .sort((a, b) => (b.score - a.score) || byDate(a.x, b.x))
-      .slice(0, 12).map(r => r.x)
-  }, [isAuthenticated, watchlist, recIds, thisWeek, restMonth, nextMonth])
+      .slice(0, 24).map(r => r.x)
+  }, [isAuthenticated, watchlist, recIds, watchUpcoming, thisWeek, restMonth, nextMonth])
 
   useEffect(() => {
     fetch(`${RECS_API}/renewals/confirmed`)
