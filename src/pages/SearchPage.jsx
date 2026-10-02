@@ -124,6 +124,11 @@ function endOfWeek() {
   return d.toISOString().split('T')[0]
 }
 
+const BLOCKED_NETWORKS = new Set(['tvb jade', 'tv asahi', 'cbc television', '5', 'm-net', 'ntr', 'tros', 'net5'])
+const isBlockedNetwork = (s) =>
+  [s.network, ...((s._detail?.networks || []).map(n => n.name))]
+    .some(n => n && BLOCKED_NETWORKS.has(n.trim().toLowerCase()))
+
 async function enrichWithNetwork(shows) {
   const details = await Promise.all(shows.map(s =>
     Promise.all([
@@ -169,7 +174,7 @@ async function enrichWithNetwork(shows) {
       backdrop_path:  s.backdrop_path || detail?.backdrop_path || null,
       _detail:        detail || null,
     }
-  })
+  }).filter(s => !isBlockedNetwork(s))
 }
 
 function dedupById(shows) {
@@ -195,7 +200,8 @@ function dedupByShowId(shows) {
 function mapTMDB(s) {
   return { id:s.id, name:s.name??s.original_name, poster_path:s.poster_path,
     backdrop_path:s.backdrop_path, first_air_date:s.first_air_date,
-    vote_average:s.vote_average, overview:s.overview, network:s.network||'' }
+    vote_average:s.vote_average, overview:s.overview, network:s.network||'',
+    original_language:s.original_language, origin_country:s.origin_country }
 }
 function normalizeShow(s) {
   return {
@@ -719,7 +725,7 @@ export function SearchPage() {
         const gw = await res.json()
         const data = parseGateway(gw)
         const mapped = (data.results ?? []).map(normalizeShow)
-        setNextMonth(dedupById(mapped).filter(isEnglishShow).slice(0, 40))
+        setNextMonth(dedupById(mapped).filter(isEnglishShow).slice(0, 30))
       } catch (e) { console.error('nextMonth fetch failed', e) }
       finally { setLoadMonth(false) }
     })()
