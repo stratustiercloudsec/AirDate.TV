@@ -94,6 +94,15 @@ function formatScoop(raw) {
   return text.trim()
 }
 
+// Treat backend error responses as "no recap" so raw errors never render
+function usableRecap(d) {
+  if (!d) return null
+  if (d.metadata?.recap_quality === 'error') return null
+  const r = d.recap
+  if (!r || /^Unable to generate recap/i.test(r)) return null
+  return r
+}
+
 function renderRecapMarkdown(raw) {
   if (!raw || typeof raw !== 'string') return raw
   const blocks = raw.trim().split(/\n\n+/)
@@ -623,7 +632,7 @@ function EpisodeSpotlight({ episode, showTitle, showId, seasonNumber, onClose, r
       })})
       .then(r=>r.json()).then(raw=>{
         if (cancelled) return
-        const d = gw(raw); const r = d.recap || null
+        const d = gw(raw); const r = usableRecap(d)
         const rendered = r ? renderRecapMarkdown(formatScoop(r)) : ''
         recapCache.current[key] = rendered
         setHtml(rendered)
@@ -775,7 +784,7 @@ function EpisodeIntelligence({ showId, showTitle, showData, requestedSeason }) {
               // (e.g. from a StrictMode double-invoked effect) from
               // clobbering a fresher/correct recap that already rendered.
               if (cancelled || recapGenerationRef.current !== myGeneration) return
-              const d=gw(raw);const r=d.recap||null
+              const d=gw(raw);const r=usableRecap(d)
               if (r&&r.length>(last.overview?.length||0)+40) setRecap(renderRecapMarkdown(formatScoop(r)))
             }).catch(()=>{})
         }
@@ -863,10 +872,11 @@ function ScoopSection({ showId, showTitle, seasonNumber }) {
     fetch(`${API_BASE}/generate-recap`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({series_title:showTitle,tmdb_id:showId,season_number:seasonNumber||null})})
       .then(r=>r.json()).then(raw=>{
-        const d=gw(raw);const text=d.recap||d.intel||null
+        const d=gw(raw);const text=usableRecap(d)||d.intel||null
         setHtml(text?renderRecapMarkdown(formatScoop(text)):'')
       }).catch(()=>setHtml(''))
   },[showId,showTitle,seasonNumber])
+  if (html === '') return null
   return (
     <section>
       <div className="flex items-center gap-3 mb-6">
