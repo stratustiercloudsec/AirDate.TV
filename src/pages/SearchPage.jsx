@@ -139,7 +139,16 @@ async function enrichWithNetwork(shows) {
     return {
       ...s,
       network:        s.network || detail?.networks?.[0]?.name || '',
-      first_air_date: detail?.first_air_date || s.first_air_date,
+      first_air_date: (() => {
+        // Show the relevant season's date, not the series premiere
+        const seasons = (detail?.seasons || []).filter(ss => ss.season_number > 0 && ss.air_date)
+        if (s.season_number) {
+          const m = seasons.find(ss => ss.season_number === s.season_number)
+          if (m) return m.air_date
+        }
+        if (seasons.length) return seasons[seasons.length - 1].air_date
+        return s.first_air_date || detail?.first_air_date
+      })(),
       content_rating: usRating,
       poster_path:    (() => {
         if (detail?.seasons?.length) {
@@ -1084,11 +1093,11 @@ export function SearchPage() {
                 )}
 
                 <section>
-                  <SectionHeader icon="fa-solid fa-fire" iconColor="text-orange-400" title="Trending Shows" subtitle="Most Tracked on AirDate"/>
+                  <SectionHeader icon="fa-solid fa-fire" iconColor="text-orange-400" title="Trending Shows" subtitle="Trending This Week"/>
                   <ShowGrid shows={trending} loading={loadTrend} skeletonCount={5} {...cardProps}/>
                 </section>
                 <section>
-                  <SectionHeader icon="fa-solid fa-ranking-star" iconColor="text-yellow-400" title="Top 10 TV Shows This Week" subtitle="Powered by TMDB"/>
+                  <SectionHeader icon="fa-solid fa-ranking-star" iconColor="text-yellow-400" title="Top 10 TV Shows This Week"/>
                   <ShowGrid shows={top10} loading={loadTop10} skeletonCount={5} rank={true} {...cardProps}/>
                 </section>
                 <section>
