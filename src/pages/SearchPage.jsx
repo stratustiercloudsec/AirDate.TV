@@ -1,7 +1,7 @@
 // src/pages/HomePage.jsx
 // API calls match main.js v112.25 exactly
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useNavigate }  from 'react-router-dom'
 import { useAuth }      from '@/context/AuthContext'
 import { useWatchlist } from '@/context/WatchlistContext'
@@ -123,6 +123,14 @@ function endOfWeek() {
   const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()+6)
   return d.toISOString().split('T')[0]
 }
+
+const RECS_API = 'https://qg0x31ranc.execute-api.us-east-1.amazonaws.com/prod'
+
+// Section picks: representation-tagged first, then popularity; display by date
+const rankForSection = (raw) => [...raw].sort((a, b) =>
+  ((b.representation_tags?.length ? 1 : 0) - (a.representation_tags?.length ? 1 : 0)) ||
+  ((b.hype_count || 0) - (a.hype_count || 0)))
+const byDate = (a, b) => (a.first_air_date || '9999').localeCompare(b.first_air_date || '9999')
 
 const BLOCKED_NETWORKS = new Set(['tvb jade', 'tv asahi', 'cbc television', '5', 'm-net', 'ntr', 'tros', 'net5'])
 const isBlockedNetwork = (s) =>
@@ -626,7 +634,7 @@ function ShowGrid({ shows, loading, skeletonCount=5, rank=false, ...cardProps })
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export function SearchPage() {
-  const { token, isAuthenticated, isPremium } = useAuth()
+  const { token, isAuthenticated, isPremium, user } = useAuth()
   const { watchlist, toggleWatchlist, isTracked, atLimit } = useWatchlist()
 
   const [query,             setQuery]         = useState('')
@@ -647,10 +655,13 @@ export function SearchPage() {
   const curatedShows = useCurated()
   const [nextMonth,         setNextMonth]     = useState([])
   const [leaderboard,       setLeaderboard]   = useState([])
+  const [renewals,          setRenewals]      = useState([])
+  const [loadRenewals,      setLoadRenewals]  = useState(true)
   const [loadTrend,         setLoadTrend]     = useState(true)
   const [loadTop10,         setLoadTop10]     = useState(true)
   const [loadWeek,          setLoadWeek]      = useState(true)
   const [loadMonth,         setLoadMonth]     = useState(true)
+  const [restMonth,         setRestMonth]     = useState([])
   const [modal,             setModal]         = useState(false)
   const [modalTitle,        setModalTitle]    = useState('')
   const [modalContent,      setModalContent]  = useState('')
@@ -724,8 +735,8 @@ export function SearchPage() {
         })
         const gw = await res.json()
         const data = parseGateway(gw)
-        const mapped = (data.results ?? []).map(normalizeShow)
-        setNextMonth(dedupById(mapped).filter(isEnglishShow).slice(0, 30))
+        const mapped = rankForSection(data.results ?? []).map(normalizeShow)
+        setNextMonth(dedupById(mapped).filter(isEnglishShow).slice(0, 30).sort(byDate))
       } catch (e) { console.error('nextMonth fetch failed', e) }
       finally { setLoadMonth(false) }
     })()
@@ -908,6 +919,60 @@ export function SearchPage() {
   }
 
   const cardProps = { isTracked, onTrack:handleTrack, atLimit, isAuthenticated, onAuthRequired: () => setAuthModal(true) }
+  const currentMonthName = new Date().toLocaleString('default', { month: 'long' })
+  useEffect(() => {
+    const now = new Date()
+    const monthName = now.toLocaleString('default', { month: 'long' })
+    const weekEnd = endOfWeek()
+    ;(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/get-premieres`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: `Series premiering in ${monthName} ${now.getFullYear()}`, page: 1, per_page: 40 }),
+        })
+        const data = parseGateway(await res.json())
+        const mapped = rankForSection(data.results ?? []).map(normalizeShow)
+          .filter(s => s.first_air_date && s.first_air_date > weekEnd)
+        setRestMonth(dedupById(mapped).filter(isEnglishShow).slice(0, 30).sort(byDate))
+      } catch (e) { console.error('restMonth fetch failed', e) }
+    })()
+  }, [])
+
+  const [recIds, setRecIds] = useState(null)
+  useEffect(() => {
+    if (!isAuthenticated || !user?.sub) return
+    fetch(`${RECS_API}/user/${user.sub}/recs`, token ? { headers: { Authorization: `Bearer ${token}` } } : {})
+      .then(r => r.ok ? r.json() : { results: [] })
+      .then(d => setRecIds(new Set((d.results || []).map(x => String(x.tmdb_id || x.id)))))
+      .catch(() => setRecIds(new Set()))
+  }, [isAuthenticated, user?.sub, token])
+
+  // Upcoming premieres ranked for this user: tracked (3) + model rec (2) + tracked network (1)
+  const forYou = useMemo(() => {
+    if (!isAuthenticated) return []
+    const nets = new Set((watchlist || []).map(w => (w.network || '').toLowerCase()).filter(Boolean))
+    const tracked = new Set((watchlist || []).map(w => String(w.id)))
+    const today = new Date().toISOString().split('T')[0]
+    const seen = new Set()
+    return [...thisWeek, ...restMonth, ...nextMonth]
+      .filter(x => x.first_air_date && x.first_air_date >= today && !seen.has(x.id) && seen.add(x.id))
+      .map(x => ({ x, score: (tracked.has(String(x.id)) ? 3 : 0) + (recIds?.has(String(x.id)) ? 2 : 0)
+                              + (nets.has((x.network || '').toLowerCase()) ? 1 : 0) }))
+      .filter(r => r.score > 0)
+      .sort((a, b) => (b.score - a.score) || byDate(a.x, b.x))
+      .slice(0, 12).map(r => r.x)
+  }, [isAuthenticated, watchlist, recIds, thisWeek, restMonth, nextMonth])
+
+  useEffect(() => {
+    fetch(`${RECS_API}/renewals/confirmed`)
+      .then(r => r.ok ? r.json() : { results: [] })
+      .then(d => setRenewals((d.results || []).slice(0, 10).map(x => ({
+        id: Number(x.show_id), name: x.name, poster_path: x.poster_path,
+        season: x.season, air_date: x.air_date === 'TBA' ? null : x.air_date }))))
+      .catch(() => setRenewals([]))
+      .finally(() => setLoadRenewals(false))
+  }, [])
+
   const nextMonthLabel = new Date(new Date().getFullYear(), new Date().getMonth()+1, 1)
     .toLocaleString('default',{month:'long',year:'numeric'})
 
@@ -1110,6 +1175,18 @@ export function SearchPage() {
                   <SectionHeader icon="fa-solid fa-calendar-week" iconColor="text-cyan-400" title="Premiering This Week"/>
                   <ShowGrid shows={thisWeek} loading={loadWeek} skeletonCount={3} {...cardProps}/>
                 </section>
+                {forYou.length > 0 && (
+                  <section>
+                    <SectionHeader icon="fa-solid fa-wand-magic-sparkles" iconColor="text-pink-400" title="Premiering Soon For You" subtitle="Based on your watchlist & persona"/>
+                    <ShowGrid shows={forYou} loading={false} skeletonCount={6} {...cardProps}/>
+                  </section>
+                )}
+                {restMonth.length > 0 && (
+                  <section>
+                    <SectionHeader icon="fa-solid fa-calendar-day" iconColor="text-cyan-400" title={`Still Premiering in ${currentMonthName}`}/>
+                    <ShowGrid shows={restMonth} loading={false} skeletonCount={6} {...cardProps}/>
+                  </section>
+                )}
                 <section>
                   <SectionHeader icon="fa-solid fa-calendar-plus" iconColor="text-purple-400" title={`Premiering ${nextMonthLabel}`} subtitle="All Major Networks"/>
                   <ShowGrid shows={nextMonth} loading={loadMonth} skeletonCount={10} {...cardProps}/>
@@ -1139,25 +1216,25 @@ export function SearchPage() {
                   <i className="fa-solid fa-fire text-pink-400 text-lg"></i>
                 </div>
                 <div>
-                  <h2 className="text-sm font-black uppercase tracking-wide text-pink-400 mb-0.5">Global Hype Ranking</h2>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-200">Top Tracked Series</p>
+                  <h2 className="text-sm font-black uppercase tracking-wide text-pink-400 mb-0.5">Guaranteed Renewals</h2>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-200">{`Aired in ${new Date().getFullYear()} · Renewed for ${new Date().getFullYear()+1}`}</p>
                 </div>
               </div>
               <div className="space-y-3">
-                {leaderboard.length === 0
+                {renewals.length === 0 && loadRenewals
                   ? Array.from({length:5}).map((_,i) => (
                       <div key={i} className="animate-pulse flex items-center gap-3 p-3 bg-slate-800/40 rounded-2xl">
                         <div className="w-8 h-8 bg-slate-700 rounded-xl"></div>
                         <div className="flex-1"><div className="h-3 bg-slate-700 rounded w-3/4 mb-1"></div><div className="h-2 bg-slate-700 rounded w-1/2"></div></div>
                       </div>
                     ))
-                  : dedupById(leaderboard).slice(0,10).map((s,idx) => (
+                  : renewals.map((s,idx) => (
                       <div key={`${s.id??idx}-${idx}`} className="flex items-center gap-3 p-3 bg-slate-800/40 border border-white/5 rounded-2xl hover:border-pink-500/20 transition-all cursor-pointer" onClick={() => window.location.href=`/details/${s.id}`}>
                         <span className="w-6 text-center text-[10px] font-black text-slate-200">{idx+1}</span>
                         <img {...usePoster(s.poster_path||s.poster, s.title||s.name, 92)} alt={s.title||s.name} className="w-8 h-10 object-cover rounded-lg flex-shrink-0"/>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-white truncate">{s.title||s.name}</p>
-                          <p className="text-[9px] font-bold uppercase tracking-widest text-pink-400 mt-0.5">{s.hype?`${Number(s.hype).toLocaleString()} tracking`:s.tracked_count?`${s.tracked_count.toLocaleString()} tracking`:'Trending'}</p>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-pink-400 mt-0.5">{`Season ${s.season} · ${s.air_date ? new Date(s.air_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Date TBA'}`}</p>
                         </div>
                       </div>
                     ))
