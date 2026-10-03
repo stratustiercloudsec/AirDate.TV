@@ -664,6 +664,8 @@ export function SearchPage() {
   const [loadWeek,          setLoadWeek]      = useState(true)
   const [loadMonth,         setLoadMonth]     = useState(true)
   const [restMonth,         setRestMonth]     = useState([])
+  const [expandRest,        setExpandRest]    = useState(false)
+  const [expandNext,        setExpandNext]    = useState(false)
   const [modal,             setModal]         = useState(false)
   const [modalTitle,        setModalTitle]    = useState('')
   const [modalContent,      setModalContent]  = useState('')
@@ -733,12 +735,12 @@ export function SearchPage() {
         const monthName = new Date(nmYear, nmMonth - 1, 1).toLocaleString('default', { month: 'long' })
         const res = await fetch(`${API_BASE}/get-premieres`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: `Series premiering in ${monthName} ${nmYear}`, page: 1, per_page: 40, cache_bust: true }),
+          body: JSON.stringify({ query: `Series premiering in ${monthName} ${nmYear}`, page: 1, per_page: 120, cache_bust: true }),
         })
         const gw = await res.json()
         const data = parseGateway(gw)
         const mapped = rankForSection(data.results ?? []).map(normalizeShow)
-        setNextMonth(dedupById(mapped).filter(isEnglishShow).slice(0, 30).sort(byDate))
+        setNextMonth(dedupById(mapped).filter(isEnglishShow))
       } catch (e) { console.error('nextMonth fetch failed', e) }
       finally { setLoadMonth(false) }
     })()
@@ -930,12 +932,12 @@ export function SearchPage() {
       try {
         const res = await fetch(`${API_BASE}/get-premieres`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: `Series premiering in ${monthName} ${now.getFullYear()}`, page: 1, per_page: 40 }),
+          body: JSON.stringify({ query: `Series premiering in ${monthName} ${now.getFullYear()}`, page: 1, per_page: 120 }),
         })
         const data = parseGateway(await res.json())
         const mapped = rankForSection(data.results ?? []).map(normalizeShow)
           .filter(s => s.first_air_date && s.first_air_date > weekEnd)
-        setRestMonth(dedupById(mapped).filter(isEnglishShow).slice(0, 30).sort(byDate))
+        setRestMonth(dedupById(mapped).filter(isEnglishShow))
       } catch (e) { console.error('restMonth fetch failed', e) }
     })()
   }, [])
@@ -1002,6 +1004,15 @@ export function SearchPage() {
       .catch(() => setRenewals([]))
       .finally(() => setLoadRenewals(false))
   }, [])
+
+  const restShown = (expandRest ? [...restMonth] : restMonth.slice(0, 30)).sort(byDate)
+  const nextShown = (expandNext ? [...nextMonth] : nextMonth.slice(0, 30)).sort(byDate)
+  const showAllBtn = (list, open, toggle, label) => list.length > 30 && (
+    <button onClick={() => toggle(v => !v)}
+      className="mt-5 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-cyan-400 border border-cyan-500/30 rounded-xl hover:bg-cyan-500/10 transition-all">
+      {open ? 'Show top 30' : `Show all ${list.length} ${label} premieres`}
+    </button>
+  )
 
   const nextMonthLabel = new Date(new Date().getFullYear(), new Date().getMonth()+1, 1)
     .toLocaleString('default',{month:'long',year:'numeric'})
@@ -1215,12 +1226,14 @@ export function SearchPage() {
                 {restMonth.length > 0 && (
                   <section>
                     <SectionHeader icon="fa-solid fa-calendar-day" iconColor="text-cyan-400" title={`Still Premiering in ${currentMonthName}`}/>
-                    <ShowGrid shows={restMonth} loading={false} skeletonCount={6} {...cardProps}/>
+                    <ShowGrid shows={restShown} loading={false} skeletonCount={6} {...cardProps}/>
+                    {showAllBtn(restMonth, expandRest, setExpandRest, currentMonthName)}
                   </section>
                 )}
                 <section>
                   <SectionHeader icon="fa-solid fa-calendar-plus" iconColor="text-purple-400" title={`Premiering ${nextMonthLabel}`} subtitle="All Major Networks"/>
-                  <ShowGrid shows={nextMonth} loading={loadMonth} skeletonCount={10} {...cardProps}/>
+                  <ShowGrid shows={nextShown} loading={loadMonth} skeletonCount={10} {...cardProps}/>
+                  {!loadMonth && showAllBtn(nextMonth, expandNext, setExpandNext, nextMonthLabel)}
                 </section>
               </div>
             )}
