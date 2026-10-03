@@ -735,7 +735,7 @@ export function SearchPage() {
         const monthName = new Date(nmYear, nmMonth - 1, 1).toLocaleString('default', { month: 'long' })
         const res = await fetch(`${API_BASE}/get-premieres`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: `Series premiering in ${monthName} ${nmYear}`, page: 1, per_page: 120, cache_bust: true }),
+          body: JSON.stringify({ query: `Series premiering in ${monthName} ${nmYear}`, page: 1, per_page: 120 }),
         })
         const gw = await res.json()
         const data = parseGateway(gw)
@@ -810,7 +810,7 @@ export function SearchPage() {
       if (network && network !== 'All') {
         let ragSucceeded = false
         try {
-          const payload = { query:q, page:overridePage, per_page:20, network, cache_bust: true }
+          const payload = { query:q, page:overridePage, per_page:20, network }
           const res = await fetch(`${API_BASE}/get-premieres`, {
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify(payload),
@@ -872,7 +872,7 @@ export function SearchPage() {
           setTotalPages(tmdbData.total_pages ?? 1)
         }
       } else {
-      const payload = { query:q, page:overridePage, per_page:20, cache_bust: true }
+      const payload = { query:q, page:overridePage, per_page:20 }
       const res  = await fetch(`${API_BASE}/get-premieres`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload),
