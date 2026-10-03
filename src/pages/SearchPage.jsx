@@ -590,7 +590,7 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, onAuthRe
       </h3>
       {show.season_number && (
         <span className="inline-block px-1.5 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded text-cyan-400 text-[9px] font-black uppercase tracking-widest mb-1">
-          Season {show.season_number}
+          {show.midseason ? `Midseason Return · S${show.season_number}E${show.episode}` : `Season ${show.season_number}`}
         </span>
       )}
       {show.network && (
@@ -951,6 +951,22 @@ export function SearchPage() {
       .catch(() => setRecIds(new Set()))
   }, [isAuthenticated, user?.sub, token])
 
+  const [midseason, setMidseason] = useState([])
+  useEffect(() => {
+    fetch(`${RECS_API}/midseason`)
+      .then(r => r.ok ? r.json() : { results: [] })
+      .then(d => setMidseason((d.results || []).map(x => ({
+        id: Number(x.show_id), name: x.name, network: x.network, poster_path: x.poster_path,
+        first_air_date: x.return_date, season_number: x.season, episode: x.episode, midseason: true }))))
+      .catch(() => setMidseason([]))
+  }, [])
+  const wkEnd  = endOfWeek()
+  const curYM  = new Date().toISOString().slice(0, 7)
+  const nextYM = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + 1); return d.toISOString().slice(0, 7) })()
+  const msWeek = midseason.filter(m => m.first_air_date <= wkEnd)
+  const msCur  = midseason.filter(m => m.first_air_date > wkEnd && m.first_air_date.startsWith(curYM))
+  const msNext = midseason.filter(m => m.first_air_date.startsWith(nextYM))
+
   // Next season premiere for every tracked show (within 120 days), straight from TMDB
   const [watchUpcoming, setWatchUpcoming] = useState([])
   useEffect(() => {
@@ -986,14 +1002,14 @@ export function SearchPage() {
     const tracked = new Set((watchlist || []).map(w => String(w.id)))
     const today = new Date().toISOString().split('T')[0]
     const seen = new Set()
-    return [...watchUpcoming, ...thisWeek, ...restMonth, ...nextMonth]
+    return [...watchUpcoming, ...midseason, ...thisWeek, ...restMonth, ...nextMonth]
       .filter(x => x.first_air_date && x.first_air_date >= today && !seen.has(x.id) && seen.add(x.id))
       .map(x => ({ x, score: (tracked.has(String(x.id)) ? 3 : 0) + (recIds?.has(String(x.id)) ? 2 : 0)
                               + (nets.has((x.network || '').toLowerCase()) ? 1 : 0) }))
       .filter(r => r.score > 0)
       .sort((a, b) => (b.score - a.score) || byDate(a.x, b.x))
       .slice(0, 24).map(r => r.x)
-  }, [isAuthenticated, watchlist, recIds, watchUpcoming, thisWeek, restMonth, nextMonth])
+  }, [isAuthenticated, watchlist, recIds, watchUpcoming, midseason, thisWeek, restMonth, nextMonth])
 
   useEffect(() => {
     fetch(`${RECS_API}/renewals/confirmed`)
@@ -1005,8 +1021,8 @@ export function SearchPage() {
       .finally(() => setLoadRenewals(false))
   }, [])
 
-  const restShown = (expandRest ? [...restMonth] : restMonth.slice(0, 30)).sort(byDate)
-  const nextShown = (expandNext ? [...nextMonth] : nextMonth.slice(0, 30)).sort(byDate)
+  const restShown = (expandRest ? [...msCur, ...restMonth] : [...msCur, ...restMonth].slice(0, 30)).sort(byDate)
+  const nextShown = (expandNext ? [...msNext, ...nextMonth] : [...msNext, ...nextMonth].slice(0, 30)).sort(byDate)
   const showAllBtn = (list, open, toggle, label) => list.length > 30 && (
     <button onClick={() => toggle(v => !v)}
       className="mt-5 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-cyan-400 border border-cyan-500/30 rounded-xl hover:bg-cyan-500/10 transition-all">
@@ -1215,7 +1231,7 @@ export function SearchPage() {
                 </section>
                 <section>
                   <SectionHeader icon="fa-solid fa-calendar-week" iconColor="text-cyan-400" title="Premiering This Week"/>
-                  <ShowGrid shows={thisWeek} loading={loadWeek} skeletonCount={3} {...cardProps}/>
+                  <ShowGrid shows={[...msWeek, ...thisWeek]} loading={loadWeek} skeletonCount={3} {...cardProps}/>
                 </section>
                 {forYou.length > 0 && (
                   <section>
