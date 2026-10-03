@@ -1047,7 +1047,7 @@ export function SearchPage() {
                     setHeader('Premiering Today · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
                     const tonight = premieringTonight.filter(hasNetwork)
                     setResults(tonight)
-                    setCount(tonight.length + ' shows')
+                    setCount(tonight.length + (tonight.length === 1 ? ' show' : ' shows'))
                     setTotalPages(1); setPage(1); setShowResults(true)
                   } else { setQuery(chip); handleSearch(chip) }
                 }}
