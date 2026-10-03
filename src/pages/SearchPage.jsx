@@ -132,6 +132,8 @@ const rankForSection = (raw) => [...raw].sort((a, b) =>
   ((b.hype_count || 0) - (a.hype_count || 0)))
 const byDate = (a, b) => (a.first_air_date || '9999').localeCompare(b.first_air_date || '9999')
 
+const hasNetwork = (s) => { const n = (s?.network || '').trim().toLowerCase(); return !!n && n !== 'streaming' }
+
 const BLOCKED_NETWORKS = new Set(['tvb jade', 'tv asahi', 'cbc television', '5', 'm-net', 'ntr', 'tros', 'net5'])
 const isBlockedNetwork = (s) =>
   [s.network, ...((s._detail?.networks || []).map(n => n.name))]
@@ -629,7 +631,7 @@ function SectionHeader({ icon, iconColor, title, subtitle }) {
 function ShowGrid({ shows, loading, skeletonCount=5, rank=false, ...cardProps }) {
   const grid = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5'
   if (loading) return <div className={grid}>{Array.from({length:skeletonCount}).map((_,i)=><SkeletonCard key={i}/>)}</div>
-  return <div className={grid}>{dedupById(shows).map((s,i)=><ShowCard key={`${s.id}-${i}`} show={s} rank={rank?i+1:undefined} {...cardProps}/>)}</div>
+  return <div className={grid}>{dedupById(shows).filter(hasNetwork).map((s,i)=><ShowCard key={`${s.id}-${i}`} show={s} rank={rank?i+1:undefined} {...cardProps}/>)}</div>
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -1043,8 +1045,9 @@ export function SearchPage() {
                 <button key={chip} onClick={() => {
                   if (chip === 'Premiering Today') {
                     setHeader('Premiering Today · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
-                    setResults(premieringTonight)
-                    setCount(premieringTonight.length + ' shows')
+                    const tonight = premieringTonight.filter(hasNetwork)
+                    setResults(tonight)
+                    setCount(tonight.length + ' shows')
                     setTotalPages(1); setPage(1); setShowResults(true)
                   } else { setQuery(chip); handleSearch(chip) }
                 }}
@@ -1144,7 +1147,7 @@ export function SearchPage() {
                 {searching
                   ? <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">{Array.from({length:6}).map((_,i)=><SkeletonCard key={i}/>)}</div>
                   : <>
-                      {searchResults.length === 0 ? (
+                      {searchResults.filter(hasNetwork).length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
                           <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-5">
                             <i className="fa-solid fa-magnifying-glass text-slate-200 text-2xl"/>
@@ -1167,10 +1170,10 @@ export function SearchPage() {
                         </div>
                       ) : (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 mb-8">
-                        {searchResults.map((s,i)=><ShowCard key={`${s.id}-${s.season_number||i}`} show={s} {...cardProps}/>)}
+                        {searchResults.filter(hasNetwork).map((s,i)=><ShowCard key={`${s.id}-${s.season_number||i}`} show={s} {...cardProps}/>)}
                       </div>
                       )}
-                      {searchResults.length > 0 && totalPages > 1 && (
+                      {searchResults.filter(hasNetwork).length > 0 && totalPages > 1 && (
                         <div className="flex items-center justify-center gap-2 mt-6 mb-10">
                           <button onClick={()=>handleSearch(query,page-1)} disabled={page===1}
                             className="px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-xs font-bold text-slate-200 hover:border-cyan-500/30 disabled:opacity-30 transition-all">← Prev</button>
