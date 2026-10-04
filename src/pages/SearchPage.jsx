@@ -159,9 +159,9 @@ async function enrichWithNetwork(shows) {
         const seasons = (detail?.seasons || []).filter(ss => ss.season_number > 0 && ss.air_date)
         if (s.season_number) {
           const m = seasons.find(ss => ss.season_number === s.season_number)
-          if (m) return m.air_date
+          if (m) return e1Date(detail, m)
         }
-        if (seasons.length) return seasons[seasons.length - 1].air_date
+        if (seasons.length) return e1Date(detail, seasons[seasons.length - 1])
         return s.first_air_date || detail?.first_air_date
       })(),
       content_rating: usRating,
@@ -213,6 +213,13 @@ function mapTMDB(s) {
     vote_average:s.vote_average, overview:s.overview, network:s.network||'',
     original_language:s.original_language, origin_country:s.origin_country }
 }
+// Season premiere = episode 1's date when TMDB has it (season-level air_date can be off,
+// e.g. Reasonable Doubt S4: season 10-05, E1 10-06). Mirrors airdate-rag-orchestration.
+const e1Date = (detail, ss) => {
+  const nx = detail?.next_episode_to_air
+  return (nx && nx.season_number === ss?.season_number && nx.episode_number === 1 && nx.air_date) || ss?.air_date || null
+}
+
 function normalizeShow(s) {
   return {
     id:             s.id,
@@ -653,6 +660,7 @@ export function SearchPage() {
   const [trending,          setTrending]      = useState([])
   const [top10,             setTop10]         = useState([])
   const [thisWeek,          setThisWeek]      = useState([])
+  const [weekFromMonth, setWeekFromMonth] = useState([])
   const [tmdbWeekResults, setTmdbWeekResults] = useState([])
   const curatedShows = useCurated()
   const [nextMonth,         setNextMonth]     = useState([])
@@ -860,7 +868,7 @@ export function SearchPage() {
               return seasons.map(ss => ({
                 ...s,
                 poster_path: ss.poster_path || s.poster_path,
-                first_air_date: ss.air_date,
+                first_air_date: e1Date(detail, ss),
                 _seasonNum: ss.season_number,
               }))
             }
@@ -928,6 +936,8 @@ export function SearchPage() {
     const now = new Date()
     const monthName = now.toLocaleString('default', { month: 'long' })
     const weekEnd = endOfWeek()
+    const weekStartM = new Date(new Date(weekEnd + 'T00:00:00').getTime() - 6 * 864e5).toLocaleDateString('en-CA')
+    const _wk = []
     ;(async () => {
       try {
         const res = await fetch(`${API_BASE}/get-premieres`, {
@@ -936,8 +946,8 @@ export function SearchPage() {
         })
         const data = parseGateway(await res.json())
         const mapped = rankForSection(data.results ?? []).map(normalizeShow)
-          .filter(s => s.first_air_date && s.first_air_date > weekEnd)
-        setRestMonth(dedupById(mapped).filter(isEnglishShow))
+          .filter(s => { if (s.first_air_date && s.first_air_date >= weekStartM && s.first_air_date <= weekEnd) _wk.push(s); return s.first_air_date && s.first_air_date > weekEnd })
+        setWeekFromMonth(dedupById(_wk).filter(isEnglishShow)); setRestMonth(dedupById(mapped).filter(isEnglishShow))
       } catch (e) { console.error('restMonth fetch failed', e) }
     })()
   }, [])
@@ -996,7 +1006,7 @@ export function SearchPage() {
             .sort((a, b) => a.air_date.localeCompare(b.air_date))[0]
           if (!next) continue
           out.push({ id: d.id, name: d.name, poster_path: next.poster_path || d.poster_path,
-                     backdrop_path: d.backdrop_path, first_air_date: next.air_date,
+                     backdrop_path: d.backdrop_path, first_air_date: e1Date(d, next),
                      season_number: next.season_number, network: d.networks?.[0]?.name || '',
                      vote_average: d.vote_average, overview: d.overview })
         }
@@ -1012,14 +1022,14 @@ export function SearchPage() {
     const tracked = new Set((watchlist || []).map(w => String(w.id)))
     const today = new Date().toISOString().split('T')[0]
     const seen = new Set()
-    return [...watchUpcoming, ...midseason, ...thisWeek, ...restMonth, ...nextMonth]
+    return [...watchUpcoming, ...midseason, ...thisWeek, ...weekFromMonth, ...restMonth, ...nextMonth]
       .filter(x => x.first_air_date && x.first_air_date >= today && !seen.has(x.id) && seen.add(x.id))
       .map(x => ({ x, score: (tracked.has(String(x.id)) ? 3 : 0) + (recIds?.has(String(x.id)) ? 2 : 0)
                               + (nets.has((x.network || '').toLowerCase()) ? 1 : 0) }))
       .filter(r => r.score > 0)
       .sort((a, b) => (b.score - a.score) || byDate(a.x, b.x))
       .slice(0, 24).map(r => r.x)
-  }, [isAuthenticated, watchlist, recIds, watchUpcoming, midseason, thisWeek, restMonth, nextMonth])
+  }, [isAuthenticated, watchlist, recIds, watchUpcoming, midseason, thisWeek, weekFromMonth, restMonth, nextMonth])
 
   useEffect(() => {
     fetch(`${RECS_API}/renewals/confirmed`)
@@ -1249,7 +1259,7 @@ export function SearchPage() {
                 </section>
                 <section>
                   <SectionHeader icon="fa-solid fa-calendar-week" iconColor="text-cyan-400" title="Premiering This Week"/>
-                  <ShowGrid shows={[...msWeek, ...thisWeek]} loading={loadWeek} skeletonCount={3} {...cardProps}/>
+                  <ShowGrid shows={dedupById([...msWeek, ...thisWeek, ...weekFromMonth]).sort(byDate)} loading={loadWeek} skeletonCount={3} {...cardProps}/>
                 </section>
                 {forYou.length > 0 && (
                   <section>

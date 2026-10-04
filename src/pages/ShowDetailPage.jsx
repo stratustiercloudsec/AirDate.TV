@@ -1075,8 +1075,9 @@ export function ShowDetailPage() {
             const { tmdbSeason: _tmdbSeason } = await import('../utils/tmdb')
             try {
               const seasonData = await _tmdbSeason(id, effectiveSeason, data?.networks?.[0]?.name||'')
-              if (seasonData?.air_date) {
-                setShow(prev => prev ? { ...prev, first_air_date: seasonData.air_date } : prev)
+              const _e1 = seasonData?.episodes?.[0]?.air_date || seasonData?.air_date  // E1 beats season-level date
+              if (_e1) {
+                setShow(prev => prev ? { ...prev, first_air_date: _e1 } : prev)
                 return
               }
             } catch {}
