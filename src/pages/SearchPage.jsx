@@ -96,7 +96,7 @@ const CHIPS = [
   'Award Shows 2026',
   'Reality TV 2026',
   'Comedy 2026',
-  'HBO Premieres 2026',
+  'Black TV Spotlight',
   'Psychological Thrillers 2026',
   'Shonda Rhimes Produced Series'
 ]
@@ -590,7 +590,7 @@ function ShowCard({ show, isTracked, onTrack, atLimit, isAuthenticated, onAuthRe
       </h3>
       {show.season_number && (
         <span className="inline-block px-1.5 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded text-cyan-400 text-[9px] font-black uppercase tracking-widest mb-1">
-          {show.midseason ? `Midseason Return · S${show.season_number}E${show.episode}` : `Season ${show.season_number}`}
+          {show.midseason ? `Midseason Return · S${show.season_number}E${show.episode}` : show.spotlightKind === 'new_episodes' ? `New Episode · S${show.season_number}E${show.episode}` : `Season ${show.season_number}`}
         </span>
       )}
       {show.network && (
@@ -951,6 +951,16 @@ export function SearchPage() {
       .catch(() => setRecIds(new Set()))
   }, [isAuthenticated, user?.sub, token])
 
+  const [spotlight, setSpotlight] = useState([])
+  useEffect(() => {
+    fetch(`${RECS_API}/spotlight`)
+      .then(r => r.ok ? r.json() : { results: [] })
+      .then(d => setSpotlight((d.results || []).map(x => ({
+        id: Number(x.tmdb_id), name: x.name, network: x.network, poster_path: x.poster_path,
+        first_air_date: x.air_date, season_number: x.season, episode: x.episode,
+        midseason: x.kind === 'midseason_return', spotlightKind: x.kind }))))
+      .catch(() => setSpotlight([]))
+  }, [])
   const [midseason, setMidseason] = useState([])
   useEffect(() => {
     fetch(`${RECS_API}/midseason`)
@@ -1070,6 +1080,14 @@ export function SearchPage() {
             <div className="flex flex-wrap gap-2 mb-5">
               {CHIPS.map(chip => (
                 <button key={chip} onClick={() => {
+                  if (chip === 'Black TV Spotlight') {
+                    setHeader('Black TV Spotlight · Next 6 Weeks')
+                    const list = spotlight.filter(hasNetwork)
+                    setResults(list)
+                    setCount(list.length + (list.length === 1 ? ' show' : ' shows'))
+                    setTotalPages(1); setPage(1); setShowResults(true)
+                    return
+                  }
                   if (chip === 'Premiering Today') {
                     setHeader('Premiering Today · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
                     const tonight = premieringTonight.filter(hasNetwork)
