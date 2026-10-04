@@ -189,7 +189,11 @@ async function enrichWithNetwork(shows) {
 
 function dedupById(shows) {
   const seen = new Set()
+  // A season-less copy of a show that also has a season-specific entry is a duplicate
+  // (e.g. NCIS: New York 319800 from TMDB discover with no season + backend S1 entry)
+  const withSeason = new Set(shows.filter(s => s.id && s.season_number != null).map(s => String(s.id)))
   return shows.filter(s => {
+    if (s.id && s.season_number == null && withSeason.has(String(s.id))) return false
     const key = s.id
       ? `${s.id}-${s.season_number ?? ''}`
       : (s.name || s.title || '')
