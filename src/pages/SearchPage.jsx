@@ -76,7 +76,7 @@ function isEnglishShow(show) {
   if (lang && lang !== 'en') return false
   // After enrichment, also check network name
   const net = (show.network || '').toLowerCase()
-  if (net && EXCLUDED_NETWORK_NAMES.has(net)) return false
+  if (net && (EXCLUDED_NETWORK_NAMES.has(net) || BLOCKED_NETWORKS.has(net))) return false
   if (net && ['youku','iqiyi','bilibili','wavve','tving','tencent','viutv','hotstar',
     'phoenix tv','cctv','guangdong','globo','tokyo','bandai'].some(k => net.includes(k))) return false
   return true
@@ -137,7 +137,7 @@ const hasNetwork = (s) => { const n = (s?.network || '').trim().toLowerCase(); r
 const BLOCKED_NETWORKS = new Set(['tvb jade', 'tv asahi', 'cbc television', '5', 'm-net', 'ntr', 'tros', 'net5'])
 const isBlockedNetwork = (s) =>
   [s.network, ...((s._detail?.networks || []).map(n => n.name))]
-    .some(n => n && BLOCKED_NETWORKS.has(n.trim().toLowerCase()))
+    .some(n => n && (BLOCKED_NETWORKS.has(n.trim().toLowerCase()) || EXCLUDED_NETWORK_NAMES.has(n.trim().toLowerCase())))
 
 async function enrichWithNetwork(shows) {
   const details = await Promise.all(shows.map(s =>
