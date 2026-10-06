@@ -676,6 +676,7 @@ export function SearchPage() {
   const [loadWeek,          setLoadWeek]      = useState(true)
   const [loadMonth,         setLoadMonth]     = useState(true)
   const [restMonth,         setRestMonth]     = useState([])
+  const [monthAll,          setMonthAll]      = useState([])
   const [expandRest,        setExpandRest]    = useState(false)
   const [expandNext,        setExpandNext]    = useState(false)
   const [modal,             setModal]         = useState(false)
@@ -949,7 +950,9 @@ export function SearchPage() {
           body: JSON.stringify({ query: `Series premiering in ${monthName} ${now.getFullYear()}`, page: 1, per_page: 120 }),
         })
         const data = parseGateway(await res.json())
-        const mapped = rankForSection(data.results ?? []).map(normalizeShow)
+        const _all = rankForSection(data.results ?? []).map(normalizeShow)
+        setMonthAll(_all)
+        const mapped = _all
           .filter(s => { if (s.first_air_date && s.first_air_date >= weekStartM && s.first_air_date <= weekEnd) _wk.push(s); return s.first_air_date && s.first_air_date > weekEnd })
         setWeekFromMonth(dedupById(_wk).filter(isEnglishShow)); setRestMonth(dedupById(mapped).filter(isEnglishShow))
       } catch (e) { console.error('restMonth fetch failed', e) }
@@ -1104,7 +1107,15 @@ export function SearchPage() {
                   }
                   if (chip === 'Premiering Today') {
                     setHeader('Premiering Today · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
-                    const tonight = premieringTonight.filter(hasNetwork)
+                    const td = new Date().toLocaleDateString('en-CA')   // local YYYY-MM-DD
+                    const tonight = [
+                      ...midseason.filter(x => x.first_air_date === td),
+                      ...spotlight.filter(x => x.first_air_date === td && x.spotlightKind !== 'new_episodes'),
+                      ...monthAll.filter(x => x.first_air_date === td),
+                      ...thisWeek.filter(x => x.first_air_date === td),
+                      ...premieringTonight,
+                    ].filter((x, i, a) => a.findIndex(y => String(y.id) === String(x.id)) === i)
+                     .filter(hasNetwork).filter(isEnglishShow)
                     setResults(tonight)
                     setCount(tonight.length + (tonight.length === 1 ? ' show' : ' shows'))
                     setTotalPages(1); setPage(1); setShowResults(true)
