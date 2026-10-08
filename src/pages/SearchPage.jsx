@@ -1057,6 +1057,25 @@ export function SearchPage() {
     </button>
   )
 
+  const buildTonight = () => {
+    const td = new Date().toLocaleDateString('en-CA')   // local YYYY-MM-DD
+    return [
+      ...midseason.filter(x => x.first_air_date === td),
+      ...spotlight.filter(x => x.first_air_date === td && x.spotlightKind !== 'new_episodes'),
+      ...monthAll.filter(x => x.first_air_date === td),
+      ...thisWeek.filter(x => x.first_air_date === td),
+      ...premieringTonight,
+    ].filter((x, i, a) => a.findIndex(y => String(y.id) === String(x.id)) === i)
+     .filter(hasNetwork).filter(isEnglishShow)
+  }
+  // Premiering Today is the default view: keep it current as each source finishes loading
+  useEffect(() => {
+    if (!String(resultsHeader || '').startsWith('Premiering Today')) return
+    const list = buildTonight()
+    setResults(list)
+    setCount(list.length + (list.length === 1 ? ' show' : ' shows'))
+  }, [resultsHeader, monthAll, thisWeek, midseason, spotlight, premieringTonight])
+
   const nextMonthLabel = new Date(new Date().getFullYear(), new Date().getMonth()+1, 1)
     .toLocaleString('default',{month:'long',year:'numeric'})
 
@@ -1107,15 +1126,7 @@ export function SearchPage() {
                   }
                   if (chip === 'Premiering Today') {
                     setHeader('Premiering Today · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
-                    const td = new Date().toLocaleDateString('en-CA')   // local YYYY-MM-DD
-                    const tonight = [
-                      ...midseason.filter(x => x.first_air_date === td),
-                      ...spotlight.filter(x => x.first_air_date === td && x.spotlightKind !== 'new_episodes'),
-                      ...monthAll.filter(x => x.first_air_date === td),
-                      ...thisWeek.filter(x => x.first_air_date === td),
-                      ...premieringTonight,
-                    ].filter((x, i, a) => a.findIndex(y => String(y.id) === String(x.id)) === i)
-                     .filter(hasNetwork).filter(isEnglishShow)
+                    const tonight = buildTonight()
                     setResults(tonight)
                     setCount(tonight.length + (tonight.length === 1 ? ' show' : ' shows'))
                     setTotalPages(1); setPage(1); setShowResults(true)
