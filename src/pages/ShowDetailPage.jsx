@@ -55,7 +55,7 @@ const TRAILER_OVERRIDES = {
 import { usePoster, createDefaultPoster } from '@/utils/poster'
 import { RatingBadge } from '@/utils/contentRating.jsx'
 import PredictionBadge from '../components/PredictionBadge'
-import { getProviderUrl } from '@/utils/providers'
+import { getProviderUrl, justWatchUrl } from '@/utils/providers'
 import { tmdbShow, tmdbCredits, tmdbProviders, tmdbRecommendations, tmdbVideos, tmdbSeason, tmdbDiscover } from '../utils/tmdb'
 import { CommentSection } from '@/components/comments/CommentSection'
 
@@ -338,20 +338,27 @@ function ShareButton({ url, title, show, posterUrl }) {
 }
 
 // ─── Providers ────────────────────────────────────────────────────────────────
-function ProvidersGrid({ providers, watchLink, showTitle }) {
+function ProvidersGrid({ providers, showTitle, showId }) {
+  const [homepage, setHomepage] = useState('')
+  useEffect(() => {
+    if (!showId) return
+    Promise.resolve(tmdbShow(showId)).then(r => (r && typeof r.json === 'function') ? r.json() : r)
+      .then(d => setHomepage(d?.homepage || '')).catch(() => {})
+  }, [showId])
+  const jw = justWatchUrl(showTitle)
   if (!providers?.length) return (
     <div className="bg-slate-800/30 rounded-2xl p-6 border border-white/5 text-center">
       <p className="text-slate-200 text-sm">Streaming info not available</p>
-      {watchLink&&<a href={watchLink} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-cyan-400 text-xs font-bold hover:underline">Check JustWatch →</a>}
+      <a href={jw} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-cyan-400 text-xs font-bold hover:underline">Check JustWatch →</a>
     </div>
   )
   return (
     <div>
       <div className="flex flex-wrap gap-4 mb-3">
         {providers.map(p=>{
-          const href=getProviderUrl(p,showTitle||'',watchLink)
+          const href=getProviderUrl(p,showTitle||'',homepage)
           return (
-            <a key={p.provider_id} href={href} target="_blank" rel="noreferrer noopener" className="flex flex-col items-center gap-2 group">
+            <a key={p.provider_id} href={href || undefined} target={href ? "_blank" : undefined} rel="noreferrer noopener sponsored" className={`flex flex-col items-center gap-2 group ${href ? '' : 'pointer-events-none'}`}>
               <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-white/10 group-hover:border-cyan-500/40 group-hover:shadow-lg group-hover:shadow-cyan-500/10 transition-all">
                 {p.logo_path?<img src={`${IMAGE_BASE}/t/p/w92${p.logo_path}`} alt={p.provider_name} className="w-full h-full object-cover"/>
                   :<div className="w-full h-full flex items-center justify-center"><i className="fa-solid fa-tv text-slate-200"></i></div>}
@@ -361,7 +368,7 @@ function ProvidersGrid({ providers, watchLink, showTitle }) {
           )
         })}
       </div>
-      {watchLink&&<p className="text-slate-200 text-[10px] font-bold uppercase tracking-widest"><i className="fa-solid fa-circle-info mr-1"></i>Availability may vary · <a href={watchLink} target="_blank" rel="noreferrer" className="text-cyan-500 hover:underline">Full options on JustWatch</a></p>}
+      {<p className="text-slate-200 text-[10px] font-bold uppercase tracking-widest"><i className="fa-solid fa-circle-info mr-1"></i>Availability may vary · <a href={jw} target="_blank" rel="noreferrer" className="text-cyan-500 hover:underline">Full options on JustWatch</a></p>}
     </div>
   )
 }
@@ -1308,7 +1315,7 @@ export function ShowDetailPage() {
                 <div className="p-2 bg-cyan-500/10 rounded-lg"><i className="fa-solid fa-tv text-cyan-400 text-xl"></i></div>
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Where to Watch</h2>
               </div>
-              <ProvidersGrid providers={providers} watchLink={watchLink} showTitle={show?.name||''}/>
+              <ProvidersGrid providers={providers} showTitle={show?.name||''} showId={id}/>
             </section>
 
             {/* Cast */}
